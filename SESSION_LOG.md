@@ -6,6 +6,58 @@
 
 ---
 
+## Sesion 2026-04-09 (parte 2) — Modulo 1 ejecutado + CLAUDE.md optimizado
+
+### ✅ Completado
+- Creada rama `feature/setup-infraestructura` y ejecutado el setup completo del Modulo 1
+- Inicializado proyecto Next.js 14.2.35 + TypeScript + App Router + Tailwind
+- Instaladas dependencias core: `@supabase/supabase-js`, `@supabase/ssr` v0.5.2, `zod`, `zustand`, `@tanstack/react-query`, `@react-pdf/renderer`, `googleapis`, `@sendgrid/mail`
+- Configurado Tailwind con paleta `reysil` (red `#DC2626` provisional + variantes red-dark/red-light/white) y fuente Inter
+- Creados clientes Supabase: `lib/supabase/client.ts` (browser), `lib/supabase/server.ts` (server + admin/service_role), `lib/supabase/middleware.ts` (updateSession)
+- Creado `middleware.ts` raiz con import RELATIVO a `./lib/supabase/middleware` y matcher excluyendo `_next/static`, `_next/image`, favicon, manifest, sw, icons
+- Creado `public/manifest.json` PWA basico (theme color reysil-red, display standalone)
+- Escrita migracion `supabase/migrations/0001_initial_schema.sql` con 17 tablas (`clients`, `client_emails`, `client_deposits`, `drivers`, `operators`, `user_profiles`, `reservations`, `containers`, `trips`, `trip_reparto_fields`, `trip_assignments`, `trip_events`, `trip_driver_data`, `remitos`, `shift_logs`, `inspections`, `inspection_items`), ENUMs (`user_role`, `trip_type`, `trip_status`, `inspection_state`, `inspection_status`, `remito_status`, `deposit_type`), RLS activado en TODAS, triggers de `updated_at`, Realtime publication para `trips`/`trip_events`/`trip_assignments`, CHECK constraint sobre `user_profiles` para consistencia rol-entidad
+- Creado `docs/branding.md` con paleta completa, decisiones UX extraidas de los 3 mockups del cliente (header rojo, observaciones progresivas, estado N/A, indicador offline, validacion de orden de eventos, FAB WhatsApp), y 5 items pendientes de confirmar
+- Configurado `.gitignore` (Next, env, .vercel, .claude/) y `.env.local.example`
+- Build local validado con env vars placeholder
+- Configurado proyecto en Vercel y resuelto deploy en 3 etapas:
+  1. Removida linea `export const runtime = 'nodejs'` del middleware (Next 14 solo soporta Edge en middleware)
+  2. Cambiado import de `@/lib/supabase/middleware` a `./lib/supabase/middleware` (Vercel Edge bundler no resuelve aliases en middleware raiz de manera consistente)
+  3. **Cambiado Vercel Settings → General → Framework Preset de "Other" a "Next.js"** (causa raiz del `ReferenceError: __dirname is not defined`). Redeploy sin cache.
+- Deploy productivo funcionando en Vercel
+- Optimizado `CLAUDE.md` (67 lineas / 3845 bytes → 33 lineas / 1954 bytes, ~49% menos): removidas secciones que duplicaban `PLAN.md`/`docs/arquitectura.md`/`docs/funcional.md`/`docs/historias.md` (descripcion del proyecto, stack detallado, descripcion completa de roles, lista de slash commands). Las 9 reglas inamovibles, las convenciones de codigo y los pointers a fuentes de verdad se conservan integros
+- Guardadas 2 memorias persistentes en `~/.claude/projects/.../memory/`:
+  - `feedback_explain_before_running.md` — explicar antes de correr comandos con env vars (incluso placeholders)
+  - `project_vercel_framework_preset.md` — Framework Preset = "Next.js", no "Other"
+
+### 🔄 En progreso
+- Ninguno — Modulo 1 cerrado
+
+### ⏭️ Proximos pasos
+1. Crear rama `feature/autenticacion` desde `main` (volver al flujo PR estricto)
+2. Verificar si la migracion `0001_initial_schema.sql` ya se aplico en el proyecto Supabase remoto (deuda tecnica anotada)
+3. Escribir migracion `supabase/migrations/0002_auth_rls_policies.sql` con RLS policies para las 17 tablas, una por rol, segun `docs/arquitectura.md` seccion "Seguridad y RLS"
+4. Trigger SQL: insert en `auth.users` → crear fila en `public.user_profiles` con role inicial `cliente`
+5. Crear `app/(auth)/login/page.tsx` (form email+password con `signInWithPassword` y schema Zod `LoginSchema` en `lib/validators/auth.ts`)
+6. Crear `app/(auth)/recuperar-contrasena/page.tsx` (form con `resetPasswordForEmail` y schema Zod `RecoverPasswordSchema`)
+7. Actualizar `lib/supabase/middleware.ts` para que despues de refrescar la sesion lea `user_profiles.role` y redirija segun rol (cliente/operador/chofer/admin)
+8. Crear `lib/server/auth/get-current-user.ts` reutilizable desde Server Actions y Server Components
+9. Probar el flujo end-to-end con un usuario de prueba creado a mano desde el SQL editor de Supabase
+10. PR a `main` cuando el modulo funcione
+
+(Detalle completo en `ESTADO.md` seccion "Proximo Paso Exacto")
+
+### 💡 Decisiones tomadas
+- **Imports en `middleware.ts` raiz: paths relativos, no `@/...`** — el bundler Edge de Vercel no resuelve siempre los aliases en imports del middleware raiz; con relativos siempre funciona
+- **Vercel Framework Preset DEBE ser "Next.js" (no "Other")** — el default "Other" rompe el bundling Edge del middleware con `__dirname is not defined`. Diagnosticado via supabase/supabase#21009. Documentado tambien en memoria persistente
+- **`CLAUDE.md` minimalista** — todo lo que duplicaba otros docs se removio. Reglas + convenciones + pointers, nada mas. Reduce tokens en cada turno sin perder informacion (los docs se leen on-demand)
+- **Push directo a main durante el setup del Modulo 1 — excepcion justificada UNA SOLA VEZ.** A partir de Modulo 2 vuelve el flujo `feature/...` + PR estricto. Documentado como deuda en `ESTADO.md`
+
+### ⚠️ Problemas / blockers
+- Ninguno activo. Los 3 problemas de deploy en Vercel quedaron resueltos (runtime line, path alias, framework preset)
+
+---
+
 ## Sesion 2026-04-09 — Cierre
 
 ### Completado
