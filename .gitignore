@@ -40,3 +40,4 @@ coverage/
 # Supabase local
 supabase/.branches
 supabase/.temp
+package-lock.json
