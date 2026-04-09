@@ -1,5 +1,7 @@
 import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+// Import relativo (no usar "@/...") porque el bundler Edge de Vercel
+// no resuelve siempre los path aliases en imports del middleware raiz.
+import { updateSession } from "./lib/supabase/middleware";
 
 /**
  * Middleware raiz de Next.js.
