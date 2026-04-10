@@ -40,7 +40,7 @@ export type TripRow = {
   } | null;
   remitos: {
     id: string;
-    foto_url: string | null;
+    drive_url: string;
     estado: string;
   }[];
 };
@@ -76,7 +76,7 @@ const TRIP_SELECT = `
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   trip_events(id, tipo, ocurrido_at, observaciones),
   containers(numero, tipo, peso_carga_kg),
-  remitos(id, foto_url, estado)
+  remitos(id, drive_url, estado)
 `;
 
 /**
