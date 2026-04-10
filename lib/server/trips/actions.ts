@@ -68,7 +68,7 @@ export async function createRepartoAction(
   if (d.zona_tarifa) metadata.zona_tarifa = d.zona_tarifa;
   if (d.horario) metadata.horario = d.horario;
   if (d.tipo_camion) metadata.tipo_camion = d.tipo_camion;
-  if (d.peon != null) metadata.peon = d.peon;
+  if (d.peon) metadata.peon = d.peon;
 
   const { error: fieldsError } = await supabase
     .from("trip_reparto_fields")
@@ -80,7 +80,7 @@ export async function createRepartoAction(
       nro_un: d.nro_un || null,
       cantidad_bultos: d.cantidad_bultos ?? null,
       peso_kg: d.peso_kg ?? null,
-      volumen_m3: d.volumen_m3 ?? null,
+      toneladas: d.toneladas ?? null,
       metadata,
     });
 
@@ -153,7 +153,7 @@ export async function createBulkRepartosAction(
     if (d.zona_tarifa) metadata.zona_tarifa = d.zona_tarifa;
     if (d.horario) metadata.horario = d.horario;
     if (d.tipo_camion) metadata.tipo_camion = d.tipo_camion;
-    if (d.peon != null) metadata.peon = d.peon;
+    if (d.peon) metadata.peon = d.peon;
 
     const { error: fieldsError } = await supabase
       .from("trip_reparto_fields")
@@ -165,7 +165,7 @@ export async function createBulkRepartosAction(
         nro_un: d.nro_un || null,
         cantidad_bultos: d.cantidad_bultos ?? null,
         peso_kg: d.peso_kg ?? null,
-        volumen_m3: d.volumen_m3 ?? null,
+        toneladas: d.toneladas ?? null,
         metadata,
       });
 

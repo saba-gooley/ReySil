@@ -108,7 +108,8 @@ export function TripList({ trips }: { trips: TripRow[] }) {
                         <Row label="NDV" value={trip.trip_reparto_fields.ndv} />
                         <Row label="PAL" value={trip.trip_reparto_fields.pal?.toString()} />
                         <Row label="CAT" value={trip.trip_reparto_fields.cat} />
-                        <Row label="Peso (kg)" value={trip.trip_reparto_fields.peso_kg?.toString()} />
+                        <Row label="KG netos" value={trip.trip_reparto_fields.peso_kg?.toString()} />
+                        <Row label="Toneladas" value={trip.trip_reparto_fields.toneladas?.toString()} />
                         <Row label="Bultos" value={trip.trip_reparto_fields.cantidad_bultos?.toString()} />
                       </dl>
                     </div>

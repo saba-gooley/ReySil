@@ -26,15 +26,18 @@ export const CreateRepartoSchema = z.object({
   nro_un: z.string().optional().default(""),
   cantidad_bultos: z.coerce.number().int().nonnegative().optional().nullable(),
   peso_kg: z.coerce.number().nonnegative().optional().nullable(),
-  volumen_m3: z.coerce.number().nonnegative().optional().nullable(),
+  toneladas: z.coerce.number().nonnegative().optional().nullable(),
 
   // metadata JSONB fields
   fecha_entrega: z.string().optional().default(""),
   codigo_postal: z.string().optional().default(""),
   zona_tarifa: z.string().optional().default(""),
   horario: z.string().optional().default(""),
-  tipo_camion: z.string().optional().default(""),
-  peon: z.coerce.number().int().nonnegative().optional().nullable(),
+  tipo_camion: z
+    .enum(["", "CHASIS", "SEMI", "710", "PICK UP", "Otro"])
+    .optional()
+    .default(""),
+  peon: z.string().optional().default(""),
 });
 
 export type CreateRepartoInput = z.infer<typeof CreateRepartoSchema>;

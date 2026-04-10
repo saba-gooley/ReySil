@@ -15,12 +15,20 @@ type GridRow = {
   fecha_solicitada: string;
   fecha_entrega: string;
   origen_deposit_id: string;
+  origen_descripcion: string;
   destino_descripcion: string;
+  codigo_postal: string;
+  zona_tarifa: string;
+  horario: string;
+  tipo_camion: string;
   ndv: string;
   pal: string;
   cat: string;
-  peso_kg: string;
+  nro_un: string;
   cantidad_bultos: string;
+  peso_kg: string;
+  toneladas: string;
+  peon: string;
   observaciones_cliente: string;
 };
 
@@ -30,17 +38,27 @@ function emptyRow(key: number): GridRow {
     fecha_solicitada: "",
     fecha_entrega: "",
     origen_deposit_id: "",
+    origen_descripcion: "",
     destino_descripcion: "",
+    codigo_postal: "",
+    zona_tarifa: "",
+    horario: "",
+    tipo_camion: "",
     ndv: "",
     pal: "",
     cat: "",
-    peso_kg: "",
+    nro_un: "",
     cantidad_bultos: "",
+    peso_kg: "",
+    toneladas: "",
+    peon: "",
     observaciones_cliente: "",
   };
 }
 
 const initialState: TripActionState = {};
+
+const TIPO_CAMION_OPTIONS = ["CHASIS", "SEMI", "710", "PICK UP", "Otro"];
 
 export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
   const [state, formAction] = useFormState(createBulkRepartosAction, initialState);
@@ -72,22 +90,22 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
     const payload = rows.map((r) => ({
       fecha_solicitada: r.fecha_solicitada,
       fecha_entrega: r.fecha_entrega,
-      origen_deposit_id: r.origen_deposit_id || null,
+      origen_deposit_id: r.origen_deposit_id === "otro" || !r.origen_deposit_id ? null : r.origen_deposit_id,
+      origen_descripcion: r.origen_deposit_id === "otro" ? r.origen_descripcion : "",
       destino_descripcion: r.destino_descripcion,
       observaciones_cliente: r.observaciones_cliente,
+      codigo_postal: r.codigo_postal,
+      zona_tarifa: r.zona_tarifa,
+      horario: r.horario,
+      tipo_camion: r.tipo_camion,
       ndv: r.ndv,
       pal: r.pal ? Number(r.pal) : null,
       cat: r.cat,
-      peso_kg: r.peso_kg ? Number(r.peso_kg) : null,
+      nro_un: r.nro_un,
       cantidad_bultos: r.cantidad_bultos ? Number(r.cantidad_bultos) : null,
-      nro_un: "",
-      volumen_m3: null,
-      origen_descripcion: "",
-      codigo_postal: "",
-      zona_tarifa: "",
-      horario: "",
-      tipo_camion: "",
-      peon: null,
+      peso_kg: r.peso_kg ? Number(r.peso_kg) : null,
+      toneladas: r.toneladas ? Number(r.toneladas) : null,
+      peon: r.peon || "",
     }));
     formData.set("payload", JSON.stringify(payload));
     formAction(formData);
@@ -107,7 +125,7 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-        <table className="w-full text-left text-xs">
+        <table className="w-full text-left text-xs" style={{ minWidth: "1400px" }}>
           <thead className="bg-neutral-50">
             <tr>
               <th className={cellClass}>#</th>
@@ -115,11 +133,18 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
               <th className={cellClass}>Fecha entrega</th>
               <th className={cellClass}>Deposito</th>
               <th className={cellClass}>Destino</th>
+              <th className={cellClass}>C.P.</th>
+              <th className={cellClass}>Zona tarifa</th>
+              <th className={cellClass}>Horario</th>
+              <th className={cellClass}>Tipo camion</th>
               <th className={cellClass}>NDV</th>
               <th className={cellClass}>PAL</th>
               <th className={cellClass}>CAT</th>
-              <th className={cellClass}>Peso Kg</th>
+              <th className={cellClass}>Nro UN</th>
               <th className={cellClass}>Bultos</th>
+              <th className={cellClass}>KG netos</th>
+              <th className={cellClass}>Toneladas</th>
+              <th className={cellClass}>Peon</th>
               <th className={cellClass}>Comentarios</th>
               <th className={cellClass}></th>
             </tr>
@@ -153,20 +178,34 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                   />
                 </td>
                 <td className={cellClass}>
-                  <select
-                    value={row.origen_deposit_id}
-                    onChange={(e) =>
-                      updateRow(row.key, "origen_deposit_id", e.target.value)
-                    }
-                    className={inputClass}
-                  >
-                    <option value="">—</option>
-                    {deposits.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.nombre}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-1">
+                    <select
+                      value={row.origen_deposit_id}
+                      onChange={(e) =>
+                        updateRow(row.key, "origen_deposit_id", e.target.value)
+                      }
+                      className={inputClass}
+                    >
+                      <option value="">—</option>
+                      {deposits.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.nombre}
+                        </option>
+                      ))}
+                      <option value="otro">Otro</option>
+                    </select>
+                    {row.origen_deposit_id === "otro" && (
+                      <input
+                        type="text"
+                        value={row.origen_descripcion}
+                        onChange={(e) =>
+                          updateRow(row.key, "origen_descripcion", e.target.value)
+                        }
+                        placeholder="Direccion"
+                        className={inputClass}
+                      />
+                    )}
+                  </div>
                 </td>
                 <td className={cellClass}>
                   <input
@@ -177,6 +216,53 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                     }
                     className={inputClass}
                   />
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="text"
+                    value={row.codigo_postal}
+                    onChange={(e) =>
+                      updateRow(row.key, "codigo_postal", e.target.value)
+                    }
+                    className={`${inputClass} w-16`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="text"
+                    value={row.zona_tarifa}
+                    onChange={(e) =>
+                      updateRow(row.key, "zona_tarifa", e.target.value)
+                    }
+                    className={`${inputClass} w-20`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="text"
+                    value={row.horario}
+                    onChange={(e) =>
+                      updateRow(row.key, "horario", e.target.value)
+                    }
+                    placeholder="Ej: 8-16"
+                    className={`${inputClass} w-20`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <select
+                    value={row.tipo_camion}
+                    onChange={(e) =>
+                      updateRow(row.key, "tipo_camion", e.target.value)
+                    }
+                    className={inputClass}
+                  >
+                    <option value="">—</option>
+                    {TIPO_CAMION_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className={cellClass}>
                   <input
@@ -211,6 +297,27 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                 </td>
                 <td className={cellClass}>
                   <input
+                    type="text"
+                    value={row.nro_un}
+                    onChange={(e) =>
+                      updateRow(row.key, "nro_un", e.target.value)
+                    }
+                    className={`${inputClass} w-16`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="number"
+                    value={row.cantidad_bultos}
+                    onChange={(e) =>
+                      updateRow(row.key, "cantidad_bultos", e.target.value)
+                    }
+                    min="0"
+                    className={`${inputClass} w-16`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <input
                     type="number"
                     value={row.peso_kg}
                     onChange={(e) =>
@@ -224,11 +331,22 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                 <td className={cellClass}>
                   <input
                     type="number"
-                    value={row.cantidad_bultos}
+                    value={row.toneladas}
                     onChange={(e) =>
-                      updateRow(row.key, "cantidad_bultos", e.target.value)
+                      updateRow(row.key, "toneladas", e.target.value)
                     }
                     min="0"
+                    step="0.01"
+                    className={`${inputClass} w-20`}
+                  />
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="text"
+                    value={row.peon}
+                    onChange={(e) =>
+                      updateRow(row.key, "peon", e.target.value)
+                    }
                     className={`${inputClass} w-16`}
                   />
                 </td>

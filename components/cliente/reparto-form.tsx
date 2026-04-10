@@ -28,7 +28,7 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
   const [nroUn, setNroUn] = useState("");
   const [cantidadBultos, setCantidadBultos] = useState("");
   const [pesoKg, setPesoKg] = useState("");
-  const [volumenM3, setVolumenM3] = useState("");
+  const [toneladas, setToneladas] = useState("");
   const [codigoPostal, setCodigoPostal] = useState("");
   const [zonaTarifa, setZonaTarifa] = useState("");
   const [horario, setHorario] = useState("");
@@ -55,12 +55,12 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
       nro_un: nroUn,
       cantidad_bultos: cantidadBultos ? Number(cantidadBultos) : null,
       peso_kg: pesoKg ? Number(pesoKg) : null,
-      volumen_m3: volumenM3 ? Number(volumenM3) : null,
+      toneladas: toneladas ? Number(toneladas) : null,
       codigo_postal: codigoPostal,
       zona_tarifa: zonaTarifa,
       horario,
       tipo_camion: tipoCamion,
-      peon: peon ? Number(peon) : null,
+      peon: peon || "",
     };
     formData.set("payload", JSON.stringify(payload));
     formAction(formData);
@@ -188,12 +188,18 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
             <label className="mb-1 block text-sm font-medium text-neutral-700">
               Tipo de camion
             </label>
-            <input
-              type="text"
+            <select
               value={tipoCamion}
               onChange={(e) => setTipoCamion(e.target.value)}
               className={inputClass}
-            />
+            >
+              <option value="">Seleccionar...</option>
+              <option value="CHASIS">Chasis</option>
+              <option value="SEMI">Semi</option>
+              <option value="710">710</option>
+              <option value="PICK UP">Pick Up</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
         </div>
       </fieldset>
@@ -263,7 +269,7 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Peso (Kg)
+              KG netos
             </label>
             <input
               type="number"
@@ -276,12 +282,12 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">
-              Volumen (m3)
+              Toneladas
             </label>
             <input
               type="number"
-              value={volumenM3}
-              onChange={(e) => setVolumenM3(e.target.value)}
+              value={toneladas}
+              onChange={(e) => setToneladas(e.target.value)}
               min="0"
               step="0.01"
               className={inputClass}
@@ -292,10 +298,9 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
               Peon
             </label>
             <input
-              type="number"
+              type="text"
               value={peon}
               onChange={(e) => setPeon(e.target.value)}
-              min="0"
               className={inputClass}
             />
           </div>
