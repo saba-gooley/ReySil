@@ -6,6 +6,55 @@
 
 ---
 
+## Sesion 2026-04-10 — Modulo 2 (Autenticacion) + Modulo 3 (Administracion) completos
+
+### ✅ Completado
+- Completado **Modulo 2 — Autenticacion** (HU-AUTH-001 + HU-AUTH-002, 5 pts): login, recuperar/restablecer contrasena, middleware RBAC, RLS policies para 17 tablas, helpers server-side
+- Migracion `supabase/migrations/0002_auth_rls_policies.sql` con ~50 RLS policies y 4 helpers SECURITY DEFINER (`auth_role`, `auth_client_id`, `auth_driver_id`, `auth_is_staff`)
+- Schemas Zod en `lib/validators/auth.ts` (LoginSchema, RecoverPasswordSchema, ResetPasswordSchema)
+- Server Actions para login (`app/(auth)/login/actions.ts`), recuperar (`app/(auth)/recuperar-contrasena/actions.ts`), restablecer (`app/(auth)/restablecer-contrasena/actions.ts`)
+- `app/auth/callback/route.ts` (exchange code for session) y `app/sign-out/route.ts` (POST + GET)
+- Middleware RBAC extendido en `lib/supabase/middleware.ts` con PUBLIC_PATHS, NEUTRAL_PATHS y ROLE_PREFIX
+- Helpers en `lib/server/auth/get-current-user.ts` (getCurrentUser, tryGetCurrentUser, requireRole, homePathForRole)
+- Placeholders por rol con requireRole() para validar flujo end-to-end
+- PR #1 abierto, mergeado y deployado. Login end-to-end validado con usuario CLIENTE de prueba
+- Configuracion manual completada: migracion 0002 aplicada, Site URL + Redirect URLs + JWT expiry en Supabase, NEXT_PUBLIC_APP_URL en Vercel
+- Completado **Modulo 3 — Administracion** (HU-ADMIN-001 + HU-ADMIN-002, 8 pts): ABM clientes y choferes
+- Schemas Zod en `lib/validators/client.ts` y `lib/validators/driver.ts`
+- Server Actions y queries en `lib/server/clients/` y `lib/server/drivers/`
+- Creacion atomica de `auth.users` + `user_profiles` al dar de alta clientes (rol CLIENTE) y choferes (rol CHOFER) via Service Role key
+- Credenciales de chofer generadas automaticamente: formato `chofer.<dni>@reysil.app` + password temporal mostrada una sola vez
+- Baja logica con ban/unban de auth.users al togglear `activo`
+- Panel operadores con layout compartido (`app/operador/layout.tsx`) + navegacion (`components/operador/operador-nav.tsx`)
+- ABM clientes: lista con filtro, formulario con emails dinamicos (agregar/quitar, marcar principal) y depositos dinamicos
+- ABM choferes: lista con filtro, formulario con display de credenciales post-creacion
+- PR #2 abierto, mergeado y deployado. ABM validado end-to-end con usuario OPERADOR
+- Creado usuario OPERADOR de prueba para validar el panel
+
+### 🔄 En progreso
+- Ninguno — Modulos 2 y 3 cerrados
+
+### ⏭️ Proximos pasos
+1. Crear rama `feature/portal-cliente` desde `main`
+2. Leer HU-CLI-001 a HU-CLI-005 en `docs/historias.md`
+3. Crear layout compartido para `/cliente/*` con requireRole("CLIENTE")
+4. HU-CLI-001: formulario solicitud de Reparto (`app/cliente/solicitudes/reparto/`) con Server Action en `lib/server/trips/actions.ts`
+5. HU-CLI-002: carga masiva de repartos (grilla con TanStack Table)
+6. HU-CLI-003: solicitud de Contenedor (reservations + containers + trips)
+7. HU-CLI-004: seguimiento de viajes con Supabase Realtime
+8. HU-CLI-005: historial de viajes finalizados/cancelados
+
+### 💡 Decisiones tomadas
+- **Trigger auth.users → user_profiles eliminado** — no viable por CHECK constraint que requiere client_id NOT NULL para CLIENTE. Usuarios se crean atomicamente desde Server Actions del ABM con Service Role key
+- **NEUTRAL_PATHS en middleware** — `/restablecer-contrasena` acepta sesion temporal de recovery sin redirigir al home, permitiendo completar el flujo de reset
+- **Credenciales de chofer con email sintetico `chofer.<dni>@reysil.app`** — Supabase Auth requiere email; este formato usa el DNI del chofer como identificador facil de recordar
+- **Baja logica con ban de auth.users** — ban_duration "876600h" (~100 anos) al desactivar, "none" al reactivar. Evita borrar datos de auth
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesion 2026-04-09 (parte 2) — Modulo 1 ejecutado + CLAUDE.md optimizado
 
 ### ✅ Completado
