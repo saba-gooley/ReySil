@@ -341,14 +341,17 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                   />
                 </td>
                 <td className={cellClass}>
-                  <input
-                    type="text"
+                  <select
                     value={row.peon}
                     onChange={(e) =>
                       updateRow(row.key, "peon", e.target.value)
                     }
                     className={`${inputClass} w-16`}
-                  />
+                  >
+                    <option value="">—</option>
+                    <option value="SI">Si</option>
+                    <option value="NO">No</option>
+                  </select>
                 </td>
                 <td className={cellClass}>
                   <input

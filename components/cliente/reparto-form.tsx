@@ -297,12 +297,15 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
             <label className="mb-1 block text-sm font-medium text-neutral-700">
               Peon
             </label>
-            <input
-              type="text"
+            <select
               value={peon}
               onChange={(e) => setPeon(e.target.value)}
               className={inputClass}
-            />
+            >
+              <option value="">Seleccionar...</option>
+              <option value="SI">Si</option>
+              <option value="NO">No</option>
+            </select>
           </div>
         </div>
       </fieldset>
