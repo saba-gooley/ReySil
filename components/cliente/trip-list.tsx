@@ -190,14 +190,14 @@ export function TripList({ trips }: { trips: TripRow[] }) {
                       <ul className="flex flex-wrap gap-2">
                         {trip.remitos.map((r) => (
                           <li key={r.id}>
-                            {r.foto_url ? (
+                            {r.drive_url ? (
                               <a
-                                href={r.foto_url}
+                                href={r.drive_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-xs text-reysil-red hover:underline"
                               >
-                                Ver remito ({r.estado})
+                                Ver remito ({r.estado.toLowerCase()})
                               </a>
                             ) : (
                               <span className="text-xs text-neutral-400">

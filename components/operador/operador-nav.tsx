@@ -5,6 +5,13 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/operador", label: "Inicio" },
+  { href: "/operador/pendientes", label: "Pendientes" },
+  { href: "/operador/chofer-asignado", label: "Chofer Asignado" },
+  { href: "/operador/en-curso", label: "En Curso" },
+  { href: "/operador/finalizadas", label: "Finalizadas" },
+  { href: "/operador/remitos", label: "Remitos" },
+  { href: "/operador/toneladas", label: "Toneladas" },
+  { href: "/operador/reportes", label: "Reportes" },
   { href: "/operador/clientes", label: "Clientes" },
   { href: "/operador/choferes", label: "Choferes" },
 ] as const;
@@ -13,7 +20,7 @@ export function OperadorNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1">
+    <nav className="flex gap-1 overflow-x-auto">
       {NAV_ITEMS.map((item) => {
         const isActive =
           item.href === "/operador"

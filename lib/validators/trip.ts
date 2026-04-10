@@ -37,7 +37,7 @@ export const CreateRepartoSchema = z.object({
     .enum(["", "CHASIS", "SEMI", "710", "PICK UP", "Otro"])
     .optional()
     .default(""),
-  peon: z.string().optional().default(""),
+  peon: z.enum(["", "SI", "NO"]).optional().default(""),
 });
 
 export type CreateRepartoInput = z.infer<typeof CreateRepartoSchema>;
