@@ -180,18 +180,37 @@ export async function listFinishedTrips(options?: {
  */
 export async function getToneladasByDate(fecha: string) {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+
+  // Fetch REPARTO trips by fecha_solicitada
+  const { data: repartoData, error: repartoErr } = await supabase
     .from("trips")
     .select(`
-      id, fecha_solicitada,
+      id, tipo, fecha_solicitada,
       trip_assignments(patente, drivers(nombre, apellido)),
       trip_reparto_fields(toneladas, peso_kg)
     `)
     .eq("tipo", "REPARTO")
     .eq("fecha_solicitada", fecha)
-    .in("estado", ["ASIGNADO", "EN_CURSO", "FINALIZADO"]);
+    .in("estado", ["PREASIGNADO", "ASIGNADO"]);
 
-  if (error) throw error;
+  if (repartoErr) throw repartoErr;
+
+  // Fetch CONTENEDOR trips by containers.reservations.fecha_carga
+  const { data: contData, error: contErr } = await supabase
+    .from("trips")
+    .select(`
+      id, tipo, fecha_solicitada,
+      trip_assignments(patente, drivers(nombre, apellido)),
+      trip_reparto_fields(toneladas, peso_kg),
+      containers!inner(peso_carga_kg, reservations!inner(fecha_carga))
+    `)
+    .eq("tipo", "CONTENEDOR")
+    .eq("containers.reservations.fecha_carga", fecha)
+    .in("estado", ["PREASIGNADO", "ASIGNADO"]);
+
+  if (contErr) throw contErr;
+
+  const allRows = [...(repartoData ?? []), ...(contData ?? [])];
 
   // Aggregate by patente
   const byPatente = new Map<
@@ -199,19 +218,18 @@ export async function getToneladasByDate(fecha: string) {
     { patente: string; chofer: string; totalToneladas: number; totalKg: number; viajes: number }
   >();
 
-  for (const row of data as Record<string, unknown>[]) {
-    const assignments = row.trip_assignments as unknown[] | null;
-    const fields = row.trip_reparto_fields as unknown[] | null;
-    const assignment = assignments?.[0] as Record<string, unknown> | undefined;
-    const field = fields?.[0] as Record<string, unknown> | undefined;
+  for (const row of allRows as Record<string, unknown>[]) {
+    const assignment = unwrapOne(row.trip_assignments) as Record<string, unknown> | null;
+    const field = unwrapOne(row.trip_reparto_fields) as Record<string, unknown> | null;
+    const container = unwrapOne(row.containers) as Record<string, unknown> | null;
 
     if (!assignment) continue;
 
     const patente = assignment.patente as string;
-    const drivers = assignment.drivers as Record<string, string> | null;
-    const chofer = drivers ? `${drivers.nombre} ${drivers.apellido}` : "—";
+    const driverData = unwrapOne(assignment.drivers) as Record<string, string> | null;
+    const chofer = driverData ? `${driverData.nombre} ${driverData.apellido}` : "—";
     const toneladas = (field?.toneladas as number) ?? 0;
-    const pesoKg = (field?.peso_kg as number) ?? 0;
+    const pesoKg = (field?.peso_kg as number) ?? (container?.peso_carga_kg as number) ?? 0;
 
     const existing = byPatente.get(patente);
     if (existing) {
@@ -256,8 +274,7 @@ export async function getReportData(from: string, to: string) {
   const byDriver = new Map<string, { nombre: string; codigo: string; count: number }>();
 
   for (const row of data as Record<string, unknown>[]) {
-    const clients = row.clients as unknown[] | null;
-    const client = clients?.[0] as Record<string, string> | undefined;
+    const client = unwrapOne(row.clients) as Record<string, string> | null;
     if (client) {
       const key = client.codigo;
       const existing = byClient.get(key);
@@ -268,10 +285,9 @@ export async function getReportData(from: string, to: string) {
       }
     }
 
-    const assignments = row.trip_assignments as unknown[] | null;
-    const assignment = assignments?.[0] as Record<string, unknown> | undefined;
+    const assignment = unwrapOne(row.trip_assignments) as Record<string, unknown> | null;
     if (assignment) {
-      const drivers = assignment.drivers as Record<string, string> | null;
+      const drivers = unwrapOne(assignment.drivers) as Record<string, string> | null;
       if (drivers) {
         const key = drivers.codigo;
         const existing = byDriver.get(key);
