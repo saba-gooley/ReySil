@@ -157,13 +157,36 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         {remitoState.success && (
           <p className="text-xs text-green-600">Remito subido</p>
         )}
-        {!hasRemito && (
-          <RemitoSubmitBtn />
-        )}
-        {hasRemito && (
-          <p className="text-xs text-neutral-400">
-            Ya hay un remito subido para este viaje.
-          </p>
+        {!hasRemito ? (
+          <>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">
+              Foto del remito firmado
+            </label>
+            <input
+              type="file"
+              name="remito_file"
+              accept="image/*"
+              capture="environment"
+              className="w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+            />
+            <RemitoSubmitBtn />
+          </>
+        ) : (
+          <div className="rounded-md bg-green-50 border border-green-200 p-3">
+            <p className="text-xs text-green-700">
+              Remito subido correctamente.
+            </p>
+            {trip.remitos[0]?.drive_url && (
+              <a
+                href={trip.remitos[0].drive_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-reysil-red hover:underline"
+              >
+                Ver remito
+              </a>
+            )}
+          </div>
         )}
       </form>
     </div>
