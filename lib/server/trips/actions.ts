@@ -90,6 +90,7 @@ export async function createRepartoAction(
 
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
+  revalidatePath("/operador/pendientes");
   return { success: true };
 }
 
@@ -178,6 +179,7 @@ export async function createBulkRepartosAction(
 
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
+  revalidatePath("/operador/pendientes");
   return { success: true };
 }
 
@@ -265,5 +267,6 @@ export async function createContenedorAction(
 
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
+  revalidatePath("/operador/pendientes");
   return { success: true };
 }

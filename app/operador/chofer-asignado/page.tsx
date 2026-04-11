@@ -4,6 +4,8 @@ import {
 } from "@/lib/server/assignments/queries";
 import { AsignadoView } from "@/components/operador/asignado-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function ChoferAsignadoPage() {
   const [trips, drivers] = await Promise.all([
     listAssignedTrips(),

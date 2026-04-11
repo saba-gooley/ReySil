@@ -4,6 +4,8 @@ import {
 } from "@/lib/server/assignments/queries";
 import { PendientesView } from "@/components/operador/pendientes-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function PendientesPage() {
   const [trips, drivers] = await Promise.all([
     listPendingTrips(),

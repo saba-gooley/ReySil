@@ -1,6 +1,8 @@
 import { listInProgressTrips } from "@/lib/server/assignments/queries";
 import { TripTable } from "@/components/operador/trip-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function EnCursoPage() {
   const trips = await listInProgressTrips();
 
