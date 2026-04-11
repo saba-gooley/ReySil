@@ -163,14 +163,14 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 
 | # | Modulo | Descripcion | Historias | Puntos | Depende de | Estado |
 |---|--------|-------------|-----------|--------|------------|--------|
-| 1 | Setup e Infraestructura | Scaffolding Next.js, proyecto Supabase, schema SQL inicial, RLS policies base, PWA manifest, configuracion de Vercel y .env | — | — | — | ⬜ Pendiente |
-| 2 | Autenticacion | Login con Supabase Auth, middleware de roles, recuperacion de contrasena, alta de user_profile | HU-AUTH-001, HU-AUTH-002 | 5 | Modulo 1 | ⬜ Pendiente |
-| 3 | Administracion | ABM de clientes (con emails y depositos) y ABM de choferes con creacion automatica de usuario en Supabase Auth | HU-ADMIN-001, HU-ADMIN-002 | 8 | Modulo 2 | ⬜ Pendiente |
-| 4 | Portal Cliente | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento (con realtime) y historial | HU-CLI-001 a HU-CLI-005 | 23 | Modulos 2, 3 | ⬜ Pendiente |
-| 5 | Panel Operadores | Vistas (Pendientes, Chofer Asignado, En Curso, Finalizadas) con realtime, asignacion, remitos, toneladas, reportes | HU-OPE-001 a HU-OPE-008 | 25 | Modulos 3, 4 | ⬜ Pendiente |
-| 6 | PWA Chofer | Viajes del dia, registro de turno, datos por viaje, foto remito, inspeccion, PDF inspeccion (rutas /chofer/* mobile-first con Service Worker) | HU-CHO-001 a HU-CHO-006 | 28 | Modulos 2, 5 | ⬜ Pendiente |
-| 7 | Notificaciones | Email automatico al asignar chofer, email automatico al subir remito (SendGrid) | HU-NOT-001, HU-NOT-002 | 5 | Modulos 5, 6 | ⬜ Pendiente |
-| 8 | Integraciones | Google Drive (upload remitos + PDF inspecciones), generacion PDF con @react-pdf/renderer | — | — | Modulo 7 | ⬜ Pendiente |
+| 1 | Setup e Infraestructura | Scaffolding Next.js, proyecto Supabase, schema SQL inicial, RLS policies base, PWA manifest, configuracion de Vercel y .env | — | — | — | ✅ Completo |
+| 2 | Autenticacion | Login con Supabase Auth, middleware de roles, recuperacion de contrasena, alta de user_profile | HU-AUTH-001, HU-AUTH-002 | 5 | Modulo 1 | ✅ Completo |
+| 3 | Administracion | ABM de clientes (con emails y depositos) y ABM de choferes con creacion automatica de usuario en Supabase Auth | HU-ADMIN-001, HU-ADMIN-002 | 8 | Modulo 2 | ✅ Completo |
+| 4 | Portal Cliente | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento (con realtime) y historial | HU-CLI-001 a HU-CLI-005 | 23 | Modulos 2, 3 | ✅ Completo |
+| 5 | Panel Operadores | Vistas (Pendientes, Chofer Asignado, En Curso, Finalizadas) con realtime, asignacion, remitos, toneladas, reportes | HU-OPE-001 a HU-OPE-008 | 25 | Modulos 3, 4 | ✅ Completo |
+| 6 | PWA Chofer | Viajes del dia, registro de turno, datos por viaje, foto remito, inspeccion, PDF inspeccion (rutas /chofer/* mobile-first con Service Worker) | HU-CHO-001 a HU-CHO-006 | 28 | Modulos 2, 5 | ✅ Completo |
+| 7 | Notificaciones | Email automatico al asignar chofer, email automatico al subir remito (SendGrid) | HU-NOT-001, HU-NOT-002 | 5 | Modulos 5, 6 | ✅ Completo |
+| 8 | Integraciones | Google Drive (upload remitos + PDF inspecciones), generacion PDF con @react-pdf/renderer | — | — | Modulo 7 | ✅ Completo |
 
 **Total: 25 historias | 94 puntos de historia | ~4.7 sprints estimados**
 

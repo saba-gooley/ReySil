@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-10 (cierre sesion 3 — Modulos 2 y 3 completos)
+> Ultima actualizacion: 2026-04-11 (cierre sesion 5 — 8 modulos completos)
 
 ---
 
 ## Estado General
-🔄 En construccion — Modulos 1, 2 y 3 de 8 completos. Listo para arrancar Modulo 4 (Portal Cliente).
+✅ Proyecto completo — 8 de 8 modulos construidos y mergeados a main.
 
 ---
 
@@ -18,68 +18,36 @@
 | 1 | Setup e Infraestructura | ✅ Completo | Next.js 14.2.35, schema SQL 17 tablas, middleware Supabase, PWA manifest, deploy Vercel |
 | 2 | Autenticacion | ✅ Completo | Login, recuperar/restablecer contrasena, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole |
 | 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav |
-| 4 | Portal Cliente | ⬜ Pendiente | Solicitudes, seguimiento (realtime), historial |
-| 5 | Panel Operadores | ⬜ Pendiente | Vistas con realtime, asignacion, remitos, reportes |
-| 6 | PWA Chofer | ⬜ Pendiente | Rutas /chofer/* mobile-first con Service Worker |
-| 7 | Notificaciones | ⬜ Pendiente | Emails automaticos via SendGrid |
-| 8 | Integraciones | ⬜ Pendiente | Google Drive + @react-pdf/renderer |
+| 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
+| 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
+| 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
+| 7 | Notificaciones | ✅ Completo | SendGrid: email al asignar chofer (HU-NOT-001) y al subir remito (HU-NOT-002). Fire-and-forget. PR #7 mergeado |
+| 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
 ---
 
 ## Modulo Actual en Progreso
-Ninguno — Modulo 3 cerrado en sesion 3.
-
-**Archivos creados/modificados en sesion 3 (Modulo 2 + Modulo 3):**
-
-Modulo 2 (mergeado PR #1):
-- `supabase/migrations/0002_auth_rls_policies.sql` (602 lineas, ~50 RLS policies, 4 helpers SECURITY DEFINER)
-- `lib/validators/auth.ts` (LoginSchema, RecoverPasswordSchema, ResetPasswordSchema)
-- `lib/server/auth/get-current-user.ts` (getCurrentUser, tryGetCurrentUser, requireRole, homePathForRole)
-- `lib/supabase/middleware.ts` (extendido con RBAC: PUBLIC_PATHS, NEUTRAL_PATHS, ROLE_PREFIX)
-- `app/(auth)/login/` (page, actions, login-form)
-- `app/(auth)/recuperar-contrasena/` (page, actions, recover-form)
-- `app/(auth)/restablecer-contrasena/` (page, actions, reset-form)
-- `app/auth/callback/route.ts` (exchange code for session)
-- `app/sign-out/route.ts` (POST + GET)
-- `app/cliente/page.tsx`, `app/operador/page.tsx`, `app/chofer/page.tsx`, `app/admin/page.tsx` (placeholders con requireRole)
-- `components/role-placeholder.tsx`
-
-Modulo 3 (mergeado PR #2):
-- `lib/validators/client.ts` (CreateClientSchema, UpdateClientSchema)
-- `lib/validators/driver.ts` (CreateDriverSchema, UpdateDriverSchema)
-- `lib/server/clients/queries.ts` (listClients, getClientById)
-- `lib/server/clients/actions.ts` (createClientAction, updateClientAction, toggleClientAction)
-- `lib/server/drivers/queries.ts` (listDrivers, getDriverById)
-- `lib/server/drivers/actions.ts` (createDriverAction, updateDriverAction, toggleDriverAction)
-- `app/operador/layout.tsx` (layout compartido con requireRole + nav)
-- `app/operador/page.tsx` (reemplazado placeholder por indice de modulos)
-- `app/operador/clientes/page.tsx`, `app/operador/clientes/nuevo/page.tsx`, `app/operador/clientes/[id]/page.tsx`
-- `app/operador/choferes/page.tsx`, `app/operador/choferes/nuevo/page.tsx`, `app/operador/choferes/[id]/page.tsx`
-- `components/operador/operador-nav.tsx`, `components/operador/client-table.tsx`, `components/operador/client-form.tsx`
-- `components/operador/driver-table.tsx`, `components/operador/driver-form.tsx`
+Ninguno — todos los modulos completados.
 
 ---
 
 ## Proximo Paso Exacto
-Iniciar **Modulo 4 — Portal Cliente** (HU-CLI-001 a HU-CLI-005, 23 puntos historicos). Secuencia:
+**Testing integral y deploy a produccion.** Secuencia:
 
-1. Crear rama `feature/portal-cliente` desde `main`.
-2. Leer `docs/historias.md` secciones HU-CLI-001 a HU-CLI-005 para entender el alcance completo.
-3. Crear layout compartido para `/cliente/*` similar al de `/operador/*` (header + nav + requireRole("CLIENTE")).
-4. **HU-CLI-001 — Solicitud de Reparto**: formulario en `app/cliente/solicitudes/reparto/page.tsx` con los campos definidos en `trip_reparto_fields` (NDV, PAL, CAT, etc.). Server Action en `lib/server/trips/actions.ts` que inserta en `trips` (tipo REPARTO) + `trip_reparto_fields`. Schema Zod en `lib/validators/trip.ts`.
-5. **HU-CLI-002 — Carga masiva de repartos**: grilla tipo planilla con TanStack Table o similar. Evaluar complejidad.
-6. **HU-CLI-003 — Solicitud de Contenedor**: formulario que crea `reservations` + `containers` + `trips` (tipo CONTENEDOR). Schema Zod `ReservationSchema`.
-7. **HU-CLI-004 — Seguimiento de viajes**: vista con Supabase Realtime suscripta a cambios en `trips` y `trip_events` filtrado por `client_id`.
-8. **HU-CLI-005 — Historial**: listado paginado de viajes finalizados/cancelados.
-
-**Decisiones previas que afectan este modulo:**
-- El `client_id` del usuario logueado se obtiene de `getCurrentUser().profile.client_id`. Todas las queries del portal cliente filtran por este `client_id`.
-- Los depositos preestablecidos del cliente (creados en ABM del Modulo 3) aparecen como opciones en los selectores de origen/destino.
-- Los campos de reparto que son configurables por cliente se modelan como `metadata` JSONB en `trip_reparto_fields` (decision de `PLAN.md`).
-- Realtime usa `supabase.channel()` suscripto a `trips` y `trip_events` — ya tiene publication habilitada en la migracion 0001.
-- Items pendientes de confirmar con cliente: obligatoriedad de campos Reparto (item 1), campos Contenedor (item 2), definicion de NDV/PAL/CAT/Nro UN (item 6). Construir con defaults razonables (campos opcionales).
+1. **Ejecutar migraciones pendientes en Supabase SQL Editor** (en orden):
+   - `supabase/migrations/0004_fix_rls_complete.sql` — fix RLS recursion en trips, containers INSERT para CLIENTE, helpers SECURITY DEFINER
+   - `supabase/migrations/0005_fix_driver_data_rls.sql` — trip_driver_data RLS con helpers
+2. **Configurar variables de entorno en Vercel:**
+   - `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_FROM_NAME` (pendiente de configurar por el usuario)
+   - `GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY` (base64 del JSON), `GOOGLE_DRIVE_FOLDER_REMITOS`, `GOOGLE_DRIVE_FOLDER_INSPECCIONES` (ya configurados en .env.local)
+3. **Testing end-to-end por rol:**
+   - CLIENTE: crear reparto individual, crear reparto masivo (grilla), crear contenedor, ver seguimiento realtime, ver historial
+   - OPERADOR: ver pendientes, asignar chofer+patente, reasignar, ver en curso, ver finalizadas, ver remitos, toneladas, reportes
+   - CHOFER: ver viajes del dia, registrar turno, registrar datos de viaje, subir foto remito (verificar que sube a Drive), completar inspeccion (verificar PDF en Drive)
+4. **Verificar emails** (cuando se configure SendGrid): asignar chofer dispara email, subir remito dispara email
+5. **Deploy a produccion** en Vercel con todas las env vars configuradas
 
 ---
 
@@ -91,11 +59,16 @@ Iniciar **Modulo 4 — Portal Cliente** (HU-CLI-001 a HU-CLI-005, 23 puntos hist
 - **NEUTRAL_PATHS en middleware**: `/restablecer-contrasena` no es publica ni protegida — el usuario llega con una sesion temporal de recovery y no debe ser redirigido a su home antes de cambiar el password.
 - **Credenciales de chofer con email sintetico**: formato `chofer.<dni>@reysil.app`. Supabase Auth requiere email como identificador; este formato es facil de recordar para el chofer (su propio DNI). No se envia email real — solo sirve como username.
 - **Baja logica con ban de auth.users**: al desactivar un cliente/chofer, se banea a los usuarios auth asociados (`ban_duration: "876600h"` = ~100 anos). Al reactivar, se desbanea (`ban_duration: "none"`).
+- **SECURITY DEFINER helpers para RLS**: `auth_is_staff()`, `trip_belongs_to_client()`, `trip_assigned_to_driver()`, `reservation_belongs_to_client()` evitan recursion infinita en policies que hacen JOIN a la misma tabla.
+- **PEON como enum SI/NO**: no es numerico, es un campo de seleccion binaria (dropdown en el form).
+- **Notificaciones fire-and-forget**: las llamadas a SendGrid nunca bloquean la operacion principal. Si falla, se loguea y se continua.
+- **Google Drive Service Account Key en base64**: el JSON completo se codifica en base64 para almacenarlo como variable de entorno sin problemas de escape.
 
 ---
 
 ## Bloqueantes Activos
-Ninguno.
+- **Migraciones 0004 y 0005 pendientes de ejecutar** en Supabase SQL Editor. Sin ellas, los modulos 4-6 tendran errores de RLS (recursion infinita, containers INSERT bloqueado para clientes).
+- **SendGrid no configurado** — las notificaciones por email no se enviaran hasta configurar SENDGRID_API_KEY. El sistema funciona sin problemas, solo loguea warnings.
 
 ---
 
@@ -103,6 +76,9 @@ Ninguno.
 - **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP). Trackear para iteracion futura.
 - **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request para obtener el rol. En produccion con mucho trafico podria ser un cuello de botella. Considerar cache en cookie para futuro.
 - **`listUsers()` en updateClientAction**: para banear usuarios al remover emails, se llama a `admin.auth.admin.listUsers()` que trae TODOS los usuarios. Para pocos usuarios esta bien, pero con muchos hay que paginar o buscar por email directamente.
+- **PDF de inspeccion se genera fire-and-forget**: si falla el upload a Drive, el campo `pdf_url` queda null. No hay retry. El chofer puede ver "Inspeccion completada" pero sin link al PDF.
+- **Remito upload sin validacion de tamaño/tipo de archivo**: el form acepta `image/*` pero no hay limite de tamaño server-side. Considerar validar max ~10MB.
+- **Service Worker para PWA offline**: el manifest.json esta configurado pero no hay service worker real. Para funcionamiento offline del chofer habria que implementar caching con Workbox.
 
 ---
 

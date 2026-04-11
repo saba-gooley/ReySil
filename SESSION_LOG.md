@@ -6,6 +6,40 @@
 
 ---
 
+## Sesion 2026-04-11 — Modulos 5, 6, 7 y 8 completos (proyecto finalizado)
+
+### ✅ Completado
+- **Modulo 5 — Panel Operadores** (HU-OPE-001 a HU-OPE-008, 25 pts): 8 vistas (Pendientes, Chofer Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes). Asignacion/reasignacion de chofer+patente. Queries en `lib/server/assignments/queries.ts`, actions en `lib/server/assignments/actions.ts`. Componentes: `trip-table.tsx`, `assign-trip-form.tsx`, `pendientes-view.tsx`, `asignado-view.tsx`, `finalizadas-view.tsx`, `remitos-view.tsx`, `toneladas-view.tsx`, `reportes-view.tsx`. PR #5 mergeado
+- **Fix RLS critico** — migracion `0004_fix_rls_complete.sql`: SECURITY DEFINER helpers (`trip_belongs_to_client`, `trip_assigned_to_driver`, `reservation_belongs_to_client`), fix recursion infinita en trips policies, containers INSERT para CLIENTE. Migracion `0005_fix_driver_data_rls.sql` para trip_driver_data
+- **Fix PEON** — cambiado de texto libre a enum SI/NO (dropdown) en Zod schema, reparto-form.tsx y reparto-grid.tsx
+- **Fix foto_url → drive_url** — corregido nombre de columna en queries.ts y trip-list.tsx
+- **Modulo 6 — PWA Chofer** (HU-CHO-001 a HU-CHO-006, 28 pts): layout mobile-first con bottom nav (`app/chofer/layout.tsx`, `chofer-nav.tsx`). Viajes del dia con detalle expandible (`trip-list.tsx`). Registro de turno con 4 hitos (`shift-view.tsx`). Registro de datos de viaje con eventos, km, pernocto (`trip-data-form.tsx`). Inspeccion vehicular con 5 secciones y 35 items (`inspection-view.tsx`). Queries en `lib/server/chofer/queries.ts`, actions en `lib/server/chofer/actions.ts` con INSPECTION_SECTIONS (35 items). PR #6 mergeado
+- **Modulo 7 — Notificaciones** (HU-NOT-001, HU-NOT-002, 5 pts): servicio SendGrid en `lib/server/notifications/send-email.ts`. Templates HTML con branding ReySil en `templates.ts`. HU-NOT-001 (`notify-assignment.ts`): email al asignar/reasignar chofer. HU-NOT-002 (`notify-remito.ts`): email al subir remito. Patron fire-and-forget. PR #7 mergeado
+- **Modulo 8 — Integraciones**: Google Drive upload via Service Account en `lib/server/drive/upload.ts`. PDF de inspeccion con `@react-pdf/renderer` en `lib/server/pdf/templates/inspection.tsx` + `generate-inspection.ts`. Upload real de remito (reemplazado placeholder). File input con `capture="environment"` para camara mobile. PR #8 mergeado
+
+### 🔄 En progreso
+- Ninguno — todos los modulos completados
+
+### ⏭️ Proximos pasos
+1. Ejecutar migraciones 0004 y 0005 en Supabase SQL Editor
+2. Configurar SendGrid (API key, verificar sender email)
+3. Configurar variables de Google Drive en Vercel (ya estan en .env.local)
+4. Testing end-to-end: flujo completo CLIENTE → OPERADOR → CHOFER
+5. Deploy a produccion con todas las env vars
+
+### 💡 Decisiones tomadas
+- **SECURITY DEFINER helpers para romper recursion RLS** — las policies que hacen JOIN a tablas con RLS propio generan recursion infinita. Se resuelve con funciones helper que corren con privilegios elevados
+- **PEON como enum SI/NO** — el campo no es numerico, es seleccion binaria. Cambiado en Zod y en los forms
+- **Notificaciones fire-and-forget** — nunca bloquean la operacion principal. Si SendGrid falla, se loguea y se continua
+- **Google Drive Service Account Key en base64** — para almacenar el JSON completo como env var sin problemas de escape
+- **PDF de inspeccion generado async** — se genera en background despues de completar la inspeccion, para no bloquear al chofer
+
+### ⚠️ Problemas / blockers
+- Migraciones 0004 y 0005 pendientes de ejecutar (sin ellas hay errores de RLS)
+- SendGrid pendiente de configurar (emails no se envian, pero el sistema funciona)
+
+---
+
 ## Sesion 2026-04-10 — Modulo 2 (Autenticacion) + Modulo 3 (Administracion) completos
 
 ### ✅ Completado
