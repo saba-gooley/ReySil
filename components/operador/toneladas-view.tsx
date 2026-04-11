@@ -23,6 +23,7 @@ export function ToneladasView({
 
   function applyDate() {
     router.push(`/operador/toneladas?fecha=${selectedDate}`);
+    router.refresh();
   }
 
   return (

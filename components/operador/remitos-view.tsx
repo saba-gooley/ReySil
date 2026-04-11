@@ -58,12 +58,14 @@ export function RemitosView({
     if (toDate) params.set("to", toDate);
     if (selectedClient) params.set("clientId", selectedClient);
     router.push(`/operador/remitos?${params.toString()}`);
+    router.refresh();
   }
 
   function goToPage(p: number) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(p));
     router.push(`/operador/remitos?${params.toString()}`);
+    router.refresh();
   }
 
   const inputClass =

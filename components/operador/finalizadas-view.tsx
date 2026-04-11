@@ -31,12 +31,14 @@ export function FinalizadasView({
     if (fromDate) params.set("from", fromDate);
     if (toDate) params.set("to", toDate);
     router.push(`/operador/finalizadas?${params.toString()}`);
+    router.refresh();
   }
 
   function goToPage(p: number) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(p));
     router.push(`/operador/finalizadas?${params.toString()}`);
+    router.refresh();
   }
 
   const inputClass =

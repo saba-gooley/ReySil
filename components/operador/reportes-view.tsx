@@ -24,6 +24,7 @@ export function ReportesView({
 
   function applyFilters() {
     router.push(`/operador/reportes?from=${fromDate}&to=${toDate}`);
+    router.refresh();
   }
 
   const inputClass =
