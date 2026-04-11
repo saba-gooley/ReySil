@@ -1,6 +1,8 @@
 import { getReportData } from "@/lib/server/assignments/queries";
 import { ReportesView } from "@/components/operador/reportes-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function ReportesPage({
   searchParams,
 }: {

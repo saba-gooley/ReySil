@@ -1,6 +1,8 @@
 import { getToneladasByDate } from "@/lib/server/assignments/queries";
 import { ToneladasView } from "@/components/operador/toneladas-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function ToneladasPage({
   searchParams,
 }: {

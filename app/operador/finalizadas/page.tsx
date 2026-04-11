@@ -1,6 +1,8 @@
 import { listFinishedTrips } from "@/lib/server/assignments/queries";
 import { FinalizadasView } from "@/components/operador/finalizadas-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function FinalizadasPage({
   searchParams,
 }: {

@@ -2,6 +2,8 @@ import { listRemitos } from "@/lib/server/assignments/queries";
 import { listClients } from "@/lib/server/clients/queries";
 import { RemitosView } from "@/components/operador/remitos-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function RemitosPage({
   searchParams,
 }: {
