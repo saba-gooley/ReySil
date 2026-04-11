@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
+import { notifyAssignment } from "@/lib/server/notifications/notify-assignment";
 
 export type AssignmentActionState = {
   error?: string;
@@ -77,6 +78,9 @@ export async function assignTripAction(
     return { error: `Error al actualizar estado: ${updateErr.message}` };
   }
 
+  // HU-NOT-001: fire-and-forget email to client
+  notifyAssignment(d.trip_id).catch(() => {});
+
   revalidatePath("/operador/pendientes");
   revalidatePath("/operador/chofer-asignado");
   return { success: true };
@@ -129,6 +133,9 @@ export async function reassignTripAction(
   if (updateErr) {
     return { error: `Error al reasignar: ${updateErr.message}` };
   }
+
+  // HU-NOT-001: fire-and-forget email on reassignment
+  notifyAssignment(d.trip_id).catch(() => {});
 
   revalidatePath("/operador/chofer-asignado");
   return { success: true };

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
+import { notifyRemitoUploaded } from "@/lib/server/notifications/notify-remito";
 
 export type ChoferActionState = {
   error?: string;
@@ -190,6 +191,10 @@ export async function uploadRemitoAction(
   });
 
   if (error) return { error: `Error al subir remito: ${error.message}` };
+
+  // HU-NOT-002: fire-and-forget email to client with remito link
+  const driveUrl = "https://drive.google.com/placeholder"; // will be real URL after Module 8
+  notifyRemitoUploaded(tripId, driveUrl).catch(() => {});
 
   revalidatePath("/chofer");
   return { success: true };
