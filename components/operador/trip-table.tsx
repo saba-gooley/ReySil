@@ -39,19 +39,25 @@ export function TripTable({
     );
   }
 
-  if (sortMode === "patente") {
-    filtered = [...filtered].sort((a, b) => {
+  // Always sort by fecha_solicitada first, then by secondary sort if selected
+  filtered = [...filtered].sort((a, b) => {
+    const fa = a.fecha_solicitada ?? "";
+    const fb = b.fecha_solicitada ?? "";
+    const dateComp = fa.localeCompare(fb);
+    if (dateComp !== 0) return dateComp;
+
+    if (sortMode === "patente") {
       const pa = a.trip_assignments?.patente ?? "zzz";
       const pb = b.trip_assignments?.patente ?? "zzz";
       return pa.localeCompare(pb);
-    });
-  } else if (sortMode === "chofer") {
-    filtered = [...filtered].sort((a, b) => {
+    }
+    if (sortMode === "chofer") {
       const da = a.trip_assignments?.drivers.apellido ?? "zzz";
       const db = b.trip_assignments?.drivers.apellido ?? "zzz";
       return da.localeCompare(db);
-    });
-  }
+    }
+    return 0;
+  });
 
   return (
     <div className="space-y-3">
