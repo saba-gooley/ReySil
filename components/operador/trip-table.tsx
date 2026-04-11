@@ -22,7 +22,9 @@ export function TripTable({
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterText, setFilterText] = useState("");
-  const [sorted, setSorted] = useState(sortByPatente);
+  const [sortMode, setSortMode] = useState<"none" | "patente" | "chofer">(
+    sortByPatente ? "patente" : "none",
+  );
 
   let filtered = trips;
   if (filterText) {
@@ -37,11 +39,17 @@ export function TripTable({
     );
   }
 
-  if (sorted) {
+  if (sortMode === "patente") {
     filtered = [...filtered].sort((a, b) => {
       const pa = a.trip_assignments?.patente ?? "zzz";
       const pb = b.trip_assignments?.patente ?? "zzz";
       return pa.localeCompare(pb);
+    });
+  } else if (sortMode === "chofer") {
+    filtered = [...filtered].sort((a, b) => {
+      const da = a.trip_assignments?.drivers.apellido ?? "zzz";
+      const db = b.trip_assignments?.drivers.apellido ?? "zzz";
+      return da.localeCompare(db);
     });
   }
 
@@ -56,13 +64,30 @@ export function TripTable({
           className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
         />
         {showAssignment && (
-          <button
-            type="button"
-            onClick={() => setSorted(!sorted)}
-            className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          >
-            {sorted ? "Orden original" : "Ordenar por patente"}
-          </button>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setSortMode(sortMode === "patente" ? "none" : "patente")}
+              className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                sortMode === "patente"
+                  ? "border-reysil-red bg-reysil-red text-white"
+                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+              }`}
+            >
+              Por patente
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortMode(sortMode === "chofer" ? "none" : "chofer")}
+              className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                sortMode === "chofer"
+                  ? "border-reysil-red bg-reysil-red text-white"
+                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+              }`}
+            >
+              Por chofer
+            </button>
+          </div>
         )}
         <span className="text-sm text-neutral-500">
           {filtered.length} {filtered.length === 1 ? "viaje" : "viajes"}
@@ -82,7 +107,7 @@ export function TripTable({
               <tr>
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Fecha solicitada</th>
                 <th className="px-4 py-3">Destino</th>
                 {showAssignment && <th className="px-4 py-3">Chofer</th>}
                 {showAssignment && <th className="px-4 py-3">Patente</th>}
@@ -225,6 +250,8 @@ function TripDetail({
   showEvents: boolean;
   showRemitos: boolean;
 }) {
+  const meta = (trip.trip_reparto_fields?.metadata ?? {}) as Record<string, unknown>;
+
   return (
     <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
       <div className="space-y-1">
@@ -233,6 +260,14 @@ function TripDetail({
         </h4>
         <Detail label="Tipo" value={trip.tipo} />
         <Detail label="Estado" value={trip.estado} />
+        <Detail
+          label="Fecha solicitada"
+          value={
+            trip.fecha_solicitada
+              ? new Date(trip.fecha_solicitada + "T00:00:00").toLocaleDateString("es-AR")
+              : null
+          }
+        />
         <Detail label="Origen" value={trip.origen_descripcion} />
         <Detail label="Destino" value={trip.destino_descripcion} />
         <Detail label="Observaciones" value={trip.observaciones_cliente} />
@@ -246,23 +281,14 @@ function TripDetail({
           <Detail label="NDV" value={trip.trip_reparto_fields.ndv} />
           <Detail label="PAL" value={trip.trip_reparto_fields.pal?.toString()} />
           <Detail label="CAT" value={trip.trip_reparto_fields.cat} />
+          <Detail label="Nro UN" value={trip.trip_reparto_fields.nro_un} />
           <Detail label="KG netos" value={trip.trip_reparto_fields.peso_kg?.toString()} />
           <Detail label="Toneladas" value={trip.trip_reparto_fields.toneladas?.toString()} />
           <Detail label="Bultos" value={trip.trip_reparto_fields.cantidad_bultos?.toString()} />
-          <Detail label="Nro UN" value={trip.trip_reparto_fields.nro_un} />
-          {trip.trip_reparto_fields.metadata && Object.keys(trip.trip_reparto_fields.metadata).length > 0 && (
-            <>
-              {(trip.trip_reparto_fields.metadata as Record<string, unknown>).tipo_camion && (
-                <Detail label="Tipo camion" value={String((trip.trip_reparto_fields.metadata as Record<string, unknown>).tipo_camion)} />
-              )}
-              {(trip.trip_reparto_fields.metadata as Record<string, unknown>).peon && (
-                <Detail label="Peon" value={String((trip.trip_reparto_fields.metadata as Record<string, unknown>).peon)} />
-              )}
-              {(trip.trip_reparto_fields.metadata as Record<string, unknown>).horario && (
-                <Detail label="Horario" value={String((trip.trip_reparto_fields.metadata as Record<string, unknown>).horario)} />
-              )}
-            </>
-          )}
+          <Detail label="Tipo camion" value={meta.tipo_camion as string} />
+          <Detail label="Peon" value={meta.peon as string} />
+          <Detail label="Horario" value={meta.horario as string} />
+          <Detail label="Hoja de ruta" value={meta.hoja_de_ruta as string} />
         </div>
       )}
 
@@ -276,9 +302,29 @@ function TripDetail({
           <Detail label="Peso (kg)" value={trip.containers.peso_carga_kg?.toString()} />
           {trip.containers.reservations && (
             <>
+              <h4 className="text-xs font-semibold uppercase text-neutral-400 mt-2">
+                Reserva
+              </h4>
               <Detail label="Booking" value={trip.containers.reservations.numero_booking} />
               <Detail label="Naviera" value={trip.containers.reservations.naviera} />
               <Detail label="Buque" value={trip.containers.reservations.buque} />
+              <Detail
+                label="Fecha arribo"
+                value={
+                  trip.containers.reservations.fecha_arribo
+                    ? new Date(trip.containers.reservations.fecha_arribo + "T00:00:00").toLocaleDateString("es-AR")
+                    : null
+                }
+              />
+              <Detail
+                label="Fecha carga"
+                value={
+                  trip.containers.reservations.fecha_carga
+                    ? new Date(trip.containers.reservations.fecha_carga + "T00:00:00").toLocaleDateString("es-AR")
+                    : null
+                }
+              />
+              <Detail label="Observaciones" value={trip.containers.reservations.observaciones} />
             </>
           )}
         </div>
@@ -374,6 +420,7 @@ function Detail({
 function EstadoBadge({ estado }: { estado: string }) {
   const styles: Record<string, string> = {
     PENDIENTE: "bg-yellow-100 text-yellow-700",
+    PREASIGNADO: "bg-orange-100 text-orange-700",
     ASIGNADO: "bg-blue-100 text-blue-700",
     EN_CURSO: "bg-green-100 text-green-700",
     FINALIZADO: "bg-neutral-100 text-neutral-600",

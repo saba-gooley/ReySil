@@ -43,6 +43,9 @@ export type OperatorTripRow = {
       numero_booking: string | null;
       naviera: string | null;
       buque: string | null;
+      fecha_arribo: string | null;
+      fecha_carga: string | null;
+      observaciones: string | null;
     };
   } | null;
   trip_events: {
@@ -67,7 +70,7 @@ const OPERATOR_TRIP_SELECT = `
   clients(nombre, codigo),
   trip_assignments(id, patente, patente_acoplado, driver_id, drivers(id, nombre, apellido, codigo)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
-  containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque)),
+  containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones)),
   trip_events(id, tipo, ocurrido_at, observaciones),
   remitos(id, drive_url, estado, uploaded_at)
 `;
@@ -99,7 +102,7 @@ export async function listPendingTrips() {
   const { data, error } = await supabase
     .from("trips")
     .select(OPERATOR_TRIP_SELECT)
-    .eq("estado", "PENDIENTE")
+    .in("estado", ["PENDIENTE", "PREASIGNADO"])
     .order("created_at", { ascending: true });
 
   if (error) throw error;

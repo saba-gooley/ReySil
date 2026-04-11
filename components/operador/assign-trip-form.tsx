@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   assignTripAction,
   reassignTripAction,
+  preassignTripAction,
   type AssignmentActionState,
 } from "@/lib/server/assignments/actions";
 
@@ -13,10 +14,22 @@ type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 type Props = {
   tripId: string;
   drivers: Driver[];
-  mode: "assign" | "reassign";
+  mode: "assign" | "reassign" | "preassign";
   currentDriverId?: string;
   currentPatente?: string;
   onDone?: () => void;
+};
+
+const ACTIONS = {
+  assign: assignTripAction,
+  reassign: reassignTripAction,
+  preassign: preassignTripAction,
+};
+
+const LABELS = {
+  assign: "Confirmar",
+  reassign: "Reasignar",
+  preassign: "Preasignar",
 };
 
 const initialState: AssignmentActionState = {};
@@ -29,7 +42,7 @@ export function AssignTripForm({
   currentPatente,
   onDone,
 }: Props) {
-  const action = mode === "assign" ? assignTripAction : reassignTripAction;
+  const action = ACTIONS[mode];
   const [state, formAction] = useFormState(action, initialState);
   const [driverId, setDriverId] = useState(currentDriverId ?? "");
   const [patente, setPatente] = useState(currentPatente ?? "");
@@ -79,12 +92,12 @@ export function AssignTripForm({
         required
         className={`${inputClass} w-28 font-mono`}
       />
-      <SubmitBtn mode={mode} />
+      <SubmitBtn label={LABELS[mode]} />
     </form>
   );
 }
 
-function SubmitBtn({ mode }: { mode: "assign" | "reassign" }) {
+function SubmitBtn({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -92,11 +105,7 @@ function SubmitBtn({ mode }: { mode: "assign" | "reassign" }) {
       disabled={pending}
       className="rounded-md bg-reysil-red px-3 py-1 text-sm font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
     >
-      {pending
-        ? "..."
-        : mode === "assign"
-          ? "Confirmar"
-          : "Reasignar"}
+      {pending ? "..." : label}
     </button>
   );
 }
