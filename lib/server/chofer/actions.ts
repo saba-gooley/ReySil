@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
 import { notifyRemitoUploaded } from "@/lib/server/notifications/notify-remito";
+import { generateAndUploadInspectionPdf } from "@/lib/server/pdf/generate-inspection";
+import { uploadToDrive } from "@/lib/server/drive/upload";
 
 export type ChoferActionState = {
   error?: string;
@@ -164,8 +166,10 @@ export async function registerTripDataAction(
 }
 
 // =========================================================================
-// HU-CHO-004: Upload remito (placeholder — Drive integration in Module 8)
+// HU-CHO-004: Upload remito to Google Drive
 // =========================================================================
+
+const REMITO_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_REMITOS;
 
 export async function uploadRemitoAction(
   _prev: ChoferActionState,
@@ -178,22 +182,59 @@ export async function uploadRemitoAction(
   const tripId = formData.get("trip_id") as string;
   if (!tripId) return { error: "Viaje no especificado" };
 
-  // TODO: In Module 8, upload to Google Drive and get the URL
-  // For now, create a placeholder remito record
+  const file = formData.get("remito_file") as File | null;
+  if (!file || file.size === 0) return { error: "Selecciona una foto del remito" };
+
+  if (!REMITO_FOLDER_ID) return { error: "Google Drive no configurado" };
+
   const supabase = createClient();
 
+  // Fetch trip + client name for file naming: [Cliente]-[Fecha]-[seq].jpg
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("fecha_solicitada, clients!inner(nombre)")
+    .eq("id", tripId)
+    .single();
+
+  const clientObj = trip?.clients;
+  const clientName = (Array.isArray(clientObj) ? clientObj[0] : clientObj)?.nombre ?? "Cliente";
+  const fecha = trip?.fecha_solicitada ?? new Date().toISOString().split("T")[0];
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const fileName = `${clientName}-${fecha}-${tripId.slice(0, 8)}.${ext}`;
+
+  // Upload to Google Drive
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  let driveUrl: string;
+  let driveFileId: string;
+  try {
+    const result = await uploadToDrive({
+      fileName,
+      mimeType: file.type || "image/jpeg",
+      body: buffer,
+      folderId: REMITO_FOLDER_ID,
+    });
+    driveUrl = result.webViewLink;
+    driveFileId = result.fileId;
+  } catch (err) {
+    console.error("[upload-remito] Drive upload error:", err);
+    return { error: "Error al subir archivo a Google Drive" };
+  }
+
+  // Save remito record
   const { error } = await supabase.from("remitos").insert({
     trip_id: tripId,
-    drive_url: "https://drive.google.com/placeholder",
-    filename: `remito-${tripId.slice(0, 8)}.jpg`,
+    drive_url: driveUrl,
+    drive_file_id: driveFileId,
+    filename: fileName,
     estado: "PENDIENTE",
     uploaded_by: user.id,
   });
 
-  if (error) return { error: `Error al subir remito: ${error.message}` };
+  if (error) return { error: `Error al guardar remito: ${error.message}` };
 
   // HU-NOT-002: fire-and-forget email to client with remito link
-  const driveUrl = "https://drive.google.com/placeholder"; // will be real URL after Module 8
   notifyRemitoUploaded(tripId, driveUrl).catch(() => {});
 
   revalidatePath("/chofer");
@@ -344,22 +385,74 @@ export async function completeInspectionAction(
   inspectionId: string,
   observaciones?: string,
 ): Promise<ChoferActionState> {
-  await getCurrentUser();
+  const user = await getCurrentUser();
   const supabase = createClient();
+
+  const now = new Date().toISOString();
 
   const { error } = await supabase
     .from("inspections")
     .update({
       status: "COMPLETADA",
-      completado_at: new Date().toISOString(),
+      completado_at: now,
       observaciones_generales: observaciones || null,
     })
     .eq("id", inspectionId);
 
   if (error) return { error: error.message };
 
-  // TODO: Module 8 — generate PDF and upload to Drive
+  // HU-CHO-006: Generate PDF and upload to Drive (fire-and-forget)
+  generateInspectionPdfAsync(inspectionId, user.profile.full_name ?? "Chofer").catch(
+    (err) => console.error("[inspection-pdf] Error:", err),
+  );
 
   revalidatePath("/chofer/inspeccion");
   return { success: true };
+}
+
+/**
+ * Background helper: fetch inspection data, generate PDF, upload to Drive,
+ * and update the inspection record with the PDF URL.
+ */
+async function generateInspectionPdfAsync(
+  inspectionId: string,
+  driverName: string,
+): Promise<void> {
+  const { createAdminClient } = await import("@/lib/supabase/server");
+  const supabase = createAdminClient();
+
+  const { data: inspection } = await supabase
+    .from("inspections")
+    .select("patente, fecha, completado_at, observaciones_generales")
+    .eq("id", inspectionId)
+    .single();
+
+  if (!inspection) return;
+
+  const { data: items } = await supabase
+    .from("inspection_items")
+    .select("seccion, item_codigo, item_descripcion, estado, observaciones")
+    .eq("inspection_id", inspectionId)
+    .order("seccion")
+    .order("item_codigo");
+
+  if (!items || items.length === 0) return;
+
+  const { pdfUrl, driveFileId } = await generateAndUploadInspectionPdf({
+    driverName,
+    patente: inspection.patente,
+    fecha: inspection.fecha,
+    completadoAt: inspection.completado_at
+      ? new Date(inspection.completado_at).toLocaleString("es-AR")
+      : new Date().toLocaleString("es-AR"),
+    observacionesGenerales: inspection.observaciones_generales,
+    items,
+  });
+
+  await supabase
+    .from("inspections")
+    .update({ pdf_url: pdfUrl, pdf_drive_file_id: driveFileId })
+    .eq("id", inspectionId);
+
+  console.log(`[inspection-pdf] PDF generated for ${inspection.patente}-${inspection.fecha}`);
 }
