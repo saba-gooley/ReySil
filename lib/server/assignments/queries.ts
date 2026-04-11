@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export type OperatorTripRow = {
   id: string;
@@ -98,7 +98,7 @@ function normalizeOperatorTrips(rows: unknown[]): OperatorTripRow[] {
  * HU-OPE-001: Viajes pendientes de asignación (estado PENDIENTE).
  */
 export async function listPendingTrips() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(OPERATOR_TRIP_SELECT)
@@ -113,7 +113,7 @@ export async function listPendingTrips() {
  * HU-OPE-004: Viajes con chofer asignado (estado ASIGNADO).
  */
 export async function listAssignedTrips() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(OPERATOR_TRIP_SELECT)
@@ -128,7 +128,7 @@ export async function listAssignedTrips() {
  * HU-OPE-005: Viajes en curso.
  */
 export async function listInProgressTrips() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(OPERATOR_TRIP_SELECT)
@@ -148,7 +148,7 @@ export async function listFinishedTrips(options?: {
   from?: string;
   to?: string;
 }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const page = options?.page ?? 1;
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
@@ -176,7 +176,7 @@ export async function listFinishedTrips(options?: {
  * HU-OPE-007: Toneladas por camión para una fecha.
  */
 export async function getToneladasByDate(fecha: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(`
@@ -235,7 +235,7 @@ export async function getToneladasByDate(fecha: string) {
  * HU-OPE-008: Reportes — viajes por cliente y por chofer en rango de fechas.
  */
 export async function getReportData(from: string, to: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(`
@@ -302,7 +302,7 @@ export async function listRemitos(options?: {
   page?: number;
   pageSize?: number;
 }) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const page = options?.page ?? 1;
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
@@ -362,7 +362,7 @@ export async function listRemitos(options?: {
  * List active drivers for assignment selectors.
  */
 export async function listActiveDrivers() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("drivers")
     .select("id, codigo, nombre, apellido")
