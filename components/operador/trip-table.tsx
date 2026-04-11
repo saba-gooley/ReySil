@@ -73,7 +73,18 @@ export function TripTable({
           <div className="flex gap-1">
             <button
               type="button"
-              onClick={() => setSortMode(sortMode === "patente" ? "none" : "patente")}
+              onClick={() => setSortMode("none")}
+              className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                sortMode === "none"
+                  ? "border-reysil-red bg-reysil-red text-white"
+                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
+              }`}
+            >
+              Todos
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortMode("patente")}
               className={`rounded-md border px-3 py-2 text-sm font-medium ${
                 sortMode === "patente"
                   ? "border-reysil-red bg-reysil-red text-white"
@@ -84,7 +95,7 @@ export function TripTable({
             </button>
             <button
               type="button"
-              onClick={() => setSortMode(sortMode === "chofer" ? "none" : "chofer")}
+              onClick={() => setSortMode("chofer")}
               className={`rounded-md border px-3 py-2 text-sm font-medium ${
                 sortMode === "chofer"
                   ? "border-reysil-red bg-reysil-red text-white"
