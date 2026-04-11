@@ -121,6 +121,18 @@ export async function listAssignedTrips() {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
+
+  // DEBUG: expose raw response + env check
+  const debugInfo = {
+    hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    serviceRoleKeyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10) ?? "NOT SET",
+    rawFirstTrip: data?.[0] ?? null,
+    rawCount: data?.length ?? 0,
+  };
+  console.log("DEBUG listAssignedTrips raw:", JSON.stringify(debugInfo, null, 2));
+  // Attach debug info to the result so the page can render it
+  (listAssignedTrips as unknown as Record<string, unknown>)._debug = debugInfo;
+
   return normalizeOperatorTrips(data);
 }
 
