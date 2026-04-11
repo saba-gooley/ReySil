@@ -37,6 +37,16 @@ export type TripRow = {
     numero: string | null;
     tipo: string | null;
     peso_carga_kg: number | null;
+    precintos: string[] | null;
+    observaciones: string | null;
+    reservations: {
+      numero_booking: string | null;
+      naviera: string | null;
+      buque: string | null;
+      fecha_arribo: string | null;
+      fecha_carga: string | null;
+      observaciones: string | null;
+    } | null;
   } | null;
   remitos: {
     id: string;
@@ -56,11 +66,20 @@ function normalizeTrips(rows: unknown[]): TripRow[] {
     const assignments = raw.trip_assignments as unknown[] | null;
     const fields = raw.trip_reparto_fields as unknown[] | null;
     const cont = raw.containers as unknown[] | null;
+    const container = cont?.[0] as Record<string, unknown> | undefined;
+    let normalizedContainer = null;
+    if (container) {
+      const res = container.reservations as unknown[] | null;
+      normalizedContainer = {
+        ...container,
+        reservations: res?.[0] ?? null,
+      };
+    }
     return {
       ...raw,
       trip_assignments: assignments?.[0] ?? null,
       trip_reparto_fields: fields?.[0] ?? null,
-      containers: cont?.[0] ?? null,
+      containers: normalizedContainer,
       trip_events: (raw.trip_events as unknown[]) ?? [],
       remitos: (raw.remitos as unknown[]) ?? [],
     } as TripRow;
@@ -75,7 +94,7 @@ const TRIP_SELECT = `
   trip_assignments(patente, drivers(nombre, apellido)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   trip_events(id, tipo, ocurrido_at, observaciones),
-  containers(numero, tipo, peso_carga_kg),
+  containers(numero, tipo, peso_carga_kg, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones)),
   remitos(id, drive_url, estado)
 `;
 
@@ -89,7 +108,7 @@ export async function listActiveTrips(clientId: string) {
     .from("trips")
     .select(TRIP_SELECT)
     .eq("client_id", clientId)
-    .in("estado", ["PENDIENTE", "ASIGNADO", "EN_CURSO"])
+    .in("estado", ["PENDIENTE", "PREASIGNADO", "ASIGNADO", "EN_CURSO"])
     .order("created_at", { ascending: false });
 
   if (error) throw error;

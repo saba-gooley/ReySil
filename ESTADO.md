@@ -67,7 +67,6 @@ Ninguno — todos los modulos completados.
 ---
 
 ## Bloqueantes Activos
-- **Migraciones 0004 y 0005 pendientes de ejecutar** en Supabase SQL Editor. Sin ellas, los modulos 4-6 tendran errores de RLS (recursion infinita, containers INSERT bloqueado para clientes).
 - **SendGrid no configurado** — las notificaciones por email no se enviaran hasta configurar SENDGRID_API_KEY. El sistema funciona sin problemas, solo loguea warnings.
 
 ---

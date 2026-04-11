@@ -49,23 +49,34 @@ export async function assignTripAction(
     return { error: "Viaje no encontrado" };
   }
 
-  if (trip.estado !== "PENDIENTE") {
+  if (trip.estado !== "PENDIENTE" && trip.estado !== "PREASIGNADO") {
     return { error: `El viaje ya tiene estado ${trip.estado}` };
   }
 
-  // Insert assignment
-  const { error: assignErr } = await supabase
-    .from("trip_assignments")
-    .insert({
-      trip_id: d.trip_id,
-      driver_id: d.driver_id,
-      patente: d.patente,
-      patente_acoplado: d.patente_acoplado || null,
-      asignado_by: user.id,
-    });
-
-  if (assignErr) {
-    return { error: `Error al asignar: ${assignErr.message}` };
+  if (trip.estado === "PREASIGNADO") {
+    // Update existing assignment
+    const { error: upErr } = await supabase
+      .from("trip_assignments")
+      .update({
+        driver_id: d.driver_id,
+        patente: d.patente,
+        patente_acoplado: d.patente_acoplado || null,
+        asignado_by: user.id,
+      })
+      .eq("trip_id", d.trip_id);
+    if (upErr) return { error: `Error al asignar: ${upErr.message}` };
+  } else {
+    // Insert assignment
+    const { error: assignErr } = await supabase
+      .from("trip_assignments")
+      .insert({
+        trip_id: d.trip_id,
+        driver_id: d.driver_id,
+        patente: d.patente,
+        patente_acoplado: d.patente_acoplado || null,
+        asignado_by: user.id,
+      });
+    if (assignErr) return { error: `Error al asignar: ${assignErr.message}` };
   }
 
   // Update trip estado
@@ -142,26 +153,63 @@ export async function reassignTripAction(
 }
 
 /**
- * Confirm assignment — used when operator wants to "confirm" a pre-filled assignment.
- * Changes estado from PENDIENTE to ASIGNADO in one step.
+ * Preassign driver + patente to a trip.
+ * Creates trip_assignments row and sets estado to PREASIGNADO.
+ * Does NOT notify the client yet.
  */
-export async function confirmAssignmentAction(
-  tripId: string,
+export async function preassignTripAction(
+  _prev: AssignmentActionState,
+  formData: FormData,
 ): Promise<AssignmentActionState> {
-  await getCurrentUser();
+  const user = await getCurrentUser();
+
+  const raw = JSON.parse(formData.get("payload") as string);
+  const parsed = AssignSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return { error: Object.values(parsed.error.flatten().fieldErrors).flat().join(", ") };
+  }
+
+  const d = parsed.data;
   const supabase = createClient();
 
-  const { error } = await supabase
+  const { data: trip, error: tripCheckErr } = await supabase
     .from("trips")
-    .update({ estado: "ASIGNADO" })
-    .eq("id", tripId)
-    .eq("estado", "PENDIENTE");
+    .select("id, estado")
+    .eq("id", d.trip_id)
+    .single();
 
-  if (error) {
-    return { error: `Error al confirmar: ${error.message}` };
+  if (tripCheckErr || !trip) {
+    return { error: "Viaje no encontrado" };
+  }
+
+  if (trip.estado !== "PENDIENTE") {
+    return { error: `El viaje ya tiene estado ${trip.estado}` };
+  }
+
+  const { error: assignErr } = await supabase
+    .from("trip_assignments")
+    .insert({
+      trip_id: d.trip_id,
+      driver_id: d.driver_id,
+      patente: d.patente,
+      patente_acoplado: d.patente_acoplado || null,
+      asignado_by: user.id,
+    });
+
+  if (assignErr) {
+    return { error: `Error al preasignar: ${assignErr.message}` };
+  }
+
+  const { error: updateErr } = await supabase
+    .from("trips")
+    .update({ estado: "PREASIGNADO" })
+    .eq("id", d.trip_id);
+
+  if (updateErr) {
+    return { error: `Error al actualizar estado: ${updateErr.message}` };
   }
 
   revalidatePath("/operador/pendientes");
-  revalidatePath("/operador/chofer-asignado");
   return { success: true };
 }
