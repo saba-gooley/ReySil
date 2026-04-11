@@ -21,10 +21,10 @@ export async function generateAndUploadInspectionPdf(
     throw new Error("GOOGLE_DRIVE_FOLDER_INSPECCIONES not set");
   }
 
-  // Render PDF to buffer
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Render PDF to buffer — type cast needed for @react-pdf/renderer compatibility
+  const element = React.createElement(InspectionPdf, { data });
   const buffer = await renderToBuffer(
-    React.createElement(InspectionPdf, { data }) as any,
+    element as unknown as Parameters<typeof renderToBuffer>[0],
   );
 
   // Upload to Drive with naming convention: [Patente]-[YYYY-MM-DD].pdf
