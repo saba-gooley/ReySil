@@ -75,21 +75,24 @@ const OPERATOR_TRIP_SELECT = `
   remitos(id, drive_url, estado, uploaded_at)
 `;
 
+/** Unwrap a value that may be an array (anon key) or a single object (service role). */
+function unwrapOne(val: unknown): unknown {
+  if (Array.isArray(val)) return val[0] ?? null;
+  return val ?? null;
+}
+
 function normalizeOperatorTrips(rows: unknown[]): OperatorTripRow[] {
   return (rows as Record<string, unknown>[]).map((r) => {
     const raw = r as Record<string, unknown>;
-    const assignments = raw.trip_assignments as unknown[] | null;
-    const fields = raw.trip_reparto_fields as unknown[] | null;
-    const cont = raw.containers as unknown[] | null;
-    const clients = raw.clients as unknown[] | null;
+    const clients = unwrapOne(raw.clients) as Record<string, string> | null;
     return {
       ...raw,
-      clients: clients?.[0] ?? { nombre: "", codigo: "" },
-      trip_assignments: assignments?.[0] ?? null,
-      trip_reparto_fields: fields?.[0] ?? null,
-      containers: cont?.[0] ?? null,
-      trip_events: (raw.trip_events as unknown[]) ?? [],
-      remitos: (raw.remitos as unknown[]) ?? [],
+      clients: clients ?? { nombre: "", codigo: "" },
+      trip_assignments: unwrapOne(raw.trip_assignments),
+      trip_reparto_fields: unwrapOne(raw.trip_reparto_fields),
+      containers: unwrapOne(raw.containers),
+      trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
+      remitos: Array.isArray(raw.remitos) ? raw.remitos : [],
     } as OperatorTripRow;
   });
 }
@@ -121,18 +124,6 @@ export async function listAssignedTrips() {
     .order("created_at", { ascending: true });
 
   if (error) throw error;
-
-  // DEBUG: expose raw response + env check
-  const debugInfo = {
-    hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    serviceRoleKeyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 10) ?? "NOT SET",
-    rawFirstTrip: data?.[0] ?? null,
-    rawCount: data?.length ?? 0,
-  };
-  console.log("DEBUG listAssignedTrips raw:", JSON.stringify(debugInfo, null, 2));
-  // Attach debug info to the result so the page can render it
-  (listAssignedTrips as unknown as Record<string, unknown>)._debug = debugInfo;
-
   return normalizeOperatorTrips(data);
 }
 
