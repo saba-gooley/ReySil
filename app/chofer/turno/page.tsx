@@ -1,18 +1,18 @@
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
-import { listTodayTrips } from "@/lib/server/chofer/queries";
-import { ChoferTripList } from "@/components/chofer/trip-list";
+import { getTodayShift } from "@/lib/server/chofer/queries";
+import { ShiftView } from "@/components/chofer/shift-view";
 
-export default async function ChoferHomePage() {
+export default async function TurnoPage() {
   const user = await getCurrentUser();
   const driverId = user.profile.driver_id!;
-  const trips = await listTodayTrips(driverId);
+  const shift = await getTodayShift(driverId);
 
   return (
     <div className="space-y-4 pb-16">
       <h2 className="text-base font-semibold text-neutral-900">
-        Viajes de hoy
+        Turno de hoy
       </h2>
-      <ChoferTripList trips={trips} />
+      <ShiftView shift={shift} />
     </div>
   );
 }
