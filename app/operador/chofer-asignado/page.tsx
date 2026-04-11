@@ -10,8 +10,7 @@ export default async function ChoferAsignadoPage() {
     listActiveDrivers(),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const debug = (listAssignedTrips as any)._debug ?? {};
+  const debug = (listAssignedTrips as unknown as Record<string, unknown>)._debug ?? {};
 
   return (
     <div className="space-y-4">
