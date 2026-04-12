@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { debugTestAction } from "@/lib/server/chofer/actions";
+import { debugPingAction } from "@/lib/server/chofer/debug-action";
 
 export function DebugButton({ driverId, userId }: { driverId: string; userId: string }) {
   const [result, setResult] = useState<string>("No probado");
@@ -11,7 +11,7 @@ export function DebugButton({ driverId, userId }: { driverId: string; userId: st
     setLoading(true);
     setResult("Llamando...");
     try {
-      const res = await debugTestAction();
+      const res = await debugPingAction();
       setResult(JSON.stringify(res));
     } catch (err) {
       setResult(`CATCH: ${err instanceof Error ? err.message : String(err)}`);
