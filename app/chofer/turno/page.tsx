@@ -2,6 +2,8 @@ import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { getTodayShift } from "@/lib/server/chofer/queries";
 import { ShiftView } from "@/components/chofer/shift-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function TurnoPage() {
   const user = await getCurrentUser();
   const driverId = user.profile.driver_id!;

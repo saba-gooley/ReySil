@@ -25,6 +25,7 @@ type ShiftField =
 
 export async function registerShiftEvent(
   field: ShiftField,
+  timestamp?: string,
 ): Promise<ChoferActionState> {
   const user = await getCurrentUser();
   const driverId = user.profile.driver_id;
@@ -32,7 +33,7 @@ export async function registerShiftEvent(
 
   const supabase = createClient();
   const today = new Date().toISOString().split("T")[0];
-  const now = new Date().toISOString();
+  const value = timestamp ?? new Date().toISOString();
 
   // Upsert: create shift if not exists, update the field
   const { data: existing } = await supabase
@@ -45,14 +46,14 @@ export async function registerShiftEvent(
   if (existing) {
     const { error } = await supabase
       .from("shift_logs")
-      .update({ [field]: now, updated_at: now })
+      .update({ [field]: value, updated_at: new Date().toISOString() })
       .eq("id", existing.id);
     if (error) return { error: error.message };
   } else {
     const { error } = await supabase.from("shift_logs").insert({
       driver_id: driverId,
       fecha: today,
-      [field]: now,
+      [field]: value,
     });
     if (error) return { error: error.message };
   }
@@ -62,27 +63,49 @@ export async function registerShiftEvent(
 }
 
 // =========================================================================
-// HU-CHO-003: Trip driver data + events
+// HU-CHO-003: Trip events (llegada/salida cliente)
+// =========================================================================
+
+export async function registerTripEventAction(
+  tripId: string,
+  eventType: string,
+  ocurridoAt: string,
+): Promise<ChoferActionState> {
+  const user = await getCurrentUser();
+  const driverId = user.profile.driver_id;
+  if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+  const supabase = createClient();
+
+  const { error: evErr } = await supabase.from("trip_events").insert({
+    trip_id: tripId,
+    tipo: eventType,
+    ocurrido_at: ocurridoAt,
+  });
+  if (evErr) return { error: `Error al registrar evento: ${evErr.message}` };
+
+  // Update trip estado to EN_CURSO if it's ASIGNADO
+  await supabase
+    .from("trips")
+    .update({ estado: "EN_CURSO" })
+    .eq("id", tripId)
+    .eq("estado", "ASIGNADO");
+
+  revalidatePath("/chofer");
+  return { success: true };
+}
+
+// =========================================================================
+// HU-CHO-003: Trip driver data (km, pernocto, obs)
 // =========================================================================
 
 const TripDataSchema = z.object({
   trip_id: z.string().uuid(),
-  event_type: z
-    .enum([
-      "LLEGADA_DEPOSITO_REYSIL",
-      "SALIDA_DEPOSITO_REYSIL",
-      "LLEGADA_DESTINO_CLIENTE",
-      "SALIDA_CLIENTE",
-      "FIN_VIAJE",
-    ])
-    .optional(),
   km_inicial: z.coerce.number().optional().nullable(),
   km_50_porc: z.coerce.number().optional().nullable(),
   km_100_porc: z.coerce.number().optional().nullable(),
   km_final: z.coerce.number().optional().nullable(),
   pernocto: z.boolean().optional().default(false),
-  lugar_pernocto: z.string().optional().default(""),
-  carga_peligrosa: z.boolean().optional().default(false),
   observaciones: z.string().optional().default(""),
 });
 
@@ -102,33 +125,6 @@ export async function registerTripDataAction(
 
   const d = parsed.data;
   const supabase = createClient();
-  const now = new Date().toISOString();
-
-  // Register event if provided
-  if (d.event_type) {
-    const { error: evErr } = await supabase.from("trip_events").insert({
-      trip_id: d.trip_id,
-      tipo: d.event_type,
-      ocurrido_at: now,
-      observaciones: d.observaciones || null,
-    });
-    if (evErr) return { error: `Error al registrar evento: ${evErr.message}` };
-
-    // Update trip estado to EN_CURSO if it's ASIGNADO
-    await supabase
-      .from("trips")
-      .update({ estado: "EN_CURSO" })
-      .eq("id", d.trip_id)
-      .eq("estado", "ASIGNADO");
-
-    // If FIN_VIAJE, mark as FINALIZADO
-    if (d.event_type === "FIN_VIAJE") {
-      await supabase
-        .from("trips")
-        .update({ estado: "FINALIZADO" })
-        .eq("id", d.trip_id);
-    }
-  }
 
   // Upsert trip_driver_data
   const { data: existing } = await supabase

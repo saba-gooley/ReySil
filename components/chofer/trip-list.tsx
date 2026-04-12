@@ -19,7 +19,8 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
     <div className="space-y-3">
       {trips.map((trip) => {
         const isExpanded = expandedId === trip.id;
-        const hasRemito = trip.remitos.length > 0;
+        const meta = (trip.trip_reparto_fields?.metadata ?? {}) as Record<string, unknown>;
+        const horario = meta.horario as string | undefined;
 
         return (
           <div
@@ -55,7 +56,25 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
 
             {isExpanded && (
               <div className="border-t border-neutral-100 px-4 py-4 space-y-4">
-                {/* Trip info */}
+                {/* Trip header info: origen, destino, horario */}
+                <div className="rounded-md bg-neutral-50 p-3 space-y-1">
+                  <div className="flex gap-2 text-xs">
+                    <span className="w-16 shrink-0 font-medium text-neutral-500">Origen:</span>
+                    <span className="text-neutral-900">{trip.origen_descripcion || "—"}</span>
+                  </div>
+                  <div className="flex gap-2 text-xs">
+                    <span className="w-16 shrink-0 font-medium text-neutral-500">Destino:</span>
+                    <span className="text-neutral-900">{trip.destino_descripcion || "—"}</span>
+                  </div>
+                  {horario && (
+                    <div className="flex gap-2 text-xs">
+                      <span className="w-16 shrink-0 font-medium text-neutral-500">Horario:</span>
+                      <span className="text-neutral-900">{horario}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Extra trip info */}
                 <div className="space-y-1 text-xs">
                   {trip.observaciones_cliente && (
                     <p className="text-neutral-500">
@@ -81,7 +100,7 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
                 {trip.trip_events.length > 0 && (
                   <div className="space-y-1">
                     <h4 className="text-xs font-semibold text-neutral-400 uppercase">
-                      Hitos
+                      Hitos registrados
                     </h4>
                     {trip.trip_events
                       .sort(
@@ -95,7 +114,7 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
                           className="flex items-center gap-2 text-xs"
                         >
                           <span className="w-2 h-2 rounded-full bg-green-500" />
-                          <span>{ev.tipo.replace(/_/g, " ")}</span>
+                          <span>{EVENT_LABELS[ev.tipo] ?? ev.tipo.replace(/_/g, " ")}</span>
                           <span className="text-neutral-400">
                             {new Date(ev.ocurrido_at).toLocaleTimeString("es-AR", {
                               hour: "2-digit",
@@ -108,7 +127,7 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
                 )}
 
                 {/* Remito status */}
-                {hasRemito && (
+                {trip.remitos.length > 0 && (
                   <div className="text-xs text-green-600 font-medium">
                     Remito subido
                   </div>
@@ -124,6 +143,11 @@ export function ChoferTripList({ trips }: { trips: ChoferTripRow[] }) {
     </div>
   );
 }
+
+const EVENT_LABELS: Record<string, string> = {
+  LLEGADA_DESTINO_CLIENTE: "Llegada al cliente",
+  SALIDA_CLIENTE: "Salida del cliente",
+};
 
 function EstadoBadge({ estado }: { estado: string }) {
   const colors: Record<string, string> = {

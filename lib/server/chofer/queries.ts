@@ -1,10 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export type ChoferTripRow = {
   id: string;
   tipo: "REPARTO" | "CONTENEDOR";
   estado: string;
   fecha_solicitada: string | null;
+  origen_descripcion: string | null;
   destino_descripcion: string | null;
   observaciones_cliente: string | null;
   clients: { nombre: string };
@@ -46,7 +47,7 @@ export type ChoferTripRow = {
 
 const CHOFER_TRIP_SELECT = `
   id, tipo, estado, fecha_solicitada,
-  destino_descripcion, observaciones_cliente,
+  origen_descripcion, destino_descripcion, observaciones_cliente,
   clients(nombre),
   trip_assignments(patente),
   trip_reparto_fields(ndv, peso_kg, toneladas, cantidad_bultos, metadata),
@@ -56,23 +57,23 @@ const CHOFER_TRIP_SELECT = `
   remitos(id, drive_url, estado)
 `;
 
+function unwrapOne(val: unknown): unknown {
+  if (Array.isArray(val)) return val[0] ?? null;
+  return val ?? null;
+}
+
 function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
   return (rows as Record<string, unknown>[]).map((r) => {
     const raw = r as Record<string, unknown>;
-    const assignments = raw.trip_assignments as unknown[] | null;
-    const fields = raw.trip_reparto_fields as unknown[] | null;
-    const cont = raw.containers as unknown[] | null;
-    const clients = raw.clients as unknown[] | null;
-    const driverData = raw.trip_driver_data as unknown[] | null;
     return {
       ...raw,
-      clients: clients?.[0] ?? { nombre: "" },
-      trip_assignments: assignments?.[0] ?? null,
-      trip_reparto_fields: fields?.[0] ?? null,
-      containers: cont?.[0] ?? null,
-      trip_driver_data: driverData?.[0] ?? null,
-      trip_events: (raw.trip_events as unknown[]) ?? [],
-      remitos: (raw.remitos as unknown[]) ?? [],
+      clients: unwrapOne(raw.clients) ?? { nombre: "" },
+      trip_assignments: unwrapOne(raw.trip_assignments),
+      trip_reparto_fields: unwrapOne(raw.trip_reparto_fields),
+      containers: unwrapOne(raw.containers),
+      trip_driver_data: unwrapOne(raw.trip_driver_data),
+      trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
+      remitos: Array.isArray(raw.remitos) ? raw.remitos : [],
     } as ChoferTripRow;
   });
 }
@@ -81,7 +82,7 @@ function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
  * HU-CHO-001: Viajes asignados al chofer para hoy.
  */
 export async function listTodayTrips(driverId: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
   const { data, error } = await supabase
@@ -99,7 +100,7 @@ export async function listTodayTrips(driverId: string) {
  * HU-CHO-002: Get or create shift log for today.
  */
 export async function getTodayShift(driverId: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
   const { data, error } = await supabase
@@ -117,7 +118,7 @@ export async function getTodayShift(driverId: string) {
  * HU-CHO-005: Get today's inspection.
  */
 export async function getTodayInspection(driverId: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
   const { data, error } = await supabase

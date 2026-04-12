@@ -2,28 +2,27 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  registerTripEventAction,
   registerTripDataAction,
   uploadRemitoAction,
   type ChoferActionState,
 } from "@/lib/server/chofer/actions";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 
-const EVENT_TYPES = [
-  { value: "LLEGADA_DEPOSITO_REYSIL", label: "Llegada deposito ReySil" },
-  { value: "SALIDA_DEPOSITO_REYSIL", label: "Salida deposito ReySil" },
-  { value: "LLEGADA_DESTINO_CLIENTE", label: "Llegada destino cliente" },
-  { value: "SALIDA_CLIENTE", label: "Salida del cliente" },
-  { value: "FIN_VIAJE", label: "Fin del viaje" },
+const TRIP_EVENTS = [
+  { value: "LLEGADA_DESTINO_CLIENTE", label: "Llegada al Cliente" },
+  { value: "SALIDA_CLIENTE", label: "Salida del Cliente" },
 ] as const;
 
 const initialState: ChoferActionState = {};
 
 export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
+  const router = useRouter();
   const [dataState, dataAction] = useFormState(registerTripDataAction, initialState);
   const [remitoState, remitoAction] = useFormState(uploadRemitoAction, initialState);
 
-  const [selectedEvent, setSelectedEvent] = useState("");
   const [km50, setKm50] = useState(
     trip.trip_driver_data?.km_50_porc?.toString() ?? "",
   );
@@ -45,7 +44,6 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
       "payload",
       JSON.stringify({
         trip_id: trip.id,
-        event_type: selectedEvent || undefined,
         km_50_porc: km50 ? Number(km50) : null,
         km_100_porc: km100 ? Number(km100) : null,
         pernocto,
@@ -65,37 +63,34 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
 
   return (
     <div className="space-y-4">
-      {/* Register event */}
+      {/* Trip events: Llegada al cliente / Salida del cliente */}
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-neutral-400 uppercase">
+          Registro del viaje
+        </h4>
+        {TRIP_EVENTS.map((ev) => (
+          <EventTimeField
+            key={ev.value}
+            tripId={trip.id}
+            eventType={ev.value}
+            label={ev.label}
+            isRegistered={registeredEvents.has(ev.value)}
+            registeredTime={
+              trip.trip_events.find((e) => e.tipo === ev.value)?.ocurrido_at
+            }
+            onDone={() => router.refresh()}
+          />
+        ))}
+      </div>
+
+      {/* Driver data form */}
       <form action={handleDataSubmit} className="space-y-3">
         {dataState.error && (
           <p className="text-xs text-red-600">{dataState.error}</p>
         )}
         {dataState.success && (
-          <p className="text-xs text-green-600">Registrado</p>
+          <p className="text-xs text-green-600">Datos guardados</p>
         )}
-
-        <div>
-          <label className="mb-1 block text-xs font-medium text-neutral-500">
-            Registrar hito
-          </label>
-          <select
-            value={selectedEvent}
-            onChange={(e) => setSelectedEvent(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Seleccionar evento...</option>
-            {EVENT_TYPES.map((ev) => (
-              <option
-                key={ev.value}
-                value={ev.value}
-                disabled={registeredEvents.has(ev.value)}
-              >
-                {ev.label}
-                {registeredEvents.has(ev.value) ? " (registrado)" : ""}
-              </option>
-            ))}
-          </select>
-        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -189,6 +184,107 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
           </div>
         )}
       </form>
+    </div>
+  );
+}
+
+function EventTimeField({
+  tripId,
+  eventType,
+  label,
+  isRegistered,
+  registeredTime,
+  onDone,
+}: {
+  tripId: string;
+  eventType: string;
+  label: string;
+  isRegistered: boolean;
+  registeredTime?: string;
+  onDone: () => void;
+}) {
+  const [time, setTime] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function setNow() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, "0");
+    const m = now.getMinutes().toString().padStart(2, "0");
+    setTime(`${h}:${m}`);
+  }
+
+  async function handleRegister(useTime: string) {
+    setLoading(true);
+    setError(null);
+
+    let ocurrido_at: string;
+    if (useTime) {
+      const today = new Date().toISOString().split("T")[0];
+      ocurrido_at = new Date(`${today}T${useTime}:00`).toISOString();
+    } else {
+      ocurrido_at = new Date().toISOString();
+    }
+
+    const result = await registerTripEventAction(tripId, eventType, ocurrido_at);
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      onDone();
+    }
+  }
+
+  if (isRegistered && registeredTime) {
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+        <div>
+          <p className="text-sm font-medium text-neutral-900">{label}</p>
+          <p className="text-xs text-green-600">
+            {new Date(registeredTime).toLocaleTimeString("es-AR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        </div>
+        <span className="text-xs text-green-600 font-medium">Registrado</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white px-4 py-3 space-y-2">
+      <p className="text-sm font-medium text-neutral-900">{label}</p>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setNow();
+            handleRegister("");
+          }}
+          disabled={loading}
+          className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+        >
+          Ahora
+        </button>
+      </div>
+      {time && (
+        <button
+          type="button"
+          onClick={() => handleRegister(time)}
+          disabled={loading}
+          className="w-full rounded-md bg-reysil-red px-4 py-2 text-sm font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
+        >
+          {loading ? "Guardando..." : `Registrar ${time}`}
+        </button>
+      )}
     </div>
   );
 }

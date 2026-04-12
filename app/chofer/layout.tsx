@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/server/auth/get-current-user";
 import { ChoferNav } from "@/components/chofer/chofer-nav";
+import { LogoutButton } from "@/components/chofer/logout-button";
 
 export const metadata = { title: "Chofer — ReySil" };
 
@@ -16,14 +17,9 @@ export default async function ChoferLayout({
         <div className="mx-auto flex max-w-lg items-center justify-between">
           <span className="text-sm font-bold text-reysil-red">ReySil</span>
           <span className="text-xs text-neutral-500">{user.profile.full_name}</span>
-          <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_PHONE_NUMBER ?? ""}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white"
-          >
-            WhatsApp
-          </a>
+          <div className="flex items-center gap-2">
+            <LogoutButton />
+          </div>
         </div>
       </header>
 

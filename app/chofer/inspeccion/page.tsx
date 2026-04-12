@@ -2,6 +2,8 @@ import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { getTodayInspection } from "@/lib/server/chofer/queries";
 import { InspectionView } from "@/components/chofer/inspection-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function InspeccionPage() {
   const user = await getCurrentUser();
   const driverId = user.profile.driver_id!;
