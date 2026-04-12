@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { getTodayShift } from "@/lib/server/chofer/queries";
 import { ShiftView } from "@/components/chofer/shift-view";
-import { DebugButton } from "@/components/chofer/debug-button";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +14,6 @@ export default async function TurnoPage() {
       <h2 className="text-base font-semibold text-neutral-900">
         Turno de hoy
       </h2>
-      <DebugButton driverId={driverId} userId={user.id} />
       <ShiftView shift={shift} />
     </div>
   );

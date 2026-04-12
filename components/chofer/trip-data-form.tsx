@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   registerTripEventAction,
   registerTripDataAction,
-  uploadRemitoAction,
   type ChoferActionState,
-} from "@/lib/server/chofer/actions";
+} from "@/lib/server/chofer/trip-actions";
+import { uploadRemitoAction } from "@/lib/server/chofer/remito-actions";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 
 const TRIP_EVENTS = [

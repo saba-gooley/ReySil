@@ -1,0 +1,122 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createAdminClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/server/auth/get-current-user";
+import { z } from "zod";
+
+export type ChoferActionState = {
+  error?: string;
+  success?: boolean;
+};
+
+// =========================================================================
+// HU-CHO-003: Trip events (llegada/salida cliente)
+// =========================================================================
+
+export async function registerTripEventAction(
+  tripId: string,
+  eventType: string,
+  ocurridoAt: string,
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+    const supabase = createAdminClient();
+
+    const { error: evErr } = await supabase.from("trip_events").insert({
+      trip_id: tripId,
+      tipo: eventType,
+      ocurrido_at: ocurridoAt,
+    });
+    if (evErr) return { error: `Error al registrar evento: ${evErr.message}` };
+
+    // Update trip estado to EN_CURSO if it's ASIGNADO
+    await supabase
+      .from("trips")
+      .update({ estado: "EN_CURSO" })
+      .eq("id", tripId)
+      .eq("estado", "ASIGNADO");
+
+    revalidatePath("/chofer");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[registerTripEventAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+// =========================================================================
+// HU-CHO-003: Trip driver data (km, pernocto, obs)
+// =========================================================================
+
+const TripDataSchema = z.object({
+  trip_id: z.string().uuid(),
+  km_inicial: z.coerce.number().optional().nullable(),
+  km_50_porc: z.coerce.number().optional().nullable(),
+  km_100_porc: z.coerce.number().optional().nullable(),
+  km_final: z.coerce.number().optional().nullable(),
+  pernocto: z.boolean().optional().default(false),
+  observaciones: z.string().optional().default(""),
+});
+
+export async function registerTripDataAction(
+  _prev: ChoferActionState,
+  formData: FormData,
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+    const raw = JSON.parse(formData.get("payload") as string);
+    const parsed = TripDataSchema.safeParse(raw);
+    if (!parsed.success) {
+      return { error: Object.values(parsed.error.flatten().fieldErrors).flat().join(", ") };
+    }
+
+    const d = parsed.data;
+    const supabase = createAdminClient();
+
+    // Upsert trip_driver_data
+    const { data: existing } = await supabase
+      .from("trip_driver_data")
+      .select("id")
+      .eq("trip_id", d.trip_id)
+      .maybeSingle();
+
+    const driverDataPayload = {
+      trip_id: d.trip_id,
+      km_inicial: d.km_inicial ?? null,
+      km_50_porc: d.km_50_porc ?? null,
+      km_100_porc: d.km_100_porc ?? null,
+      km_final: d.km_final ?? null,
+      pernocto: d.pernocto,
+      observaciones: d.observaciones || null,
+      registrado_by: user.id,
+    };
+
+    if (existing) {
+      const { error } = await supabase
+        .from("trip_driver_data")
+        .update(driverDataPayload)
+        .eq("id", existing.id);
+      if (error) return { error: error.message };
+    } else {
+      const { error } = await supabase
+        .from("trip_driver_data")
+        .insert(driverDataPayload);
+      if (error) return { error: error.message };
+    }
+
+    revalidatePath("/chofer");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[registerTripDataAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}

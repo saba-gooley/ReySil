@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { registerShiftEvent } from "@/lib/server/chofer/actions";
+import { registerShiftEvent } from "@/lib/server/chofer/shift-actions";
 
 type Shift = {
   id: string;
