@@ -4,9 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
-import { notifyRemitoUploaded } from "@/lib/server/notifications/notify-remito";
-import { generateAndUploadInspectionPdf } from "@/lib/server/pdf/generate-inspection";
-import { uploadToDrive } from "@/lib/server/drive/upload";
 
 export type ChoferActionState = {
   error?: string;
@@ -224,6 +221,7 @@ export async function uploadRemitoAction(
   let driveUrl: string;
   let driveFileId: string;
   try {
+    const { uploadToDrive } = await import("@/lib/server/drive/upload");
     const result = await uploadToDrive({
       fileName,
       mimeType: file.type || "image/jpeg",
@@ -250,7 +248,9 @@ export async function uploadRemitoAction(
   if (error) return { error: `Error al guardar remito: ${error.message}` };
 
   // HU-NOT-002: fire-and-forget email to client with remito link
-  notifyRemitoUploaded(tripId, driveUrl).catch(() => {});
+  import("@/lib/server/notifications/notify-remito").then(({ notifyRemitoUploaded }) =>
+    notifyRemitoUploaded(tripId, driveUrl).catch(() => {}),
+  );
 
   revalidatePath("/chofer");
   return { success: true };
@@ -459,6 +459,7 @@ async function generateInspectionPdfAsync(
 
   if (!items || items.length === 0) return;
 
+  const { generateAndUploadInspectionPdf } = await import("@/lib/server/pdf/generate-inspection");
   const { pdfUrl, driveFileId } = await generateAndUploadInspectionPdf({
     driverName,
     patente: inspection.patente,
