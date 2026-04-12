@@ -14,6 +14,13 @@ export type ChoferActionState = {
 };
 
 // =========================================================================
+// DEBUG: simple test action
+// =========================================================================
+export async function debugTestAction(): Promise<ChoferActionState> {
+  return { success: true, error: `OK at ${new Date().toISOString()}` };
+}
+
+// =========================================================================
 // HU-CHO-002: Shift log events
 // =========================================================================
 
