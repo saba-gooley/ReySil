@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
 import { notifyRemitoUploaded } from "@/lib/server/notifications/notify-remito";
@@ -31,7 +31,7 @@ export async function registerShiftEvent(
   const driverId = user.profile.driver_id;
   if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
   const value = timestamp ?? new Date().toISOString();
 
@@ -75,7 +75,7 @@ export async function registerTripEventAction(
   const driverId = user.profile.driver_id;
   if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const { error: evErr } = await supabase.from("trip_events").insert({
     trip_id: tripId,
@@ -124,7 +124,7 @@ export async function registerTripDataAction(
   }
 
   const d = parsed.data;
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   // Upsert trip_driver_data
   const { data: existing } = await supabase
@@ -183,7 +183,7 @@ export async function uploadRemitoAction(
 
   if (!REMITO_FOLDER_ID) return { error: "Google Drive no configurado" };
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   // Fetch trip + client name for file naming: [Cliente]-[Fecha]-[seq].jpg
   const { data: trip } = await supabase
@@ -299,7 +299,7 @@ export async function startInspectionAction(
   const driverId = user.profile.driver_id;
   if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
   // Check if inspection already exists
@@ -361,7 +361,7 @@ export async function updateInspectionItemAction(
   observaciones?: string,
 ): Promise<ChoferActionState> {
   await getCurrentUser();
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("inspection_items")
@@ -382,7 +382,7 @@ export async function completeInspectionAction(
   observaciones?: string,
 ): Promise<ChoferActionState> {
   const user = await getCurrentUser();
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const now = new Date().toISOString();
 
