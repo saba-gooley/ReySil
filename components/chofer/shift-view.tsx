@@ -78,22 +78,27 @@ function ShiftEventField({
     setLoading(true);
     onError("");
 
-    const timestamp = useNow
-      ? new Date().toISOString()
-      : (() => {
-          const today = new Date().toISOString().split("T")[0];
-          return new Date(`${today}T${time}:00`).toISOString();
-        })();
+    try {
+      const timestamp = useNow
+        ? new Date().toISOString()
+        : (() => {
+            const today = new Date().toISOString().split("T")[0];
+            return new Date(`${today}T${time}:00`).toISOString();
+          })();
 
-    const result = await registerShiftEvent(
-      field as "llegada_deposito" | "salida_deposito" | "vuelta_deposito" | "fin_turno",
-      timestamp,
-    );
-    setLoading(false);
-    if (result.error) {
-      onError(result.error);
-    } else {
-      onDone();
+      const result = await registerShiftEvent(
+        field as "llegada_deposito" | "salida_deposito" | "vuelta_deposito" | "fin_turno",
+        timestamp,
+      );
+      setLoading(false);
+      if (result.error) {
+        onError(result.error);
+      } else {
+        onDone();
+      }
+    } catch (err) {
+      setLoading(false);
+      onError(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 

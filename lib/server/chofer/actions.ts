@@ -27,6 +27,7 @@ export async function registerShiftEvent(
   field: ShiftField,
   timestamp?: string,
 ): Promise<ChoferActionState> {
+  try {
   const user = await getCurrentUser();
   const driverId = user.profile.driver_id;
   if (!driverId) return { error: "Usuario no vinculado a un chofer" };
@@ -60,6 +61,11 @@ export async function registerShiftEvent(
 
   revalidatePath("/chofer/turno");
   return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err; // re-throw Next.js redirects
+    console.error("[registerShiftEvent] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
 }
 
 // =========================================================================
@@ -71,28 +77,34 @@ export async function registerTripEventAction(
   eventType: string,
   ocurridoAt: string,
 ): Promise<ChoferActionState> {
-  const user = await getCurrentUser();
-  const driverId = user.profile.driver_id;
-  if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
-  const supabase = createAdminClient();
+    const supabase = createAdminClient();
 
-  const { error: evErr } = await supabase.from("trip_events").insert({
-    trip_id: tripId,
-    tipo: eventType,
-    ocurrido_at: ocurridoAt,
-  });
-  if (evErr) return { error: `Error al registrar evento: ${evErr.message}` };
+    const { error: evErr } = await supabase.from("trip_events").insert({
+      trip_id: tripId,
+      tipo: eventType,
+      ocurrido_at: ocurridoAt,
+    });
+    if (evErr) return { error: `Error al registrar evento: ${evErr.message}` };
 
-  // Update trip estado to EN_CURSO if it's ASIGNADO
-  await supabase
-    .from("trips")
-    .update({ estado: "EN_CURSO" })
-    .eq("id", tripId)
-    .eq("estado", "ASIGNADO");
+    // Update trip estado to EN_CURSO if it's ASIGNADO
+    await supabase
+      .from("trips")
+      .update({ estado: "EN_CURSO" })
+      .eq("id", tripId)
+      .eq("estado", "ASIGNADO");
 
-  revalidatePath("/chofer");
-  return { success: true };
+    revalidatePath("/chofer");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[registerTripEventAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
 }
 
 // =========================================================================
@@ -295,64 +307,70 @@ export { INSPECTION_SECTIONS };
 export async function startInspectionAction(
   patente: string,
 ): Promise<{ id: string } | { error: string }> {
-  const user = await getCurrentUser();
-  const driverId = user.profile.driver_id;
-  if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
-  const supabase = createAdminClient();
-  const today = new Date().toISOString().split("T")[0];
+    const supabase = createAdminClient();
+    const today = new Date().toISOString().split("T")[0];
 
-  // Check if inspection already exists
-  const { data: existing } = await supabase
-    .from("inspections")
-    .select("id")
-    .eq("driver_id", driverId)
-    .eq("fecha", today)
-    .eq("patente", patente)
-    .maybeSingle();
+    // Check if inspection already exists
+    const { data: existing } = await supabase
+      .from("inspections")
+      .select("id")
+      .eq("driver_id", driverId)
+      .eq("fecha", today)
+      .eq("patente", patente)
+      .maybeSingle();
 
-  if (existing) return { id: existing.id };
+    if (existing) return { id: existing.id };
 
-  // Create inspection
-  const { data: inspection, error: insErr } = await supabase
-    .from("inspections")
-    .insert({
-      driver_id: driverId,
-      patente,
-      fecha: today,
-    })
-    .select("id")
-    .single();
+    // Create inspection
+    const { data: inspection, error: insErr } = await supabase
+      .from("inspections")
+      .insert({
+        driver_id: driverId,
+        patente,
+        fecha: today,
+      })
+      .select("id")
+      .single();
 
-  if (insErr) return { error: insErr.message };
+    if (insErr) return { error: insErr.message };
 
-  // Create all items
-  const items: {
-    inspection_id: string;
-    seccion: string;
-    item_codigo: string;
-    item_descripcion: string;
-  }[] = [];
+    // Create all items
+    const items: {
+      inspection_id: string;
+      seccion: string;
+      item_codigo: string;
+      item_descripcion: string;
+    }[] = [];
 
-  for (const [seccion, sectionItems] of Object.entries(INSPECTION_SECTIONS)) {
-    for (const item of sectionItems) {
-      items.push({
-        inspection_id: inspection.id,
-        seccion,
-        item_codigo: item.codigo,
-        item_descripcion: item.desc,
-      });
+    for (const [seccion, sectionItems] of Object.entries(INSPECTION_SECTIONS)) {
+      for (const item of sectionItems) {
+        items.push({
+          inspection_id: inspection.id,
+          seccion,
+          item_codigo: item.codigo,
+          item_descripcion: item.desc,
+        });
+      }
     }
+
+    const { error: itemsErr } = await supabase
+      .from("inspection_items")
+      .insert(items);
+
+    if (itemsErr) return { error: itemsErr.message };
+
+    revalidatePath("/chofer/inspeccion");
+    return { id: inspection.id };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[startInspectionAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
   }
-
-  const { error: itemsErr } = await supabase
-    .from("inspection_items")
-    .insert(items);
-
-  if (itemsErr) return { error: itemsErr.message };
-
-  revalidatePath("/chofer/inspeccion");
-  return { id: inspection.id };
 }
 
 export async function updateInspectionItemAction(
