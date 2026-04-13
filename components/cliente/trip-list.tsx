@@ -31,6 +31,7 @@ export function TripList({ trips }: { trips: TripRow[] }) {
             <th className="px-4 py-3">Estado</th>
             <th className="px-4 py-3">Tipo</th>
             <th className="px-4 py-3">Fecha solicitada</th>
+            <th className="px-4 py-3">Origen</th>
             <th className="px-4 py-3">Destino</th>
             <th className="px-4 py-3">Hoja de ruta</th>
             <th className="px-4 py-3">Hora</th>
@@ -103,6 +104,9 @@ function TripRowComponent({
             : "—"}
         </td>
         <td className="px-4 py-3 text-sm">
+          {trip.origen_descripcion || "—"}
+        </td>
+        <td className="px-4 py-3 text-sm">
           {trip.destino_descripcion || "—"}
         </td>
         <td className="px-4 py-3 text-xs text-neutral-600">
@@ -128,7 +132,7 @@ function TripRowComponent({
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={10} className="bg-neutral-50 px-4 py-4">
+          <td colSpan={11} className="bg-neutral-50 px-4 py-4">
             <TripDetail trip={trip} />
           </td>
         </tr>
@@ -210,6 +214,20 @@ function TripDetail({ trip }: { trip: TripRow }) {
                 <Row label="Booking" value={trip.containers.reservations.numero_booking} />
                 <Row label="Naviera" value={trip.containers.reservations.naviera} />
                 <Row label="Buque" value={trip.containers.reservations.buque} />
+                <Row label="Orden" value={trip.containers.reservations.orden} />
+                <Row label="Mercaderia" value={trip.containers.reservations.mercaderia} />
+                <Row label="Despacho" value={trip.containers.reservations.despacho} />
+                <Row label="Carga" value={trip.containers.reservations.carga} />
+                <Row label="Terminal" value={trip.containers.reservations.terminal} />
+                <Row label="Devuelve en" value={trip.containers.reservations.devuelve_en} />
+                <Row
+                  label="Libre hasta"
+                  value={
+                    trip.containers.reservations.libre_hasta
+                      ? new Date(trip.containers.reservations.libre_hasta + "T00:00:00").toLocaleDateString("es-AR")
+                      : null
+                  }
+                />
                 <Row
                   label="Fecha arribo"
                   value={
@@ -286,11 +304,11 @@ function TripDetail({ trip }: { trip: TripRow }) {
       )}
 
       {/* Remitos */}
-      {trip.remitos.length > 0 && (
-        <div className="space-y-2 sm:col-span-3">
-          <h4 className="text-xs font-semibold uppercase text-neutral-400">
-            Remitos
-          </h4>
+      <div className="space-y-2 sm:col-span-3">
+        <h4 className="text-xs font-semibold uppercase text-neutral-400">
+          Remitos
+        </h4>
+        {trip.remitos.length > 0 ? (
           <ul className="flex flex-wrap gap-2">
             {trip.remitos.map((r) => (
               <li key={r.id}>
@@ -299,9 +317,9 @@ function TripDetail({ trip }: { trip: TripRow }) {
                     href={r.drive_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-reysil-red hover:underline"
+                    className="text-xs font-medium text-green-600 hover:underline"
                   >
-                    Ver remito ({r.estado.toLowerCase()})
+                    Ver remito
                   </a>
                 ) : (
                   <span className="text-xs text-neutral-400">
@@ -311,8 +329,10 @@ function TripDetail({ trip }: { trip: TripRow }) {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-neutral-400">No hay remito cargado</p>
+        )}
+      </div>
     </div>
   );
 }

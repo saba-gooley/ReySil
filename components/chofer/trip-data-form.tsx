@@ -86,6 +86,7 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
       </div>
 
       {/* Driver data form */}
+      <fieldset disabled={trip.estado === "FINALIZADO"}>
       <form action={handleDataSubmit} className="space-y-3">
         {dataState.error && (
           <p className="text-xs text-red-600">{dataState.error}</p>
@@ -160,6 +161,7 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
 
         <DataSubmitBtn />
       </form>
+      </fieldset>
 
       {/* Upload remito */}
       <form action={handleRemitoSubmit} className="space-y-2">

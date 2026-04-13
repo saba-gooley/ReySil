@@ -30,21 +30,19 @@ export function TripTable({
   if (filterText.trim()) {
     const words = filterText.toLowerCase().trim().split(/\s+/);
     filtered = trips.filter((t) => {
-      const searchable = [
+      const tokens = [
         t.clients.nombre,
         t.destino_descripcion,
         t.origen_descripcion,
         t.trip_assignments?.patente,
         t.trip_assignments?.drivers?.apellido,
         t.trip_assignments?.drivers?.nombre,
-        t.trip_assignments?.drivers
-          ? `${t.trip_assignments.drivers.nombre} ${t.trip_assignments.drivers.apellido}`
-          : null,
       ]
         .filter(Boolean)
         .join(" ")
-        .toLowerCase();
-      return words.every((w) => searchable.includes(w));
+        .toLowerCase()
+        .split(/\s+/);
+      return words.every((w) => tokens.some((tok) => tok.startsWith(w)));
     });
   }
 
@@ -134,6 +132,7 @@ export function TripTable({
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Fecha solicitada</th>
+                <th className="px-4 py-3">Origen</th>
                 <th className="px-4 py-3">Destino</th>
                 {showAssignment && <th className="px-4 py-3">Chofer</th>}
                 {showAssignment && <th className="px-4 py-3">Patente</th>}
@@ -217,6 +216,9 @@ function TripRow({
             : "—"}
         </td>
         <td className="px-4 py-3 text-sm">
+          {trip.origen_descripcion || "—"}
+        </td>
+        <td className="px-4 py-3 text-sm">
           {trip.destino_descripcion || "—"}
         </td>
         {showAssignment && (
@@ -247,7 +249,7 @@ function TripRow({
         <tr>
           <td
             colSpan={
-              3 +
+              4 +
               (showAssignment ? 2 : 0) +
               1 +
               (actions ? 1 : 0) +
@@ -334,6 +336,20 @@ function TripDetail({
               <Detail label="Booking" value={trip.containers.reservations.numero_booking} />
               <Detail label="Naviera" value={trip.containers.reservations.naviera} />
               <Detail label="Buque" value={trip.containers.reservations.buque} />
+              <Detail label="Orden" value={trip.containers.reservations.orden} />
+              <Detail label="Mercaderia" value={trip.containers.reservations.mercaderia} />
+              <Detail label="Despacho" value={trip.containers.reservations.despacho} />
+              <Detail label="Carga" value={trip.containers.reservations.carga} />
+              <Detail label="Terminal" value={trip.containers.reservations.terminal} />
+              <Detail label="Devuelve en" value={trip.containers.reservations.devuelve_en} />
+              <Detail
+                label="Libre hasta"
+                value={
+                  trip.containers.reservations.libre_hasta
+                    ? new Date(trip.containers.reservations.libre_hasta + "T00:00:00").toLocaleDateString("es-AR")
+                    : null
+                }
+              />
               <Detail
                 label="Fecha arribo"
                 value={
@@ -402,25 +418,29 @@ function TripDetail({
         </div>
       )}
 
-      {showRemitos && trip.remitos.length > 0 && (
+      {showRemitos && (
         <div className="space-y-1 sm:col-span-3">
           <h4 className="text-xs font-semibold uppercase text-neutral-400">
             Remitos
           </h4>
-          <ul className="flex flex-wrap gap-2">
-            {trip.remitos.map((r) => (
-              <li key={r.id}>
-                <a
-                  href={r.drive_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-reysil-red hover:underline"
-                >
-                  Ver remito ({r.estado.toLowerCase()})
-                </a>
-              </li>
-            ))}
-          </ul>
+          {trip.remitos.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {trip.remitos.map((r) => (
+                <li key={r.id}>
+                  <a
+                    href={r.drive_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-green-600 hover:underline"
+                  >
+                    Ver remito
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-neutral-400">No hay remito cargado</p>
+          )}
         </div>
       )}
     </div>

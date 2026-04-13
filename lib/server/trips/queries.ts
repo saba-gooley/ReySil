@@ -46,6 +46,13 @@ export type TripRow = {
       fecha_arribo: string | null;
       fecha_carga: string | null;
       observaciones: string | null;
+      orden: string | null;
+      mercaderia: string | null;
+      despacho: string | null;
+      carga: string | null;
+      terminal: string | null;
+      devuelve_en: string | null;
+      libre_hasta: string | null;
     } | null;
   } | null;
   remitos: {
@@ -94,7 +101,7 @@ const TRIP_SELECT = `
   trip_assignments(patente, drivers(nombre, apellido)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   trip_events(id, tipo, ocurrido_at, observaciones),
-  containers(numero, tipo, peso_carga_kg, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones)),
+  containers(numero, tipo, peso_carga_kg, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   remitos(id, drive_url, estado)
 `;
 
@@ -109,7 +116,7 @@ export async function listActiveTrips(clientId: string) {
     .select(TRIP_SELECT)
     .eq("client_id", clientId)
     .in("estado", ["PENDIENTE", "PREASIGNADO", "ASIGNADO", "EN_CURSO"])
-    .order("created_at", { ascending: false });
+    .order("fecha_solicitada", { ascending: true });
 
   if (error) throw error;
   return normalizeTrips(data);
@@ -133,7 +140,7 @@ export async function listTripHistory(
     .select(TRIP_SELECT, { count: "exact" })
     .eq("client_id", clientId)
     .in("estado", ["FINALIZADO", "CANCELADO"])
-    .order("created_at", { ascending: false })
+    .order("fecha_solicitada", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
   if (options?.from) {

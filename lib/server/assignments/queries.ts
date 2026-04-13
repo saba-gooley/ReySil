@@ -46,6 +46,13 @@ export type OperatorTripRow = {
       fecha_arribo: string | null;
       fecha_carga: string | null;
       observaciones: string | null;
+      orden: string | null;
+      mercaderia: string | null;
+      despacho: string | null;
+      carga: string | null;
+      terminal: string | null;
+      devuelve_en: string | null;
+      libre_hasta: string | null;
     };
   } | null;
   trip_events: {
@@ -70,7 +77,7 @@ const OPERATOR_TRIP_SELECT = `
   clients(nombre, codigo),
   trip_assignments(id, patente, patente_acoplado, driver_id, drivers(id, nombre, apellido, codigo)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
-  containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones)),
+  containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   trip_events(id, tipo, ocurrido_at, observaciones),
   remitos(id, drive_url, estado, uploaded_at)
 `;
@@ -106,7 +113,7 @@ export async function listPendingTrips() {
     .from("trips")
     .select(OPERATOR_TRIP_SELECT)
     .in("estado", ["PENDIENTE", "PREASIGNADO"])
-    .order("created_at", { ascending: true });
+    .order("fecha_solicitada", { ascending: true });
 
   if (error) throw error;
   return normalizeOperatorTrips(data);
@@ -160,7 +167,7 @@ export async function listFinishedTrips(options?: {
     .from("trips")
     .select(OPERATOR_TRIP_SELECT, { count: "exact" })
     .in("estado", ["FINALIZADO", "CANCELADO"])
-    .order("created_at", { ascending: false })
+    .order("fecha_solicitada", { ascending: false })
     .range(offset, offset + pageSize - 1);
 
   if (options?.from) {

@@ -15,6 +15,7 @@ export default async function EnCursoPage() {
         trips={trips}
         showAssignment
         showEvents
+        showRemitos
         sortByPatente
       />
     </div>

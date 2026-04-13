@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server";
 import { CreateClientSchema, UpdateClientSchema } from "@/lib/validators/client";
 
@@ -31,11 +30,10 @@ export async function createClientAction(
   const { codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
 
-  const supabase = createClient();
   const admin = createAdminClient();
 
   // Check unique codigo
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("clients")
     .select("id")
     .eq("codigo", codigo)
@@ -47,7 +45,7 @@ export async function createClientAction(
 
   // Check unique emails across all client_emails
   for (const entry of emails) {
-    const { data: emailExists } = await supabase
+    const { data: emailExists } = await admin
       .from("client_emails")
       .select("id")
       .eq("email", entry.email)
@@ -59,7 +57,7 @@ export async function createClientAction(
   }
 
   // 1. Insert client
-  const { data: client, error: clientError } = await supabase
+  const { data: client, error: clientError } = await admin
     .from("clients")
     .insert({ codigo, nombre, cuit: cuit || null, telefono: telefono || null, direccion: direccion || null })
     .select("id")
@@ -76,7 +74,7 @@ export async function createClientAction(
     es_principal: e.es_principal,
   }));
 
-  const { error: emailsError } = await supabase
+  const { error: emailsError } = await admin
     .from("client_emails")
     .insert(emailRows);
 
@@ -94,7 +92,7 @@ export async function createClientAction(
       activo: d.activo,
     }));
 
-    const { error: depError } = await supabase
+    const { error: depError } = await admin
       .from("client_deposits")
       .insert(depositRows);
 
@@ -161,11 +159,10 @@ export async function updateClientAction(
   const { id, codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
 
-  const supabase = createClient();
   const admin = createAdminClient();
 
   // Check unique codigo (excluding self)
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("clients")
     .select("id")
     .eq("codigo", codigo)
@@ -178,7 +175,7 @@ export async function updateClientAction(
 
   // Check unique emails (excluding own client_emails)
   for (const entry of emails) {
-    const { data: emailExists } = await supabase
+    const { data: emailExists } = await admin
       .from("client_emails")
       .select("id, client_id")
       .eq("email", entry.email)
@@ -190,7 +187,7 @@ export async function updateClientAction(
   }
 
   // 1. Update client
-  const { error: clientError } = await supabase
+  const { error: clientError } = await admin
     .from("clients")
     .update({ codigo, nombre, cuit: cuit || null, telefono: telefono || null, direccion: direccion || null })
     .eq("id", id);
@@ -200,7 +197,7 @@ export async function updateClientAction(
   }
 
   // 2. Sync emails: determine added, removed, kept
-  const { data: currentEmails } = await supabase
+  const { data: currentEmails } = await admin
     .from("client_emails")
     .select("id, email, es_principal")
     .eq("client_id", id);
@@ -216,7 +213,7 @@ export async function updateClientAction(
 
   // Remove old emails + ban their auth users
   for (const old of toRemove) {
-    await supabase.from("client_emails").delete().eq("id", old.id);
+    await admin.from("client_emails").delete().eq("id", old.id);
 
     // Find and ban the auth user
     const { data: profile } = await admin
@@ -237,7 +234,7 @@ export async function updateClientAction(
 
   // Update es_principal on existing emails
   for (const entry of toUpdate) {
-    await supabase
+    await admin
       .from("client_emails")
       .update({ es_principal: entry.es_principal })
       .eq("client_id", id)
@@ -252,7 +249,7 @@ export async function updateClientAction(
       es_principal: e.es_principal,
     }));
 
-    const { error: emailsError } = await supabase
+    const { error: emailsError } = await admin
       .from("client_emails")
       .insert(emailRows);
 
@@ -296,7 +293,7 @@ export async function updateClientAction(
   }
 
   // 3. Sync depositos: delete all + re-insert (simpler for small sets)
-  await supabase.from("client_deposits").delete().eq("client_id", id);
+  await admin.from("client_deposits").delete().eq("client_id", id);
 
   if (depositos.length > 0) {
     const depositRows = depositos.map((d) => ({
@@ -307,7 +304,7 @@ export async function updateClientAction(
       activo: d.activo,
     }));
 
-    const { error: depError } = await supabase
+    const { error: depError } = await admin
       .from("client_deposits")
       .insert(depositRows);
 
@@ -329,10 +326,9 @@ export async function toggleClientAction(
   clientId: string,
   activo: boolean,
 ): Promise<ClientActionState> {
-  const supabase = createClient();
   const admin = createAdminClient();
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("clients")
     .update({ activo })
     .eq("id", clientId);
