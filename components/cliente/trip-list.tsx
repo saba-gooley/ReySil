@@ -30,13 +30,9 @@ export function TripList({ trips }: { trips: TripRow[] }) {
           <tr>
             <th className="px-4 py-3">Estado</th>
             <th className="px-4 py-3">Tipo</th>
-            <th className="px-4 py-3">Fecha solicitada</th>
+            <th className="px-4 py-3">Fecha</th>
             <th className="px-4 py-3">Origen</th>
             <th className="px-4 py-3">Destino</th>
-            <th className="px-4 py-3">Hoja de ruta</th>
-            <th className="px-4 py-3">Hora</th>
-            <th className="px-4 py-3">Tipo camion</th>
-            <th className="px-4 py-3">Peon</th>
             <th className="px-4 py-3">Chofer / Patente</th>
             <th className="px-4 py-3 w-8"></th>
           </tr>
@@ -48,16 +44,12 @@ export function TripList({ trips }: { trips: TripRow[] }) {
               label: trip.estado,
               color: "bg-neutral-100 text-neutral-600",
             };
-            const assignment = trip.trip_assignments;
-            const meta = (trip.trip_reparto_fields?.metadata ?? {}) as Record<string, unknown>;
 
             return (
               <TripRowComponent
                 key={trip.id}
                 trip={trip}
                 estado={estado}
-                assignment={assignment}
-                meta={meta}
                 isExpanded={isExpanded}
                 onToggle={() => setExpandedId(isExpanded ? null : trip.id)}
               />
@@ -72,18 +64,16 @@ export function TripList({ trips }: { trips: TripRow[] }) {
 function TripRowComponent({
   trip,
   estado,
-  assignment,
-  meta,
   isExpanded,
   onToggle,
 }: {
   trip: TripRow;
   estado: { label: string; color: string };
-  assignment: TripRow["trip_assignments"];
-  meta: Record<string, unknown>;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
+  const assignment = trip.trip_assignments;
+
   return (
     <>
       <tr
@@ -109,18 +99,6 @@ function TripRowComponent({
         <td className="px-4 py-3 text-sm">
           {trip.destino_descripcion || "—"}
         </td>
-        <td className="px-4 py-3 text-xs text-neutral-600">
-          {(meta.hoja_de_ruta as string) || "—"}
-        </td>
-        <td className="px-4 py-3 text-xs text-neutral-600">
-          {(meta.horario as string) || "—"}
-        </td>
-        <td className="px-4 py-3 text-xs text-neutral-600">
-          {(meta.tipo_camion as string) || "—"}
-        </td>
-        <td className="px-4 py-3 text-xs text-neutral-600">
-          {(meta.peon as string) || "—"}
-        </td>
         <td className="px-4 py-3 text-xs text-neutral-500">
           {assignment
             ? `${assignment.drivers.nombre} ${assignment.drivers.apellido} — ${assignment.patente}`
@@ -132,7 +110,7 @@ function TripRowComponent({
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={11} className="bg-neutral-50 px-4 py-4">
+          <td colSpan={7} className="bg-neutral-50 px-4 py-4">
             <TripDetail trip={trip} />
           </td>
         </tr>
@@ -143,6 +121,7 @@ function TripRowComponent({
 
 function TripDetail({ trip }: { trip: TripRow }) {
   const meta = (trip.trip_reparto_fields?.metadata ?? {}) as Record<string, unknown>;
+  const res = trip.containers?.reservations;
 
   return (
     <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
@@ -155,7 +134,7 @@ function TripDetail({ trip }: { trip: TripRow }) {
           <Row label="Tipo" value={trip.tipo} />
           <Row label="Estado" value={ESTADO_LABELS[trip.estado]?.label ?? trip.estado} />
           <Row
-            label="Fecha solicitada"
+            label="Fecha"
             value={
               trip.fecha_solicitada
                 ? new Date(trip.fecha_solicitada + "T00:00:00").toLocaleDateString("es-AR")
@@ -169,7 +148,7 @@ function TripDetail({ trip }: { trip: TripRow }) {
       </div>
 
       {/* Reparto fields */}
-      {trip.trip_reparto_fields && (
+      {trip.tipo === "REPARTO" && trip.trip_reparto_fields && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold uppercase text-neutral-400">
             Datos de carga
@@ -190,64 +169,59 @@ function TripDetail({ trip }: { trip: TripRow }) {
         </div>
       )}
 
-      {/* Container + reservation info */}
-      {trip.containers && (
+      {/* Contenedor fields */}
+      {trip.tipo === "CONTENEDOR" && (
         <div className="space-y-2">
           <h4 className="text-xs font-semibold uppercase text-neutral-400">
-            Contenedor
+            Datos del contenedor
           </h4>
           <dl className="space-y-1">
-            <Row label="Numero" value={trip.containers.numero} />
-            <Row label="Tipo" value={trip.containers.tipo} />
-            <Row label="Peso (kg)" value={trip.containers.peso_carga_kg?.toString()} />
-            {trip.containers.precintos && trip.containers.precintos.length > 0 && (
+            <Row label="Contenedor" value={trip.containers?.numero} />
+            <Row label="Tipo" value={trip.containers?.tipo} />
+            <Row label="Peso (kg)" value={trip.containers?.peso_carga_kg?.toString()} />
+            {trip.containers?.precintos && trip.containers.precintos.length > 0 && (
               <Row label="Precintos" value={trip.containers.precintos.join(", ")} />
             )}
-            <Row label="Observaciones" value={trip.containers.observaciones} />
-          </dl>
-          {trip.containers.reservations && (
-            <>
-              <h4 className="text-xs font-semibold uppercase text-neutral-400 mt-3">
-                Reserva
-              </h4>
-              <dl className="space-y-1">
-                <Row label="Booking" value={trip.containers.reservations.numero_booking} />
-                <Row label="Naviera" value={trip.containers.reservations.naviera} />
-                <Row label="Buque" value={trip.containers.reservations.buque} />
-                <Row label="Orden" value={trip.containers.reservations.orden} />
-                <Row label="Mercaderia" value={trip.containers.reservations.mercaderia} />
-                <Row label="Despacho" value={trip.containers.reservations.despacho} />
-                <Row label="Carga" value={trip.containers.reservations.carga} />
-                <Row label="Terminal" value={trip.containers.reservations.terminal} />
-                <Row label="Devuelve en" value={trip.containers.reservations.devuelve_en} />
+            <Row label="Observaciones" value={trip.containers?.observaciones} />
+            {res && (
+              <>
+                <Row label="Orden" value={res.orden} />
+                <Row label="Mercaderia" value={res.mercaderia} />
+                <Row label="Despacho" value={res.despacho} />
+                <Row label="Carga" value={res.carga} />
+                <Row label="Terminal" value={res.terminal} />
+                <Row label="Devuelve en" value={res.devuelve_en} />
                 <Row
                   label="Libre hasta"
                   value={
-                    trip.containers.reservations.libre_hasta
-                      ? new Date(trip.containers.reservations.libre_hasta + "T00:00:00").toLocaleDateString("es-AR")
+                    res.libre_hasta
+                      ? new Date(res.libre_hasta + "T00:00:00").toLocaleDateString("es-AR")
                       : null
                   }
                 />
+                <Row label="Booking" value={res.numero_booking} />
+                <Row label="Naviera" value={res.naviera} />
+                <Row label="Buque" value={res.buque} />
                 <Row
                   label="Fecha arribo"
                   value={
-                    trip.containers.reservations.fecha_arribo
-                      ? new Date(trip.containers.reservations.fecha_arribo + "T00:00:00").toLocaleDateString("es-AR")
+                    res.fecha_arribo
+                      ? new Date(res.fecha_arribo + "T00:00:00").toLocaleDateString("es-AR")
                       : null
                   }
                 />
                 <Row
                   label="Fecha carga"
                   value={
-                    trip.containers.reservations.fecha_carga
-                      ? new Date(trip.containers.reservations.fecha_carga + "T00:00:00").toLocaleDateString("es-AR")
+                    res.fecha_carga
+                      ? new Date(res.fecha_carga + "T00:00:00").toLocaleDateString("es-AR")
                       : null
                   }
                 />
-                <Row label="Observaciones" value={trip.containers.reservations.observaciones} />
-              </dl>
-            </>
-          )}
+                <Row label="Obs. reserva" value={res.observaciones} />
+              </>
+            )}
+          </dl>
         </div>
       )}
 

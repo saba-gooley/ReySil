@@ -82,9 +82,18 @@ function normalizeTrips(rows: unknown[]): TripRow[] {
         reservations: res?.[0] ?? null,
       };
     }
+    const assignment = assignments?.[0] as Record<string, unknown> | undefined;
+    let normalizedAssignment = null;
+    if (assignment) {
+      const drv = assignment.drivers as unknown[] | Record<string, unknown> | null;
+      normalizedAssignment = {
+        ...assignment,
+        drivers: Array.isArray(drv) ? drv[0] ?? null : drv ?? null,
+      };
+    }
     return {
       ...raw,
-      trip_assignments: assignments?.[0] ?? null,
+      trip_assignments: normalizedAssignment,
       trip_reparto_fields: fields?.[0] ?? null,
       containers: normalizedContainer,
       trip_events: (raw.trip_events as unknown[]) ?? [],
