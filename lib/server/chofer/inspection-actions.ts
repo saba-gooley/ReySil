@@ -201,3 +201,24 @@ async function generateInspectionPdfAsync(
 
   console.log(`[inspection-pdf] PDF generated for ${inspection.patente}-${inspection.fecha}`);
 }
+
+// =========================================================================
+// Regenerate inspection PDF
+// =========================================================================
+
+export async function regenerateInspectionPdfAction(
+  inspectionId: string,
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+
+    await generateInspectionPdfAsync(inspectionId, user.profile.full_name ?? "Chofer");
+
+    revalidatePath("/chofer/inspeccion");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[regenerateInspectionPdfAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}

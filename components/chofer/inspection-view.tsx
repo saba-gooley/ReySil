@@ -6,6 +6,7 @@ import {
   startInspectionAction,
   updateInspectionItemAction,
   completeInspectionAction,
+  regenerateInspectionPdfAction,
 } from "@/lib/server/chofer/inspection-actions";
 import { INSPECTION_SECTIONS } from "@/lib/server/chofer/inspection-sections";
 
@@ -296,16 +297,7 @@ function CompletedInspectionView({
         >
           Ver inspeccion
         </button>
-        {inspection.pdf_url && (
-          <a
-            href={inspection.pdf_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-center text-sm text-reysil-red hover:underline"
-          >
-            Ver PDF de inspeccion
-          </a>
-        )}
+        <PdfButton inspectionId={inspection.id} pdfUrl={inspection.pdf_url} />
       </div>
     );
   }
@@ -347,16 +339,52 @@ function CompletedInspectionView({
         );
       })}
 
-      {inspection.pdf_url && (
-        <a
-          href={inspection.pdf_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-center text-sm text-reysil-red hover:underline mt-4"
-        >
-          Ver PDF de inspeccion
-        </a>
-      )}
+      <PdfButton inspectionId={inspection.id} pdfUrl={inspection.pdf_url} />
+    </div>
+  );
+}
+
+function PdfButton({ inspectionId, pdfUrl }: { inspectionId: string; pdfUrl: string | null }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  if (pdfUrl) {
+    return (
+      <a
+        href={pdfUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full text-center rounded-md bg-neutral-800 px-4 py-3 text-sm font-medium text-white hover:bg-neutral-700"
+      >
+        Ver PDF de inspeccion
+      </a>
+    );
+  }
+
+  async function handleRegenerate() {
+    setLoading(true);
+    setError(null);
+    const result = await regenerateInspectionPdfAction(inspectionId);
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      router.refresh();
+    }
+  }
+
+  return (
+    <div>
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      <button
+        type="button"
+        onClick={handleRegenerate}
+        disabled={loading}
+        className="w-full rounded-md bg-neutral-800 px-4 py-3 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-50"
+      >
+        {loading ? "Generando PDF..." : "Generar PDF"}
+      </button>
     </div>
   );
 }
