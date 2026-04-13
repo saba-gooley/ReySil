@@ -6,8 +6,8 @@ import {
   startInspectionAction,
   updateInspectionItemAction,
   completeInspectionAction,
-  INSPECTION_SECTIONS,
 } from "@/lib/server/chofer/inspection-actions";
+import { INSPECTION_SECTIONS } from "@/lib/server/chofer/inspection-sections";
 
 type InspectionItem = {
   id: string;
