@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export type TripRow = {
   id: string;
@@ -62,42 +62,43 @@ export type TripRow = {
   }[];
 };
 
-/**
- * Supabase returns all joined relations as arrays. For 1:1 relations
- * (trip_assignments, trip_reparto_fields, containers) we normalize
- * them to single objects or null.
- */
+/** Unwrap a value that may be an array (anon key) or a single object (service role). */
+function unwrapOne(val: unknown): unknown {
+  if (Array.isArray(val)) return val[0] ?? null;
+  return val ?? null;
+}
+
 function normalizeTrips(rows: unknown[]): TripRow[] {
   return (rows as Record<string, unknown>[]).map((r) => {
     const raw = r as Record<string, unknown>;
-    const assignments = raw.trip_assignments as unknown[] | null;
-    const fields = raw.trip_reparto_fields as unknown[] | null;
-    const cont = raw.containers as unknown[] | null;
-    const container = cont?.[0] as Record<string, unknown> | undefined;
+
+    // Normalize container + nested reservation
+    const container = unwrapOne(raw.containers) as Record<string, unknown> | null;
     let normalizedContainer = null;
     if (container) {
-      const res = container.reservations as unknown[] | null;
       normalizedContainer = {
         ...container,
-        reservations: res?.[0] ?? null,
+        reservations: unwrapOne(container.reservations) ?? null,
       };
     }
-    const assignment = assignments?.[0] as Record<string, unknown> | undefined;
+
+    // Normalize assignment + nested drivers
+    const assignment = unwrapOne(raw.trip_assignments) as Record<string, unknown> | null;
     let normalizedAssignment = null;
     if (assignment) {
-      const drv = assignment.drivers as unknown[] | Record<string, unknown> | null;
       normalizedAssignment = {
         ...assignment,
-        drivers: Array.isArray(drv) ? drv[0] ?? null : drv ?? null,
+        drivers: unwrapOne(assignment.drivers) ?? null,
       };
     }
+
     return {
       ...raw,
       trip_assignments: normalizedAssignment,
-      trip_reparto_fields: fields?.[0] ?? null,
+      trip_reparto_fields: unwrapOne(raw.trip_reparto_fields),
       containers: normalizedContainer,
-      trip_events: (raw.trip_events as unknown[]) ?? [],
-      remitos: (raw.remitos as unknown[]) ?? [],
+      trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
+      remitos: Array.isArray(raw.remitos) ? raw.remitos : [],
     } as TripRow;
   });
 }
@@ -119,7 +120,7 @@ const TRIP_SELECT = `
  * HU-CLI-004
  */
 export async function listActiveTrips(clientId: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("trips")
     .select(TRIP_SELECT)
@@ -139,7 +140,7 @@ export async function listTripHistory(
   clientId: string,
   options?: { from?: string; to?: string; page?: number; pageSize?: number },
 ) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const page = options?.page ?? 1;
   const pageSize = options?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
@@ -168,7 +169,7 @@ export async function listTripHistory(
  * Depositos preestablecidos del cliente para selectores de origen/destino.
  */
 export async function listClientDeposits(clientId: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("client_deposits")
     .select("id, nombre, direccion, tipo, activo")
