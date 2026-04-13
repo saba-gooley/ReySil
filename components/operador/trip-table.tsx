@@ -33,9 +33,13 @@ export function TripTable({
       const searchable = [
         t.clients.nombre,
         t.destino_descripcion,
+        t.origen_descripcion,
         t.trip_assignments?.patente,
-        t.trip_assignments?.drivers.apellido,
-        t.trip_assignments?.drivers.nombre,
+        t.trip_assignments?.drivers?.apellido,
+        t.trip_assignments?.drivers?.nombre,
+        t.trip_assignments?.drivers
+          ? `${t.trip_assignments.drivers.nombre} ${t.trip_assignments.drivers.apellido}`
+          : null,
       ]
         .filter(Boolean)
         .join(" ")

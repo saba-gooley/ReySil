@@ -204,13 +204,34 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
 
       {/* Finalizar viaje */}
       {trip.estado !== "FINALIZADO" && (
-        <FinalizeSection tripId={trip.id} onDone={() => router.refresh()} />
+        <FinalizeSection
+          tripId={trip.id}
+          kmType={kmType}
+          kmValue={kmValue}
+          pernocto={pernocto}
+          obs={obs}
+          onDone={() => router.refresh()}
+        />
       )}
     </div>
   );
 }
 
-function FinalizeSection({ tripId, onDone }: { tripId: string; onDone: () => void }) {
+function FinalizeSection({
+  tripId,
+  kmType,
+  kmValue,
+  pernocto,
+  obs,
+  onDone,
+}: {
+  tripId: string;
+  kmType: "50" | "100";
+  kmValue: string;
+  pernocto: boolean;
+  obs: string;
+  onDone: () => void;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showRemitoConfirm, setShowRemitoConfirm] = useState(false);
@@ -218,7 +239,13 @@ function FinalizeSection({ tripId, onDone }: { tripId: string; onDone: () => voi
   async function handleFinalize(skipRemito: boolean) {
     setLoading(true);
     setError(null);
-    const result = await finalizeTripAction(tripId, skipRemito);
+    const kmNum = kmValue ? Number(kmValue) : 0;
+    const result = await finalizeTripAction(tripId, skipRemito, {
+      kmType,
+      kmValue: kmNum,
+      pernocto,
+      observaciones: obs,
+    });
     setLoading(false);
 
     if (result.error === "__NO_REMITO__") {

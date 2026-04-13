@@ -128,6 +128,7 @@ export async function registerTripDataAction(
 export async function finalizeTripAction(
   tripId: string,
   skipRemito: boolean,
+  kmData?: { kmType: "50" | "100"; kmValue: number; pernocto: boolean; observaciones: string },
 ): Promise<ChoferActionState> {
   try {
     const user = await getCurrentUser();
@@ -158,6 +159,30 @@ export async function finalizeTripAction(
     }
     if (!eventTypes.has("SALIDA_CLIENTE")) {
       return { error: "Falta registrar la salida del cliente" };
+    }
+
+    // Auto-save km data if provided
+    if (kmData && kmData.kmValue > 0) {
+      const { data: existingData } = await supabase
+        .from("trip_driver_data")
+        .select("id")
+        .eq("trip_id", tripId)
+        .maybeSingle();
+
+      const payload = {
+        trip_id: tripId,
+        km_50_porc: kmData.kmType === "50" ? kmData.kmValue : null,
+        km_100_porc: kmData.kmType === "100" ? kmData.kmValue : null,
+        pernocto: kmData.pernocto,
+        observaciones: kmData.observaciones || null,
+        registrado_by: user.id,
+      };
+
+      if (existingData) {
+        await supabase.from("trip_driver_data").update(payload).eq("id", existingData.id);
+      } else {
+        await supabase.from("trip_driver_data").insert(payload);
+      }
     }
 
     // Validate driver data (km)
