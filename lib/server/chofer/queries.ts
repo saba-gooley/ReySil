@@ -99,7 +99,7 @@ export async function listTodayTrips(driverId: string) {
     .select(CHOFER_TRIP_SELECT)
     .in("id", assignedTripIds)
     .eq("fecha_solicitada", today)
-    .in("estado", ["ASIGNADO", "EN_CURSO"])
+    .in("estado", ["ASIGNADO", "EN_CURSO", "FINALIZADO"])
     .order("created_at", { ascending: true });
 
   if (error) throw error;
