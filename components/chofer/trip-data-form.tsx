@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   registerTripEventAction,
   registerTripDataAction,
+  finalizeTripAction,
   type ChoferActionState,
 } from "@/lib/server/chofer/trip-actions";
 import { uploadRemitoAction } from "@/lib/server/chofer/remito-actions";
@@ -200,6 +201,75 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
           </div>
         )}
       </form>
+
+      {/* Finalizar viaje */}
+      {trip.estado !== "FINALIZADO" && (
+        <FinalizeSection tripId={trip.id} onDone={() => router.refresh()} />
+      )}
+    </div>
+  );
+}
+
+function FinalizeSection({ tripId, onDone }: { tripId: string; onDone: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showRemitoConfirm, setShowRemitoConfirm] = useState(false);
+
+  async function handleFinalize(skipRemito: boolean) {
+    setLoading(true);
+    setError(null);
+    const result = await finalizeTripAction(tripId, skipRemito);
+    setLoading(false);
+
+    if (result.error === "__NO_REMITO__") {
+      setShowRemitoConfirm(true);
+      return;
+    }
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    onDone();
+  }
+
+  if (showRemitoConfirm) {
+    return (
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
+        <p className="text-sm font-medium text-yellow-800">
+          No se cargo remito para este viaje. Desea finalizar de todas formas?
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => handleFinalize(true)}
+            disabled={loading}
+            className="flex-1 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+          >
+            {loading ? "Finalizando..." : "Si, finalizar sin remito"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowRemitoConfirm(false)}
+            className="flex-1 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            No, volver
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-4 border-t border-neutral-200">
+      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+      <button
+        type="button"
+        onClick={() => handleFinalize(false)}
+        disabled={loading}
+        className="w-full rounded-md bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+      >
+        {loading ? "Finalizando..." : "Finalizar viaje"}
+      </button>
     </div>
   );
 }

@@ -120,3 +120,88 @@ export async function registerTripDataAction(
     return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
+
+// =========================================================================
+// Finalizar viaje
+// =========================================================================
+
+export async function finalizeTripAction(
+  tripId: string,
+  skipRemito: boolean,
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+    const supabase = createAdminClient();
+
+    // Validate trip exists and belongs to driver
+    const { data: assignment } = await supabase
+      .from("trip_assignments")
+      .select("trip_id")
+      .eq("trip_id", tripId)
+      .eq("driver_id", driverId)
+      .maybeSingle();
+
+    if (!assignment) return { error: "Viaje no asignado a este chofer" };
+
+    // Validate events
+    const { data: events } = await supabase
+      .from("trip_events")
+      .select("tipo")
+      .eq("trip_id", tripId);
+
+    const eventTypes = new Set((events ?? []).map((e) => e.tipo));
+    if (!eventTypes.has("LLEGADA_DESTINO_CLIENTE")) {
+      return { error: "Falta registrar la llegada al cliente" };
+    }
+    if (!eventTypes.has("SALIDA_CLIENTE")) {
+      return { error: "Falta registrar la salida del cliente" };
+    }
+
+    // Validate driver data (km)
+    const { data: driverData } = await supabase
+      .from("trip_driver_data")
+      .select("km_50_porc, km_100_porc")
+      .eq("trip_id", tripId)
+      .maybeSingle();
+
+    if (!driverData || (driverData.km_50_porc == null && driverData.km_100_porc == null)) {
+      return { error: "Falta registrar los km del viaje" };
+    }
+
+    // Validate remito (warn only)
+    if (!skipRemito) {
+      const { data: remitos } = await supabase
+        .from("remitos")
+        .select("id")
+        .eq("trip_id", tripId)
+        .limit(1);
+
+      if (!remitos || remitos.length === 0) {
+        return { error: "__NO_REMITO__" };
+      }
+    }
+
+    // Finalize
+    const { error } = await supabase
+      .from("trips")
+      .update({
+        estado: "FINALIZADO",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", tripId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/chofer");
+    revalidatePath("/operador/en-curso");
+    revalidatePath("/operador/finalizadas");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[finalizeTripAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
