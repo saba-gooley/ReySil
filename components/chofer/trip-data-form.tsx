@@ -23,11 +23,11 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
   const [dataState, dataAction] = useFormState(registerTripDataAction, initialState);
   const [remitoState, remitoAction] = useFormState(uploadRemitoAction, initialState);
 
-  const [km50, setKm50] = useState(
-    trip.trip_driver_data?.km_50_porc?.toString() ?? "",
+  const [kmType, setKmType] = useState<"50" | "100">(
+    trip.trip_driver_data?.km_100_porc != null ? "100" : "50",
   );
-  const [km100, setKm100] = useState(
-    trip.trip_driver_data?.km_100_porc?.toString() ?? "",
+  const [kmValue, setKmValue] = useState(
+    (trip.trip_driver_data?.km_100_porc ?? trip.trip_driver_data?.km_50_porc)?.toString() ?? "",
   );
   const [pernocto, setPernocto] = useState(
     trip.trip_driver_data?.pernocto ?? false,
@@ -40,12 +40,13 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
   const hasRemito = trip.remitos.length > 0;
 
   function handleDataSubmit(formData: FormData) {
+    const kmNum = kmValue ? Number(kmValue) : null;
     formData.set(
       "payload",
       JSON.stringify({
         trip_id: trip.id,
-        km_50_porc: km50 ? Number(km50) : null,
-        km_100_porc: km100 ? Number(km100) : null,
+        km_50_porc: kmType === "50" ? kmNum : null,
+        km_100_porc: kmType === "100" ? kmNum : null,
         pernocto,
         observaciones: obs,
       }),
@@ -92,26 +93,41 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
           <p className="text-xs text-green-600">Datos guardados</p>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-1 block text-xs text-neutral-500">
+        <div className="space-y-2">
+          <label className="mb-1 block text-xs text-neutral-500">
+            Tipo de carga
+          </label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <input
+                type="radio"
+                name={`km-type-${trip.id}`}
+                checked={kmType === "50"}
+                onChange={() => setKmType("50")}
+                className="border-neutral-300"
+              />
               Km 50%
             </label>
-            <input
-              type="number"
-              value={km50}
-              onChange={(e) => setKm50(e.target.value)}
-              className={inputClass}
-            />
+            <label className="flex items-center gap-2 text-sm text-neutral-700">
+              <input
+                type="radio"
+                name={`km-type-${trip.id}`}
+                checked={kmType === "100"}
+                onChange={() => setKmType("100")}
+                className="border-neutral-300"
+              />
+              Km 100%
+            </label>
           </div>
           <div>
             <label className="mb-1 block text-xs text-neutral-500">
-              Km 100%
+              Km
             </label>
             <input
               type="number"
-              value={km100}
-              onChange={(e) => setKm100(e.target.value)}
+              value={kmValue}
+              onChange={(e) => setKmValue(e.target.value)}
+              placeholder="Ingrese km"
               className={inputClass}
             />
           </div>
