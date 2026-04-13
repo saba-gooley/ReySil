@@ -50,6 +50,7 @@ export function InspectionView({
   const [error, setError] = useState<string | null>(null);
   const [currentSection, setCurrentSection] = useState(0);
   const [completing, setCompleting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
   async function handleStart() {
     if (!patente.trim()) {
@@ -111,26 +112,17 @@ export function InspectionView({
   // Inspection completed
   if (inspection.status === "COMPLETADA") {
     return (
-      <div className="space-y-4">
-        <div className="rounded-lg bg-green-50 border border-green-200 p-4">
-          <p className="text-sm font-medium text-green-700">
-            Inspeccion completada
-          </p>
-          <p className="text-xs text-green-600 mt-1">
-            Patente: {inspection.patente} — {new Date(inspection.completado_at!).toLocaleString("es-AR")}
-          </p>
-        </div>
-        {inspection.pdf_url && (
-          <a
-            href={inspection.pdf_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-center text-sm text-reysil-red hover:underline"
-          >
-            Ver PDF de inspeccion
-          </a>
-        )}
-      </div>
+      <CompletedInspectionView
+        inspection={inspection}
+        onEdit={() => {
+          setReviewing(true);
+        }}
+        reviewing={reviewing}
+        onBack={() => {
+          setReviewing(false);
+          router.refresh();
+        }}
+      />
     );
   }
 
@@ -269,6 +261,102 @@ function InspectionItemRow({
           No
         </button>
       </div>
+    </div>
+  );
+}
+
+function CompletedInspectionView({
+  inspection,
+  onEdit,
+  reviewing,
+  onBack,
+}: {
+  inspection: NonNullable<Inspection>;
+  onEdit: () => void;
+  reviewing: boolean;
+  onBack: () => void;
+}) {
+  const router = useRouter();
+
+  if (!reviewing) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg bg-green-50 border border-green-200 p-4">
+          <p className="text-sm font-medium text-green-700">
+            Inspeccion completada
+          </p>
+          <p className="text-xs text-green-600 mt-1">
+            Patente: {inspection.patente} — {new Date(inspection.completado_at!).toLocaleString("es-AR")}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="w-full rounded-md border border-reysil-red px-4 py-3 text-sm font-medium text-reysil-red hover:bg-red-50"
+        >
+          Ver inspeccion
+        </button>
+        {inspection.pdf_url && (
+          <a
+            href={inspection.pdf_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-center text-sm text-reysil-red hover:underline"
+          >
+            Ver PDF de inspeccion
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  // Review mode: show all sections with current values, allow editing
+  const items = inspection.inspection_items;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-neutral-800">
+          Revision — {inspection.patente}
+        </h3>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-sm text-reysil-red hover:underline"
+        >
+          Volver
+        </button>
+      </div>
+
+      {SECTION_ORDER.map((sec) => {
+        const secItems = items.filter((i) => i.seccion === sec);
+        if (secItems.length === 0) return null;
+        return (
+          <div key={sec} className="space-y-2">
+            <h4 className="text-xs font-semibold text-neutral-500 uppercase">
+              {SECTION_LABELS[sec] ?? sec}
+            </h4>
+            {secItems.map((item) => (
+              <InspectionItemRow
+                key={item.id}
+                item={item}
+                onUpdate={() => router.refresh()}
+              />
+            ))}
+          </div>
+        );
+      })}
+
+      {inspection.pdf_url && (
+        <a
+          href={inspection.pdf_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-center text-sm text-reysil-red hover:underline mt-4"
+        >
+          Ver PDF de inspeccion
+        </a>
+      )}
     </div>
   );
 }

@@ -60,12 +60,19 @@ export const CreateContenedorSchema = z.object({
   buque: z.string().optional().default(""),
   fecha_arribo: z.string().optional().default(""),
   fecha_carga: z.string().min(1, "Fecha de carga requerida"),
+  orden: z.string().optional().default(""),
+  mercaderia: z.string().optional().default(""),
+  despacho: z.string().optional().default(""),
+  carga: z.string().optional().default(""),
+  terminal: z.string().optional().default(""),
+  devuelve_en: z.string().optional().default(""),
+  libre_hasta: z.string().optional().default(""),
   observaciones: z.string().optional().default(""),
 
   // trip routing
   origen_deposit_id: z.string().uuid().optional().nullable(),
   origen_descripcion: z.string().optional().default(""),
-  destino_descripcion: z.string().optional().default(""),
+  destino_descripcion: z.string().min(1, "Destino requerido"),
 
   // containers
   containers: z

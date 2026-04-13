@@ -28,6 +28,13 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
   const [buque, setBuque] = useState("");
   const [fechaArribo, setFechaArribo] = useState("");
   const [fechaCarga, setFechaCarga] = useState("");
+  const [orden, setOrden] = useState("");
+  const [mercaderia, setMercaderia] = useState("");
+  const [despacho, setDespacho] = useState("");
+  const [carga, setCarga] = useState("");
+  const [terminal, setTerminal] = useState("");
+  const [devuelveEn, setDevuelveEn] = useState("");
+  const [libreHasta, setLibreHasta] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [origenDepositId, setOrigenDepositId] = useState("");
   const [origenDescripcion, setOrigenDescripcion] = useState("");
@@ -70,6 +77,13 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
       buque,
       fecha_arribo: fechaArribo,
       fecha_carga: fechaCarga,
+      orden,
+      mercaderia,
+      despacho,
+      carga,
+      terminal,
+      devuelve_en: devuelveEn,
+      libre_hasta: libreHasta,
       observaciones,
       origen_deposit_id: origenDepositId === "otro" || !origenDepositId ? null : origenDepositId,
       origen_descripcion: origenDepositId === "otro" ? origenDescripcion : "",
@@ -155,6 +169,83 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
               value={fechaCarga}
               onChange={(e) => setFechaCarga(e.target.value)}
               required
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Orden
+            </label>
+            <input
+              type="text"
+              value={orden}
+              onChange={(e) => setOrden(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Mercaderia
+            </label>
+            <input
+              type="text"
+              value={mercaderia}
+              onChange={(e) => setMercaderia(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Despacho
+            </label>
+            <input
+              type="text"
+              value={despacho}
+              onChange={(e) => setDespacho(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Carga
+            </label>
+            <input
+              type="text"
+              value={carga}
+              onChange={(e) => setCarga(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Terminal
+            </label>
+            <input
+              type="text"
+              value={terminal}
+              onChange={(e) => setTerminal(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Devuelve en
+            </label>
+            <input
+              type="text"
+              value={devuelveEn}
+              onChange={(e) => setDevuelveEn(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Libre hasta
+            </label>
+            <input
+              type="date"
+              value={libreHasta}
+              onChange={(e) => setLibreHasta(e.target.value)}
               className={inputClass}
             />
           </div>

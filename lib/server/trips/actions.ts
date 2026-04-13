@@ -217,6 +217,13 @@ export async function createContenedorAction(
       buque: d.buque || null,
       fecha_arribo: d.fecha_arribo || null,
       fecha_carga: d.fecha_carga || null,
+      orden: d.orden || null,
+      mercaderia: d.mercaderia || null,
+      despacho: d.despacho || null,
+      carga: d.carga || null,
+      terminal: d.terminal || null,
+      devuelve_en: d.devuelve_en || null,
+      libre_hasta: d.libre_hasta || null,
       observaciones: d.observaciones || null,
       created_by: user.id,
     })

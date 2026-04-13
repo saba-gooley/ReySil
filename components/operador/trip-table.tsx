@@ -27,16 +27,21 @@ export function TripTable({
   );
 
   let filtered = trips;
-  if (filterText) {
-    const lower = filterText.toLowerCase();
-    filtered = trips.filter(
-      (t) =>
-        t.clients.nombre.toLowerCase().includes(lower) ||
-        t.destino_descripcion?.toLowerCase().includes(lower) ||
-        t.trip_assignments?.patente.toLowerCase().includes(lower) ||
-        t.trip_assignments?.drivers.apellido.toLowerCase().includes(lower) ||
-        t.trip_assignments?.drivers.nombre.toLowerCase().includes(lower),
-    );
+  if (filterText.trim()) {
+    const words = filterText.toLowerCase().trim().split(/\s+/);
+    filtered = trips.filter((t) => {
+      const searchable = [
+        t.clients.nombre,
+        t.destino_descripcion,
+        t.trip_assignments?.patente,
+        t.trip_assignments?.drivers.apellido,
+        t.trip_assignments?.drivers.nombre,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return words.every((w) => searchable.includes(w));
+    });
   }
 
   // Always sort by fecha_solicitada first, then by secondary sort if selected

@@ -85,9 +85,19 @@ export async function listTodayTrips(driverId: string) {
   const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
+  // First get trip IDs assigned to this driver
+  const { data: assignments } = await supabase
+    .from("trip_assignments")
+    .select("trip_id")
+    .eq("driver_id", driverId);
+
+  const assignedTripIds = (assignments ?? []).map((a) => a.trip_id);
+  if (assignedTripIds.length === 0) return [];
+
   const { data, error } = await supabase
     .from("trips")
     .select(CHOFER_TRIP_SELECT)
+    .in("id", assignedTripIds)
     .eq("fecha_solicitada", today)
     .in("estado", ["ASIGNADO", "EN_CURSO"])
     .order("created_at", { ascending: true });
