@@ -44,7 +44,7 @@ export async function uploadToDrive({
   const auth = getAuth();
   const drive = google.drive({ version: "v3", auth });
 
-  // Upload
+  // Upload (supportsAllDrives for Shared Drives)
   const res = await drive.files.create({
     requestBody: {
       name: fileName,
@@ -55,6 +55,7 @@ export async function uploadToDrive({
       body: Readable.from(body),
     },
     fields: "id,webViewLink",
+    supportsAllDrives: true,
   });
 
   const fileId = res.data.id!;
@@ -67,6 +68,7 @@ export async function uploadToDrive({
       role: "reader",
       type: "anyone",
     },
+    supportsAllDrives: true,
   });
 
   return { fileId, webViewLink };
