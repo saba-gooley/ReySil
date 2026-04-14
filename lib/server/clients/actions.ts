@@ -296,27 +296,54 @@ export async function updateClientAction(
     }
   }
 
-  // 3. Sync depositos: delete all + re-insert (simpler for small sets)
-  const { error: delError } = await admin.from("client_deposits").delete().eq("client_id", id);
-  console.log("[updateClientAction] delete deposits result:", delError?.message ?? "ok");
+  // 3. Sync depositos: update existing, insert new, deactivate removed
+  // Can't delete because trips may reference deposit IDs via FK
+  const { data: currentDeposits } = await admin
+    .from("client_deposits")
+    .select("id")
+    .eq("client_id", id);
 
-  if (depositos.length > 0) {
-    const depositRows = depositos.map((d) => ({
-      client_id: id,
-      nombre: d.nombre,
-      direccion: d.direccion || null,
-      tipo: d.tipo,
-      activo: d.activo,
-    }));
+  const currentDepIds = new Set((currentDeposits ?? []).map((d) => d.id));
+  const newDepIds = new Set(depositos.filter((d) => d.id).map((d) => d.id!));
 
-    console.log("[updateClientAction] inserting deposits:", JSON.stringify(depositRows));
+  // Deactivate removed deposits (can't delete due to FK on trips)
+  const toDeactivate = [...currentDepIds].filter((depId) => !newDepIds.has(depId));
+  if (toDeactivate.length > 0) {
+    await admin
+      .from("client_deposits")
+      .update({ activo: false })
+      .in("id", toDeactivate);
+  }
+
+  // Update existing deposits
+  for (const dep of depositos.filter((d) => d.id && currentDepIds.has(d.id!))) {
+    await admin
+      .from("client_deposits")
+      .update({
+        nombre: dep.nombre,
+        direccion: dep.direccion || null,
+        tipo: dep.tipo,
+        activo: dep.activo,
+      })
+      .eq("id", dep.id!);
+  }
+
+  // Insert new deposits
+  const toInsert = depositos.filter((d) => !d.id);
+  if (toInsert.length > 0) {
     const { error: depError } = await admin
       .from("client_deposits")
-      .insert(depositRows);
-
-    console.log("[updateClientAction] insert deposits result:", depError?.message ?? "ok");
+      .insert(
+        toInsert.map((d) => ({
+          client_id: id,
+          nombre: d.nombre,
+          direccion: d.direccion || null,
+          tipo: d.tipo,
+          activo: d.activo,
+        })),
+      );
     if (depError) {
-      return { error: `Error al actualizar depositos: ${depError.message}` };
+      return { error: `Error al crear depositos: ${depError.message}` };
     }
   }
 
