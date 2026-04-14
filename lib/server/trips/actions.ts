@@ -11,6 +11,27 @@ export type TripActionState = {
   success?: boolean;
 };
 
+async function resolveOrigenDescripcion(
+  supabase: ReturnType<typeof createClient>,
+  clientId: string,
+  origenDepositId: string | null | undefined,
+  origenDescripcion: string | null | undefined,
+): Promise<string | null> {
+  if (!origenDepositId) {
+    return origenDescripcion?.trim() || null;
+  }
+
+  const { data: deposit } = await supabase
+    .from("client_deposits")
+    .select("nombre, direccion")
+    .eq("id", origenDepositId)
+    .eq("client_id", clientId)
+    .maybeSingle();
+
+  const resolved = deposit?.direccion?.trim() || deposit?.nombre?.trim() || "";
+  return resolved || origenDescripcion?.trim() || null;
+}
+
 /**
  * Crea un viaje tipo REPARTO (HU-CLI-001).
  * Inserta en trips + trip_reparto_fields.
@@ -34,6 +55,12 @@ export async function createRepartoAction(
 
   const d = parsed.data;
   const supabase = createClient();
+  const origenDescripcion = await resolveOrigenDescripcion(
+    supabase,
+    user.profile.client_id,
+    d.origen_deposit_id,
+    d.origen_descripcion,
+  );
 
   // Validate fecha_entrega >= fecha_solicitada if provided
   if (d.fecha_entrega && d.fecha_solicitada && d.fecha_entrega < d.fecha_solicitada) {
@@ -48,7 +75,7 @@ export async function createRepartoAction(
       tipo: "REPARTO",
       estado: "PENDIENTE",
       origen_deposit_id: d.origen_deposit_id || null,
-      origen_descripcion: d.origen_descripcion || null,
+      origen_descripcion: origenDescripcion,
       destino_descripcion: d.destino_descripcion || null,
       fecha_solicitada: d.fecha_solicitada || null,
       observaciones_cliente: d.observaciones_cliente || null,
@@ -116,6 +143,34 @@ export async function createBulkRepartosAction(
   const supabase = createClient();
   let created = 0;
 
+  const depositIds = Array.from(
+    new Set(
+      rows
+        .map((row) => {
+          if (!row || typeof row !== "object") return null;
+          const candidate = (row as { origen_deposit_id?: unknown }).origen_deposit_id;
+          return typeof candidate === "string" && candidate ? candidate : null;
+        })
+        .filter((id): id is string => !!id),
+    ),
+  );
+
+  const depositMap = new Map<string, { nombre: string | null; direccion: string | null }>();
+  if (depositIds.length > 0) {
+    const { data: deposits } = await supabase
+      .from("client_deposits")
+      .select("id, nombre, direccion")
+      .eq("client_id", user.profile.client_id)
+      .in("id", depositIds);
+
+    for (const dep of deposits ?? []) {
+      depositMap.set(dep.id, {
+        nombre: dep.nombre,
+        direccion: dep.direccion,
+      });
+    }
+  }
+
   for (let i = 0; i < rows.length; i++) {
     const parsed = CreateRepartoSchema.safeParse(rows[i]);
     if (!parsed.success) {
@@ -123,6 +178,14 @@ export async function createBulkRepartosAction(
     }
 
     const d = parsed.data;
+    const deposit = d.origen_deposit_id
+      ? depositMap.get(d.origen_deposit_id)
+      : undefined;
+    const origenDescripcion =
+      deposit?.direccion?.trim() ||
+      deposit?.nombre?.trim() ||
+      d.origen_descripcion?.trim() ||
+      null;
 
     if (d.fecha_entrega && d.fecha_solicitada && d.fecha_entrega < d.fecha_solicitada) {
       return { error: `Fila ${i + 1}: La fecha de entrega no puede ser anterior a la fecha de carga` };
@@ -135,7 +198,7 @@ export async function createBulkRepartosAction(
         tipo: "REPARTO",
         estado: "PENDIENTE",
         origen_deposit_id: d.origen_deposit_id || null,
-        origen_descripcion: d.origen_descripcion || null,
+        origen_descripcion: origenDescripcion,
         destino_descripcion: d.destino_descripcion || null,
         fecha_solicitada: d.fecha_solicitada || null,
         observaciones_cliente: d.observaciones_cliente || null,
@@ -206,6 +269,12 @@ export async function createContenedorAction(
 
   const d = parsed.data;
   const supabase = createClient();
+  const origenDescripcion = await resolveOrigenDescripcion(
+    supabase,
+    user.profile.client_id,
+    d.origen_deposit_id,
+    d.origen_descripcion,
+  );
 
   // 1. Insert reservation
   const { data: reservation, error: resError } = await supabase
@@ -260,7 +329,7 @@ export async function createContenedorAction(
       estado: "PENDIENTE",
       container_id: container.id,
       origen_deposit_id: d.origen_deposit_id || null,
-      origen_descripcion: d.origen_descripcion || null,
+      origen_descripcion: origenDescripcion,
       destino_descripcion: d.destino_descripcion || null,
       fecha_solicitada: d.fecha_carga || null,
       observaciones_cliente: d.observaciones || null,
