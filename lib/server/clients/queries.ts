@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 
 export type ClientRow = {
   id: string;
@@ -20,7 +20,7 @@ export type ClientRow = {
 };
 
 export async function listClients() {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("clients")
     .select(
@@ -33,7 +33,7 @@ export async function listClients() {
 }
 
 export async function getClientById(id: string) {
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("clients")
     .select(

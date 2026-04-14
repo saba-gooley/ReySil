@@ -30,6 +30,8 @@ export async function createClientAction(
   const { codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
 
+  console.log("[createClientAction] depositos count:", depositos.length, JSON.stringify(depositos));
+
   const admin = createAdminClient();
 
   // Check unique codigo
@@ -158,6 +160,8 @@ export async function updateClientAction(
 
   const { id, codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
+
+  console.log("[updateClientAction] depositos count:", depositos.length, JSON.stringify(depositos));
 
   const admin = createAdminClient();
 
@@ -293,7 +297,8 @@ export async function updateClientAction(
   }
 
   // 3. Sync depositos: delete all + re-insert (simpler for small sets)
-  await admin.from("client_deposits").delete().eq("client_id", id);
+  const { error: delError } = await admin.from("client_deposits").delete().eq("client_id", id);
+  console.log("[updateClientAction] delete deposits result:", delError?.message ?? "ok");
 
   if (depositos.length > 0) {
     const depositRows = depositos.map((d) => ({
@@ -304,10 +309,12 @@ export async function updateClientAction(
       activo: d.activo,
     }));
 
+    console.log("[updateClientAction] inserting deposits:", JSON.stringify(depositRows));
     const { error: depError } = await admin
       .from("client_deposits")
       .insert(depositRows);
 
+    console.log("[updateClientAction] insert deposits result:", depError?.message ?? "ok");
     if (depError) {
       return { error: `Error al actualizar depositos: ${depError.message}` };
     }
