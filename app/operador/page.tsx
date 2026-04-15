@@ -27,6 +27,11 @@ const SECTIONS = [
     desc: "Panel de remitos subidos por choferes — filtrar por fecha y cliente",
   },
   {
+    href: "/operador/inspecciones",
+    label: "Inspecciones",
+    desc: "Documentacion de inspecciones por chofer con acceso al PDF",
+  },
+  {
     href: "/operador/toneladas",
     label: "Toneladas",
     desc: "Resumen de toneladas por camion para una fecha",
