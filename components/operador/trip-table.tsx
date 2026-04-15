@@ -10,6 +10,14 @@ type Props = {
   showRemitos?: boolean;
   actions?: (trip: OperatorTripRow) => React.ReactNode;
   sortByPatente?: boolean;
+  compactColumns?: boolean;
+  enableDateDriverFilters?: boolean;
+  driversForFilter?: Array<{
+    id: string;
+    codigo: string;
+    nombre: string;
+    apellido: string;
+  }>;
 };
 
 export function TripTable({
@@ -19,9 +27,14 @@ export function TripTable({
   showRemitos = false,
   actions,
   sortByPatente = false,
+  compactColumns = false,
+  enableDateDriverFilters = false,
+  driversForFilter = [],
 }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filterText, setFilterText] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDriverId, setSelectedDriverId] = useState("");
   const [sortMode, setSortMode] = useState<"none" | "patente" | "chofer">(
     sortByPatente ? "patente" : "none",
   );
@@ -46,6 +59,16 @@ export function TripTable({
     });
   }
 
+  if (enableDateDriverFilters && selectedDate) {
+    filtered = filtered.filter((t) => t.fecha_solicitada === selectedDate);
+  }
+
+  if (enableDateDriverFilters && selectedDriverId) {
+    filtered = filtered.filter(
+      (t) => t.trip_assignments?.driver_id === selectedDriverId,
+    );
+  }
+
   // Always sort by fecha_solicitada first, then by secondary sort if selected
   filtered = [...filtered].sort((a, b) => {
     const fa = a.fecha_solicitada ?? "";
@@ -66,9 +89,21 @@ export function TripTable({
     return 0;
   });
 
+  const filteredTripsCount = filtered.length;
+  const filteredToneladas = filtered.reduce((sum, trip) => {
+    if (trip.tipo !== "REPARTO") return sum;
+    const toneladas = trip.trip_reparto_fields?.toneladas;
+    return typeof toneladas === "number" ? sum + toneladas : sum;
+  }, 0);
+
+  const headerCellClass = compactColumns
+    ? "px-2 py-2"
+    : "px-4 py-3";
+  const bodyCellClass = compactColumns ? "px-2 py-2 text-xs" : "px-4 py-3";
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <input
           type="text"
           placeholder="Filtrar por cliente, chofer o patente..."
@@ -76,6 +111,34 @@ export function TripTable({
           onChange={(e) => setFilterText(e.target.value)}
           className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
         />
+        {enableDateDriverFilters && (
+          <>
+            <div>
+              <label className="mb-1 block text-xs text-neutral-500">Fecha</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-neutral-500">Chofer</label>
+              <select
+                value={selectedDriverId}
+                onChange={(e) => setSelectedDriverId(e.target.value)}
+                className="rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+              >
+                <option value="">Todos</option>
+                {driversForFilter.map((driver) => (
+                  <option key={driver.id} value={driver.id}>
+                    {driver.apellido}, {driver.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
         {showAssignment && (
           <div className="flex gap-1">
             <button
@@ -114,8 +177,13 @@ export function TripTable({
           </div>
         )}
         <span className="text-sm text-neutral-500">
-          {filtered.length} {filtered.length === 1 ? "viaje" : "viajes"}
+          {filteredTripsCount} {filteredTripsCount === 1 ? "viaje" : "viajes"}
         </span>
+        {enableDateDriverFilters && (
+          <span className="text-sm font-medium text-neutral-700">
+            Toneladas filtradas: {filteredToneladas.toLocaleString("es-AR")}
+          </span>
+        )}
       </div>
 
       {filtered.length === 0 && (
@@ -126,19 +194,21 @@ export function TripTable({
 
       <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
         {filtered.length > 0 && (
-          <table className="w-full text-left text-sm">
+          <table
+            className={`w-full text-left text-sm ${compactColumns ? "table-fixed" : ""}`}
+          >
             <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500">
               <tr>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Fecha solicitada</th>
-                <th className="px-4 py-3">Origen</th>
-                <th className="px-4 py-3">Destino</th>
-                {showAssignment && <th className="px-4 py-3">Chofer</th>}
-                {showAssignment && <th className="px-4 py-3">Patente</th>}
-                <th className="px-4 py-3">Estado</th>
-                {actions && <th className="px-4 py-3"></th>}
-                <th className="px-4 py-3 w-8"></th>
+                <th className={headerCellClass}>{compactColumns ? "Tip." : "Tipo"}</th>
+                <th className={headerCellClass}>Cliente</th>
+                <th className={headerCellClass}>{compactColumns ? "Fecha" : "Fecha solicitada"}</th>
+                <th className={headerCellClass}>Origen</th>
+                <th className={headerCellClass}>Destino</th>
+                {showAssignment && <th className={headerCellClass}>Chofer</th>}
+                {showAssignment && <th className={headerCellClass}>Patente</th>}
+                <th className={headerCellClass}>Estado</th>
+                {actions && <th className={headerCellClass}>Accion</th>}
+                <th className={headerCellClass}> </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -156,6 +226,7 @@ export function TripTable({
                     showEvents={showEvents}
                     showRemitos={showRemitos}
                     actions={actions}
+                    bodyCellClass={bodyCellClass}
                   />
                 );
               })}
@@ -175,6 +246,7 @@ function TripRow({
   showEvents,
   showRemitos,
   actions,
+  bodyCellClass,
 }: {
   trip: OperatorTripRow;
   isExpanded: boolean;
@@ -183,6 +255,7 @@ function TripRow({
   showEvents: boolean;
   showRemitos: boolean;
   actions?: (trip: OperatorTripRow) => React.ReactNode;
+  bodyCellClass: string;
 }) {
   const assignment = trip.trip_assignments;
   const booking =
@@ -196,7 +269,7 @@ function TripRow({
         className="cursor-pointer hover:bg-neutral-50"
         onClick={onToggle}
       >
-        <td className="px-4 py-3">
+        <td className={bodyCellClass}>
           <span className="text-xs font-medium">{trip.tipo}</span>
           {booking && (
             <span className="ml-1 text-xs text-neutral-400">
@@ -209,39 +282,43 @@ function TripRow({
             </span>
           )}
         </td>
-        <td className="px-4 py-3 text-sm">{trip.clients.nombre}</td>
-        <td className="px-4 py-3 text-xs text-neutral-500">
+        <td className={`${bodyCellClass} text-sm`}>
+          <span className="block truncate">{trip.clients.nombre}</span>
+        </td>
+        <td className={`${bodyCellClass} text-xs text-neutral-500`}>
           {trip.fecha_solicitada
             ? new Date(trip.fecha_solicitada + "T00:00:00").toLocaleDateString("es-AR")
             : "—"}
         </td>
-        <td className="px-4 py-3 text-sm">
-          {trip.origen_descripcion || "—"}
+        <td className={`${bodyCellClass} text-sm`}>
+          <span className="block truncate">{trip.origen_descripcion || "—"}</span>
         </td>
-        <td className="px-4 py-3 text-sm">
-          {trip.destino_descripcion || "—"}
+        <td className={`${bodyCellClass} text-sm`}>
+          <span className="block truncate">{trip.destino_descripcion || "—"}</span>
         </td>
         {showAssignment && (
-          <td className="px-4 py-3 text-sm">
-            {assignment
-              ? `${assignment.drivers.nombre} ${assignment.drivers.apellido}`
-              : "—"}
+          <td className={`${bodyCellClass} text-sm`}>
+            <span className="block truncate">
+              {assignment
+                ? `${assignment.drivers.nombre} ${assignment.drivers.apellido}`
+                : "—"}
+            </span>
           </td>
         )}
         {showAssignment && (
-          <td className="px-4 py-3 text-sm font-mono">
+          <td className={`${bodyCellClass} text-sm font-mono`}>
             {assignment?.patente || "—"}
           </td>
         )}
-        <td className="px-4 py-3">
+        <td className={bodyCellClass}>
           <EstadoBadge estado={trip.estado} />
         </td>
         {actions && (
-          <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+          <td className={bodyCellClass} onClick={(e) => e.stopPropagation()}>
             {actions(trip)}
           </td>
         )}
-        <td className="px-4 py-3 text-neutral-400 text-xs">
+        <td className={`${bodyCellClass} text-neutral-400 text-xs`}>
           {isExpanded ? "▲" : "▼"}
         </td>
       </tr>

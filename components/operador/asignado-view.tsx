@@ -21,6 +21,9 @@ export function AsignadoView({
       trips={trips}
       showAssignment
       sortByPatente
+      compactColumns
+      enableDateDriverFilters
+      driversForFilter={drivers}
       actions={(trip) => (
         <AssignTripForm
           tripId={trip.id}

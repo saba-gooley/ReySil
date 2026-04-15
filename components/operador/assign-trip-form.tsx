@@ -67,7 +67,7 @@ export function AssignTripForm({
     "rounded-md border border-neutral-300 px-2 py-1 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red";
 
   return (
-    <form action={handleSubmit} className="flex items-end gap-2">
+    <form action={handleSubmit} className="flex flex-wrap items-end justify-end gap-1">
       {state.error && (
         <span className="text-xs text-red-600">{state.error}</span>
       )}
@@ -75,7 +75,7 @@ export function AssignTripForm({
         value={driverId}
         onChange={(e) => setDriverId(e.target.value)}
         required
-        className={`${inputClass} w-44`}
+        className={`${inputClass} w-32 text-xs`}
       >
         <option value="">Chofer...</option>
         {drivers.map((d) => (
@@ -90,7 +90,7 @@ export function AssignTripForm({
         onChange={(e) => setPatente(e.target.value.toUpperCase())}
         placeholder="Patente"
         required
-        className={`${inputClass} w-28 font-mono`}
+        className={`${inputClass} w-24 font-mono text-xs`}
       />
       <SubmitBtn label={LABELS[mode]} />
     </form>
@@ -103,7 +103,7 @@ function SubmitBtn({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-reysil-red px-3 py-1 text-sm font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
+      className="rounded-md bg-reysil-red px-2 py-1 text-xs font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
     >
       {pending ? "..." : label}
     </button>

@@ -20,6 +20,9 @@ export function PendientesView({
     <TripTable
       trips={trips}
       showAssignment
+      compactColumns
+      enableDateDriverFilters
+      driversForFilter={drivers}
       actions={(trip) => (
         <AssignTripForm
           tripId={trip.id}
