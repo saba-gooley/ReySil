@@ -273,22 +273,56 @@ export async function getReportData(from: string, to: string) {
     `)
     .gte("fecha_solicitada", from)
     .lte("fecha_solicitada", to)
-    .in("estado", ["ASIGNADO", "EN_CURSO", "FINALIZADO", "CANCELADO"]);
+    .in("estado", ["PREASIGNADO", "ASIGNADO", "EN_CURSO", "FINALIZADO"]);
 
   if (error) throw error;
 
-  const byClient = new Map<string, { nombre: string; codigo: string; count: number }>();
-  const byDriver = new Map<string, { nombre: string; codigo: string; count: number }>();
+  const byClient = new Map<
+    string,
+    {
+      nombre: string;
+      codigo: string;
+      preasignados: number;
+      asignados: number;
+      enCurso: number;
+      finalizados: number;
+      total: number;
+    }
+  >();
+  const byDriver = new Map<
+    string,
+    {
+      nombre: string;
+      codigo: string;
+      asignados: number;
+      enCurso: number;
+      finalizados: number;
+      total: number;
+    }
+  >();
 
   for (const row of data as Record<string, unknown>[]) {
+    const estado = row.estado as string;
     const client = unwrapOne(row.clients) as Record<string, string> | null;
     if (client) {
       const key = client.codigo;
       const existing = byClient.get(key);
       if (existing) {
-        existing.count += 1;
+        if (estado === "PREASIGNADO") existing.preasignados += 1;
+        if (estado === "ASIGNADO") existing.asignados += 1;
+        if (estado === "EN_CURSO") existing.enCurso += 1;
+        if (estado === "FINALIZADO") existing.finalizados += 1;
+        existing.total += 1;
       } else {
-        byClient.set(key, { nombre: client.nombre, codigo: client.codigo, count: 1 });
+        byClient.set(key, {
+          nombre: client.nombre,
+          codigo: client.codigo,
+          preasignados: estado === "PREASIGNADO" ? 1 : 0,
+          asignados: estado === "ASIGNADO" ? 1 : 0,
+          enCurso: estado === "EN_CURSO" ? 1 : 0,
+          finalizados: estado === "FINALIZADO" ? 1 : 0,
+          total: 1,
+        });
       }
     }
 
@@ -299,12 +333,18 @@ export async function getReportData(from: string, to: string) {
         const key = drivers.codigo;
         const existing = byDriver.get(key);
         if (existing) {
-          existing.count += 1;
+          if (estado === "ASIGNADO") existing.asignados += 1;
+          if (estado === "EN_CURSO") existing.enCurso += 1;
+          if (estado === "FINALIZADO") existing.finalizados += 1;
+          existing.total += 1;
         } else {
           byDriver.set(key, {
             nombre: `${drivers.nombre} ${drivers.apellido}`,
             codigo: drivers.codigo,
-            count: 1,
+            asignados: estado === "ASIGNADO" ? 1 : 0,
+            enCurso: estado === "EN_CURSO" ? 1 : 0,
+            finalizados: estado === "FINALIZADO" ? 1 : 0,
+            total: 1,
           });
         }
       }
@@ -312,8 +352,8 @@ export async function getReportData(from: string, to: string) {
   }
 
   return {
-    byClient: Array.from(byClient.values()).sort((a, b) => b.count - a.count),
-    byDriver: Array.from(byDriver.values()).sort((a, b) => b.count - a.count),
+    byClient: Array.from(byClient.values()).sort((a, b) => b.total - a.total),
+    byDriver: Array.from(byDriver.values()).sort((a, b) => b.total - a.total),
     total: data.length,
   };
 }
@@ -432,10 +472,19 @@ export async function listInspections(options?: {
         patente: row.patente as string,
         fecha: row.fecha as string,
         pdf_url: row.pdf_url as string | null,
-        file_name:
-          typeof row.pdf_url === "string" && row.pdf_url.length > 0
-            ? decodeURIComponent(row.pdf_url.split("/").pop() ?? "inspeccion.pdf")
-            : "Sin archivo",
+        file_name: (() => {
+          if (typeof row.pdf_url !== "string" || row.pdf_url.length === 0) {
+            return "Sin archivo";
+          }
+          try {
+            const url = new URL(row.pdf_url);
+            const rawName = url.pathname.split("/").pop() ?? "inspeccion.pdf";
+            return decodeURIComponent(rawName);
+          } catch {
+            const rawName = row.pdf_url.split("?")[0].split("/").pop() ?? "inspeccion.pdf";
+            return decodeURIComponent(rawName);
+          }
+        })(),
         driver: {
           nombre: (driver?.nombre as string | undefined) ?? "",
           apellido: (driver?.apellido as string | undefined) ?? "",
