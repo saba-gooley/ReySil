@@ -20,7 +20,6 @@ export function AsignadoView({
     <TripTable
       trips={trips}
       showAssignment
-      sortByPatente
       compactColumns
       enableDateDriverFilters
       driversForFilter={drivers}

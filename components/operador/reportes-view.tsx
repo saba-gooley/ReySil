@@ -4,8 +4,23 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type ReportData = {
-  byClient: { nombre: string; codigo: string; count: number }[];
-  byDriver: { nombre: string; codigo: string; count: number }[];
+  byClient: {
+    nombre: string;
+    codigo: string;
+    preasignados: number;
+    asignados: number;
+    enCurso: number;
+    finalizados: number;
+    total: number;
+  }[];
+  byDriver: {
+    nombre: string;
+    codigo: string;
+    asignados: number;
+    enCurso: number;
+    finalizados: number;
+    total: number;
+  }[];
   total: number;
 };
 
@@ -87,7 +102,11 @@ export function ReportesView({
                 <tr>
                   <th className="px-4 py-2 text-left">Cliente</th>
                   <th className="px-4 py-2 text-left">Codigo</th>
-                  <th className="px-4 py-2 text-right">Viajes</th>
+                  <th className="px-4 py-2 text-right">Preasig.</th>
+                  <th className="px-4 py-2 text-right">Asignado</th>
+                  <th className="px-4 py-2 text-right">En curso</th>
+                  <th className="px-4 py-2 text-right">Finalizado</th>
+                  <th className="px-4 py-2 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -98,7 +117,19 @@ export function ReportesView({
                       {row.codigo}
                     </td>
                     <td className="px-4 py-2 text-right font-medium">
-                      {row.count}
+                      {row.preasignados}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {row.asignados}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {row.enCurso}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {row.finalizados}
+                    </td>
+                    <td className="px-4 py-2 text-right font-semibold">
+                      {row.total}
                     </td>
                   </tr>
                 ))}
@@ -122,7 +153,10 @@ export function ReportesView({
                 <tr>
                   <th className="px-4 py-2 text-left">Chofer</th>
                   <th className="px-4 py-2 text-left">Codigo</th>
-                  <th className="px-4 py-2 text-right">Viajes</th>
+                  <th className="px-4 py-2 text-right">Asignado</th>
+                  <th className="px-4 py-2 text-right">En curso</th>
+                  <th className="px-4 py-2 text-right">Finalizado</th>
+                  <th className="px-4 py-2 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -133,7 +167,16 @@ export function ReportesView({
                       {row.codigo}
                     </td>
                     <td className="px-4 py-2 text-right font-medium">
-                      {row.count}
+                      {row.asignados}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {row.enCurso}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium">
+                      {row.finalizados}
+                    </td>
+                    <td className="px-4 py-2 text-right font-semibold">
+                      {row.total}
                     </td>
                   </tr>
                 ))}

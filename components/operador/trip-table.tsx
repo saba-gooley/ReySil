@@ -9,7 +9,6 @@ type Props = {
   showEvents?: boolean;
   showRemitos?: boolean;
   actions?: (trip: OperatorTripRow) => React.ReactNode;
-  sortByPatente?: boolean;
   compactColumns?: boolean;
   enableDateDriverFilters?: boolean;
   driversForFilter?: Array<{
@@ -26,7 +25,6 @@ export function TripTable({
   showEvents = false,
   showRemitos = false,
   actions,
-  sortByPatente = false,
   compactColumns = false,
   enableDateDriverFilters = false,
   driversForFilter = [],
@@ -35,9 +33,6 @@ export function TripTable({
   const [filterText, setFilterText] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedDriverId, setSelectedDriverId] = useState("");
-  const [sortMode, setSortMode] = useState<"none" | "patente" | "chofer">(
-    sortByPatente ? "patente" : "none",
-  );
 
   let filtered = trips;
   if (filterText.trim()) {
@@ -69,31 +64,27 @@ export function TripTable({
     );
   }
 
-  // Always sort by fecha_solicitada first, then by secondary sort if selected
+  // Default order: fecha ascendente, luego chofer ascendente.
   filtered = [...filtered].sort((a, b) => {
     const fa = a.fecha_solicitada ?? "";
     const fb = b.fecha_solicitada ?? "";
     const dateComp = fa.localeCompare(fb);
     if (dateComp !== 0) return dateComp;
-
-    if (sortMode === "patente") {
-      const pa = a.trip_assignments?.patente ?? "zzz";
-      const pb = b.trip_assignments?.patente ?? "zzz";
-      return pa.localeCompare(pb);
-    }
-    if (sortMode === "chofer") {
-      const da = a.trip_assignments?.drivers.apellido ?? "zzz";
-      const db = b.trip_assignments?.drivers.apellido ?? "zzz";
-      return da.localeCompare(db);
-    }
-    return 0;
+    const da = a.trip_assignments?.drivers.apellido ?? "zzz";
+    const db = b.trip_assignments?.drivers.apellido ?? "zzz";
+    return da.localeCompare(db);
   });
 
   const filteredTripsCount = filtered.length;
   const filteredToneladas = filtered.reduce((sum, trip) => {
     if (trip.tipo !== "REPARTO") return sum;
     const toneladas = trip.trip_reparto_fields?.toneladas;
-    return typeof toneladas === "number" ? sum + toneladas : sum;
+    if (typeof toneladas === "number") return sum + toneladas;
+    if (typeof toneladas === "string") {
+      const parsed = Number(toneladas);
+      return Number.isFinite(parsed) ? sum + parsed : sum;
+    }
+    return sum;
   }, 0);
 
   const headerCellClass = compactColumns
@@ -138,43 +129,6 @@ export function TripTable({
               </select>
             </div>
           </>
-        )}
-        {showAssignment && (
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={() => setSortMode("none")}
-              className={`rounded-md border px-3 py-2 text-sm font-medium ${
-                sortMode === "none"
-                  ? "border-reysil-red bg-reysil-red text-white"
-                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              type="button"
-              onClick={() => setSortMode("patente")}
-              className={`rounded-md border px-3 py-2 text-sm font-medium ${
-                sortMode === "patente"
-                  ? "border-reysil-red bg-reysil-red text-white"
-                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
-              }`}
-            >
-              Por patente
-            </button>
-            <button
-              type="button"
-              onClick={() => setSortMode("chofer")}
-              className={`rounded-md border px-3 py-2 text-sm font-medium ${
-                sortMode === "chofer"
-                  ? "border-reysil-red bg-reysil-red text-white"
-                  : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"
-              }`}
-            >
-              Por chofer
-            </button>
-          </div>
         )}
         <span className="text-sm text-neutral-500">
           {filteredTripsCount} {filteredTripsCount === 1 ? "viaje" : "viajes"}
