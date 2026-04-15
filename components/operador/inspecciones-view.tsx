@@ -97,7 +97,6 @@ export function InspeccionesView({
                 <th className="px-4 py-3">Chofer</th>
                 <th className="px-4 py-3">Patente</th>
                 <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Archivo</th>
                 <th className="px-4 py-3">Documento</th>
               </tr>
             </thead>
@@ -121,9 +120,6 @@ export function InspeccionesView({
                       {new Date(`${inspection.fecha}T00:00:00`).toLocaleDateString(
                         "es-AR",
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-neutral-600">
-                      {inspection.file_name}
                     </td>
                     <td className="px-4 py-3">
                       {inspection.pdf_url ? (
