@@ -384,6 +384,65 @@ export async function listRemitos(options?: {
   return { data: normalized, total: count ?? 0 };
 }
 
+export async function listInspections(options?: {
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const supabase = createAdminClient();
+  const page = options?.page ?? 1;
+  const pageSize = options?.pageSize ?? 20;
+  const offset = (page - 1) * pageSize;
+
+  let inspectionsQuery = supabase
+    .from("inspections")
+    .select(
+      `
+      id, patente, fecha,
+      drivers!inner(nombre, apellido, codigo)
+    `,
+      { count: "exact" },
+    )
+    .order("fecha", { ascending: false })
+    .range(offset, offset + pageSize - 1);
+
+  if (options?.from) {
+    inspectionsQuery = inspectionsQuery.gte("fecha", options.from);
+  }
+  if (options?.to) {
+    inspectionsQuery = inspectionsQuery.lte("fecha", options.to);
+  }
+
+  const { data: inspectionRows, error: inspectionsError, count } =
+    await inspectionsQuery;
+
+  if (inspectionsError) throw inspectionsError;
+
+  const normalized = ((inspectionRows ?? []) as Record<string, unknown>[]).map(
+    (row) => {
+      const driverRaw = row.drivers as
+        | Record<string, unknown>
+        | Record<string, unknown>[]
+        | null;
+      const driver = Array.isArray(driverRaw) ? driverRaw[0] : driverRaw;
+
+      return {
+        id: row.id as string,
+        patente: row.patente as string,
+        fecha: row.fecha as string,
+        driver: {
+          nombre: (driver?.nombre as string | undefined) ?? "",
+          apellido: (driver?.apellido as string | undefined) ?? "",
+          codigo: (driver?.codigo as string | undefined) ?? "",
+        },
+      };
+    },
+  );
+
+  return { data: normalized, total: count ?? 0 };
+}
+
 /**
  * List active drivers for assignment selectors.
  */
