@@ -399,7 +399,7 @@ export async function listInspections(options?: {
     .from("inspections")
     .select(
       `
-      id, patente, fecha,
+      id, patente, fecha, pdf_url,
       drivers!inner(nombre, apellido, codigo)
     `,
       { count: "exact" },
@@ -431,6 +431,11 @@ export async function listInspections(options?: {
         id: row.id as string,
         patente: row.patente as string,
         fecha: row.fecha as string,
+        pdf_url: row.pdf_url as string | null,
+        file_name:
+          typeof row.pdf_url === "string" && row.pdf_url.length > 0
+            ? decodeURIComponent(row.pdf_url.split("/").pop() ?? "inspeccion.pdf")
+            : "Sin archivo",
         driver: {
           nombre: (driver?.nombre as string | undefined) ?? "",
           apellido: (driver?.apellido as string | undefined) ?? "",
