@@ -16,7 +16,6 @@ export default async function EnCursoPage() {
         showAssignment
         showEvents
         showRemitos
-        sortByPatente
       />
     </div>
   );
