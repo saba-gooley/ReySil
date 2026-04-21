@@ -44,6 +44,7 @@ export function PendientesView({
               drivers={drivers}
               currentDriverId={trip.trip_assignments?.driver_id}
               currentPatente={trip.trip_assignments?.patente}
+              currentComentario={trip.trip_assignments?.comentario_asignacion}
               onDone={() => router.refresh()}
             />
           );

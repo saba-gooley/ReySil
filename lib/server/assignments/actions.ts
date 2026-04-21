@@ -198,6 +198,7 @@ export async function preassignTripAction(
       driver_id: d.driver_id,
       patente: d.patente,
       patente_acoplado: d.patente_acoplado || null,
+      comentario_asignacion: d.comentario_asignacion || null,
       asignado_by: user.id,
     });
 
@@ -212,6 +213,60 @@ export async function preassignTripAction(
 
   if (updateErr) {
     return { error: `Error al actualizar estado: ${updateErr.message}` };
+  }
+
+  revalidatePath("/operador/pendientes");
+  return { success: true };
+}
+
+/**
+ * Update an existing PREASIGNADO trip assignment (change driver/patente).
+ * Keeps estado as PREASIGNADO.
+ */
+export async function updatePreassignedTripAction(
+  _prev: AssignmentActionState,
+  formData: FormData,
+): Promise<AssignmentActionState> {
+  await getCurrentUser();
+
+  const raw = JSON.parse(formData.get("payload") as string);
+  const parsed = AssignSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return { error: Object.values(parsed.error.flatten().fieldErrors).flat().join(", ") };
+  }
+
+  const d = parsed.data;
+  const supabase = createClient();
+
+  // Check trip is PREASIGNADO
+  const { data: trip, error: tripCheckErr } = await supabase
+    .from("trips")
+    .select("id, estado")
+    .eq("id", d.trip_id)
+    .single();
+
+  if (tripCheckErr || !trip) {
+    return { error: "Viaje no encontrado" };
+  }
+
+  if (trip.estado !== "PREASIGNADO") {
+    return { error: `No se puede actualizar: el viaje tiene estado ${trip.estado}` };
+  }
+
+  // Update existing preasignment
+  const { error: updateErr } = await supabase
+    .from("trip_assignments")
+    .update({
+      driver_id: d.driver_id,
+      patente: d.patente,
+      patente_acoplado: d.patente_acoplado || null,
+      comentario_asignacion: d.comentario_asignacion || null,
+    })
+    .eq("trip_id", d.trip_id);
+
+  if (updateErr) {
+    return { error: `Error al actualizar preasignación: ${updateErr.message}` };
   }
 
   revalidatePath("/operador/pendientes");

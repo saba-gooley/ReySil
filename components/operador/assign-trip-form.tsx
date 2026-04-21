@@ -6,6 +6,7 @@ import {
   assignTripAction,
   reassignTripAction,
   preassignTripAction,
+  updatePreassignedTripAction,
   type AssignmentActionState,
 } from "@/lib/server/assignments/actions";
 
@@ -14,9 +15,10 @@ type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 type Props = {
   tripId: string;
   drivers: Driver[];
-  mode: "assign" | "reassign" | "preassign";
+  mode: "assign" | "reassign" | "preassign" | "update-preassigned";
   currentDriverId?: string;
   currentPatente?: string;
+  currentComentario?: string | null;
   onDone?: () => void;
 };
 
@@ -24,12 +26,14 @@ const ACTIONS = {
   assign: assignTripAction,
   reassign: reassignTripAction,
   preassign: preassignTripAction,
+  "update-preassigned": updatePreassignedTripAction,
 };
 
 const LABELS = {
   assign: "Confirmar",
   reassign: "Reasignar",
   preassign: "Preasignar",
+  "update-preassigned": "Actualizar Preasignación",
 };
 
 const initialState: AssignmentActionState = {};
@@ -40,13 +44,14 @@ export function AssignTripForm({
   mode,
   currentDriverId,
   currentPatente,
+  currentComentario,
   onDone,
 }: Props) {
   const action = ACTIONS[mode];
   const [state, formAction] = useFormState(action, initialState);
   const [driverId, setDriverId] = useState(currentDriverId ?? "");
   const [patente, setPatente] = useState(currentPatente ?? "");
-  const [comentario, setComentario] = useState("");
+  const [comentario, setComentario] = useState(currentComentario ?? "");
 
   if (state.success) {
     onDone?.();

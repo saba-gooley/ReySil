@@ -416,6 +416,9 @@ function TripDetail({
           {trip.trip_assignments.patente_acoplado && (
             <Detail label="Acoplado" value={trip.trip_assignments.patente_acoplado} />
           )}
+          {trip.trip_assignments.comentario_asignacion && (
+            <Detail label="Comentario del operador" value={trip.trip_assignments.comentario_asignacion} />
+          )}
         </div>
       )}
 

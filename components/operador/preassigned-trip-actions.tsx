@@ -10,6 +10,7 @@ type Props = {
   drivers: Driver[];
   currentDriverId?: string;
   currentPatente?: string;
+  currentComentario?: string | null;
   onDone?: () => void;
 };
 
@@ -18,20 +19,22 @@ export function PreassignedTripActions({
   drivers,
   currentDriverId,
   currentPatente,
+  currentComentario,
   onDone,
 }: Props) {
-  const [activeMode, setActiveMode] = useState<"reassign" | "assign" | null>(
+  const [activeMode, setActiveMode] = useState<"update-preassigned" | "assign" | null>(
     null
   );
 
-  if (activeMode === "reassign") {
+  if (activeMode === "update-preassigned") {
     return (
       <AssignTripForm
         tripId={tripId}
         drivers={drivers}
-        mode="reassign"
+        mode="update-preassigned"
         currentDriverId={currentDriverId}
         currentPatente={currentPatente}
+        currentComentario={currentComentario}
         onDone={() => {
           setActiveMode(null);
           onDone?.();
@@ -48,6 +51,7 @@ export function PreassignedTripActions({
         mode="assign"
         currentDriverId={currentDriverId}
         currentPatente={currentPatente}
+        currentComentario={currentComentario}
         onDone={() => {
           setActiveMode(null);
           onDone?.();
@@ -60,7 +64,7 @@ export function PreassignedTripActions({
     <div className="flex gap-2">
       <button
         type="button"
-        onClick={() => setActiveMode("reassign")}
+        onClick={() => setActiveMode("update-preassigned")}
         className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
       >
         Volver a Preasignar
