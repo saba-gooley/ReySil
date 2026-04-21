@@ -37,7 +37,7 @@ const LABELS: Record<
   string
 > = {
   assign: "Confirmar",
-  reassign: "Reasignar",
+  reassign: "Modificar",
   preassign: "Preasignar",
   "update-preassigned": "Guardar cambios",
 };
