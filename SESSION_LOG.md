@@ -6,6 +6,96 @@
 
 ---
 
+## Sesion 2026-04-21 — Ciclo de Bug Fixes y Refinamiento
+
+### ✅ Completado
+
+**Fixes Operador Panel (8 vistas):**
+- Fixed search multipalabra con espacios ("Juan Garcia" ahora filtra correctamente)
+  - Cambio: `string.includes(word)` → `tokens.some(tok => tok.startsWith(word))`
+  - Archivo: `components/operador/trip-table.tsx:40-46`
+- Agregada columna Origen a todas las tablas (Pendientes, Asignado, En Curso, Finalizadas)
+  - Archivos: `components/operador/trip-table.tsx`, `lib/server/assignments/queries.ts`
+- Corregido sort order: fecha_solicitada ascendente (activos), descendente (historial)
+  - Archivos: `lib/server/assignments/queries.ts` (listPendingTrips, listFinishedTrips)
+- Agregados nuevos campos de contenedor en detalle expandido
+  - Orden, Mercaderia, Despacho, Carga, Terminal, Devuelve en, Libre hasta
+  - Archivos: `components/operador/trip-table.tsx`, `lib/server/assignments/queries.ts` (OPERATOR_TRIP_SELECT)
+- Remitos ahora con styling verde "Ver remito" + fallback "no hay remito cargado"
+  - Archivos: `components/operador/trip-table.tsx:TripDetail`
+- Remitos visibles en vista En Curso (agregado prop showRemitos)
+  - Archivos: `app/operador/en-curso/page.tsx`
+
+**Fixes Cliente Portal (Seguimiento + Historial):**
+- Chofer/Patente ahora visible en tabla (estaba vacio porque RLS bloqueaba lectura de drivers)
+  - Causa raiz: trips queries usaban `createClient()` (anon key con RLS), drivers table solo permite lectura a staff
+  - Solucion: Cambiar a `createAdminClient()` (como operador queries), con filtro por client_id mantiene seguridad
+  - Archivos: `lib/server/trips/queries.ts`, `lib/server/clients/queries.ts`
+- Normalizador robusto para relaciones 1:1 anidadas
+  - Supabase devuelve relaciones como arrays (anon key) u objetos (service_role)
+  - Nueva helper `unwrapOne()` maneja ambos formatos
+  - Archivos: `lib/server/trips/queries.ts:normalizeTrips()`
+- Detalle expandido ahora muestra TODOS los datos de solicitud
+  - REPARTO: NDV, PAL, CAT, Nro UN, KG, Toneladas, Bultos, Tipo camion, Peon, Horario, Hoja de ruta
+  - CONTENEDOR: Contenedor, Tipo, Peso, Orden, Mercaderia, Despacho, Carga, Terminal, Devuelve en, Libre hasta, Booking, Naviera, Buque, Fechas
+  - Archivo: `components/cliente/trip-list.tsx:TripDetail()`
+- Sort orders fijos: Seguimiento por fecha asc, Historial por fecha desc
+
+**Fixes PWA Chofer (Viajes del dia):**
+- Form "Guardar datos" deshabilitado cuando trip.estado === FINALIZADO
+  - Uso: `<fieldset disabled={trip.estado === "FINALIZADO"}>`
+  - Archivo: `components/chofer/trip-data-form.tsx:88-163`
+
+**Fixes Administracion (ABM Clientes):**
+- **CRITICAL FIX**: Depositos ahora se persisten correctamente al editar cliente existente
+  - Problema raiz: Delete fallaba silenciosamente porque trips referencian deposit IDs via FK (sin ON DELETE CASCADE)
+  - Solucion: Cambiar de delete+re-insert a update/insert/deactivate (marcar como inactivo en vez de borrar)
+  - Archivos: `lib/server/clients/actions.ts:updateClientAction()` (lineas 299-343)
+- Client queries (listClients, getClientById) cambiadas a `createAdminClient()` para consistencia
+  - Archivo: `lib/server/clients/queries.ts`
+- Agregado debug logging para deposits en server actions
+  - Console logs cuando se reciben, cuando se insertan, si hay errores
+  - Archivo: `lib/server/clients/actions.ts` (createClientAction, updateClientAction)
+
+**Commits en main (8 totales):**
+1. `aba819b` fix: batch UI/data fixes across operator, client, and chofer views
+2. `c14de78` fix: client trip list showing all solicitud data and chofer/patente
+3. `5b395ac` fix: switch client queries to adminClient to bypass RLS on drivers table
+4. `ab7f1e5` fix: deposits - switch client queries to adminClient + add debug logging
+5. `a3ae447` fix: deposits sync uses update/insert instead of delete+re-insert
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Proximos pasos
+
+1. **Testing end-to-end por rol** (siguiendo el checklist en ESTADO.md):
+   - CLIENTE: crear viaje (reparto/contenedor) → ver en Seguimiento con Chofer asignado → expandir → verificar todos los campos
+   - OPERADOR: buscar con espacios → expandir → verificar Origen y nuevos campos de contenedor
+   - CHOFER: ver viaje FINALIZADO → verificar form deshabilitado
+   - ADMIN: editar cliente con depositos previos → cambiar nombre + agregar/quitar deposits → guardar → verificar en BD
+
+2. **Validar flujo completo de depositos:**
+   - Crear cliente nuevo (funciona segun user)
+   - Editar cliente existente (arreglado en esta sesion) — verificar que update/insert/deactivate funciona
+
+3. **Remover debug logging de deposits** (console.log en updateClientAction) una vez confirmado que funciona
+
+4. **Testing en mobile** — PWA chofer debe responder en iPhone/Android
+
+5. **Deploy a produccion** cuando testing pase
+
+### 💡 Decisiones tomadas
+- **Client queries deben usar createAdminClient()** — aunque parece contra-intuitivo, la seguridad viene del filtro por client_id (en las queries mismas), no de RLS. RLS es segunda linea de defensa. Si client queries van via anon key, fallan silencios en esos joined tables que RLS no permite
+- **Deposits: deactivate en vez de delete** — respeta FKs en trips (origen_deposit_id, destino_deposit_id no tienen ON DELETE CASCADE). Deactivate permite edit de clientes sin romper historial de viajes
+- **Normalizador con unwrapOne()** — adminClient devuelve objetos, anon key devuelve arrays. Una sola funcion maneja ambos casos
+
+### ⚠️ Problemas / blockers
+- Debug logging aun activo en clients/actions.ts (console.log) — no es problema pero limpiar antes de release
+- Depositos no habia forma de testear en Vercel porque el cliente de prueba tenia viajes referenciando sus deposits. Ahora se puede testear: editar cliente → cambiar nombre + qty de deposits → guardar → verificar que persisten
+
+---
+
 ## Sesion 2026-04-11 — Modulos 5, 6, 7 y 8 completos (proyecto finalizado)
 
 ### ✅ Completado

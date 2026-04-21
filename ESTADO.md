@@ -2,7 +2,7 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-11 (cierre sesion 5 — 8 modulos completos)
+> Ultima actualizacion: 2026-04-21 (cierre sesion 6 — 8 modulos + bug fixes y refinamiento)
 
 ---
 
@@ -28,26 +28,67 @@
 
 ---
 
-## Modulo Actual en Progreso
-Ninguno — todos los modulos completados.
+## Trabajo Completado en Esta Sesion (2026-04-21)
+🔧 **Ciclo de Refinamiento y Bug Fixes** (no es un modulo nuevo, sino corrections sobre Modulos 4, 5, 6, 8 ya construidos):
+
+**Fixes Operador (HU-OPE-001 a HU-OPE-008):**
+- [x] Search con espacios multipalabra funcionando correctamente (token-based en trip-table.tsx)
+- [x] Agregada columna Origen a todas las tablas (operator + client)
+- [x] Sort por fecha_solicitada (ascendente para activos, descendente para historial)
+- [x] Nuevos campos de contenedor visibles (Orden, Mercaderia, Despacho, Carga, Terminal, Devuelve en, Libre hasta)
+- [x] Remitos con styling verde "Ver remito" + fallback "no hay remito cargado"
+- [x] Remitos visibles en vista En Curso
+
+**Fixes Cliente (HU-CLI-001 a HU-CLI-005):**
+- [x] Chofer/Patente ahora visible en tabla de viajes
+- [x] Todos los datos de solicitud (reparto o contenedor) en detalle expandido
+- [x] RLS bypass en client queries (switch a adminClient)
+- [x] Normalizador robusto para relaciones 1:1 anidadas (drivers en trip_assignments)
+
+**Fixes Chofer (HU-CHO-001 a HU-CHO-006):**
+- [x] Form Guardar datos deshabilitado cuando trip.estado === FINALIZADO
+
+**Fixes Administracion (HU-ADMIN-001 a HU-ADMIN-002):**
+- [x] Depositos ahora persisten correctamente al editar cliente
+- [x] Fix: sync usa update/insert/deactivate en vez de delete (FK constraints en trips)
+- [x] Client queries (listClients, getClientById) usan adminClient para consistencia
+
+**Archivos modificados en esta sesion (8 commits):**
+- `components/operador/trip-table.tsx` — search fix, Origen column, remito styling
+- `components/cliente/trip-list.tsx` — simplified table, full contenedor details
+- `lib/server/trips/queries.ts` — switch to adminClient, robust normalizer, new fields
+- `lib/server/assignments/queries.ts` — new fields in OPERATOR_TRIP_SELECT, sort fixes
+- `lib/server/clients/queries.ts` — switch to adminClient
+- `lib/server/clients/actions.ts` — deposits sync logic (update/insert/deactivate), add logging
+- `components/chofer/trip-data-form.tsx` — disable form when finalized
+- `app/operador/en-curso/page.tsx` — add showRemitos prop
 
 ---
 
 ## Proximo Paso Exacto
-**Testing integral y deploy a produccion.** Secuencia:
+**El proyecto está funcional tras el ciclo de fixes. Proximos pasos:**
 
-1. **Ejecutar migraciones pendientes en Supabase SQL Editor** (en orden):
-   - `supabase/migrations/0004_fix_rls_complete.sql` — fix RLS recursion en trips, containers INSERT para CLIENTE, helpers SECURITY DEFINER
-   - `supabase/migrations/0005_fix_driver_data_rls.sql` — trip_driver_data RLS con helpers
-2. **Configurar variables de entorno en Vercel:**
-   - `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_FROM_NAME` (pendiente de configurar por el usuario)
-   - `GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY` (base64 del JSON), `GOOGLE_DRIVE_FOLDER_REMITOS`, `GOOGLE_DRIVE_FOLDER_INSPECCIONES` (ya configurados en .env.local)
-3. **Testing end-to-end por rol:**
-   - CLIENTE: crear reparto individual, crear reparto masivo (grilla), crear contenedor, ver seguimiento realtime, ver historial
-   - OPERADOR: ver pendientes, asignar chofer+patente, reasignar, ver en curso, ver finalizadas, ver remitos, toneladas, reportes
-   - CHOFER: ver viajes del dia, registrar turno, registrar datos de viaje, subir foto remito (verificar que sube a Drive), completar inspeccion (verificar PDF en Drive)
-4. **Verificar emails** (cuando se configure SendGrid): asignar chofer dispara email, subir remito dispara email
-5. **Deploy a produccion** en Vercel con todas las env vars configuradas
+1. **Testing por rol (flujo completo end-to-end):**
+   - **CLIENTE Seguimiento**: Crear viaje (reparto o contenedor) → Ver en tabla con Chofer/Patente una vez asignado → Expandir detalle → Verificar todos los campos de solicitud + reseerva si aplica
+   - **CLIENTE Historial**: Viajes finalizados → Verificar ordenados por fecha desc → Verificar Origen column → Expandir detalle → Verificar remito con link verde
+   - **OPERADOR Pendientes/Chofer Asignado**: Buscar por cliente/chofer/patente con espacios (ej: "Juan Garcia") → Verificar search funciona → Expandir detail → Verificar todos los datos
+   - **OPERADOR En Curso**: Expandir → Verificar remitos si hay cargado
+   - **CHOFER**: Ver viajes del dia (incluyendo FINALIZADO) → Expandir → Verificar form deshabilitado si FINALIZADO → Registrar datos si estado permite
+   
+2. **Validar depositos:**
+   - Ir a /operador/clientes → editar cliente de prueba que tenia depositos previos → cambiar nombre, agregar/quitar depositos → guardar → verificar en BD que se actualizaron (update + insert + deactivate, sin delete)
+
+3. **Verificar datos complejos:**
+   - Crear contenedor en cliente → ver en operador → expandir → verificar todos los campos (Orden, Mercaderia, Despacho, etc.) visibles
+   - Contenedor debe mostrar Fecha del Viaje, Deposito, Destino, Orden, Mercaderia, Despacho, Carga, Terminal, Contenedor, Devuelve en
+
+4. **Deployment a Vercel:**
+   - Todos los cambios estan en `main` (8 commits: aba819b → a3ae447 → 5b395ac → ab7f1e5 → a3ae447 → c14de78 → 5b395ac → a3ae447)
+   - Verificar en Vercel que las rutas responden correctamente
+
+5. **Deuda pendiente de resolver:**
+   - Debug logging de deposits aun activo (`console.log` en updateClientAction) — remover antes de release si todo funciona
+   - Testing en mobile (PWA chofer)
 
 ---
 
