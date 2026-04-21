@@ -22,18 +22,24 @@ type Props = {
   onDone?: () => void;
 };
 
-const ACTIONS = {
+const ACTIONS: Record<
+  "assign" | "reassign" | "preassign" | "update-preassigned",
+  (prev: AssignmentActionState, formData: FormData) => Promise<AssignmentActionState>
+> = {
   assign: assignTripAction,
   reassign: reassignTripAction,
   preassign: preassignTripAction,
   "update-preassigned": updatePreassignedTripAction,
 };
 
-const LABELS = {
+const LABELS: Record<
+  "assign" | "reassign" | "preassign" | "update-preassigned",
+  string
+> = {
   assign: "Confirmar",
   reassign: "Reasignar",
   preassign: "Preasignar",
-  "update-preassigned": "Actualizar Preasignación",
+  "update-preassigned": "Guardar cambios",
 };
 
 const initialState: AssignmentActionState = {};

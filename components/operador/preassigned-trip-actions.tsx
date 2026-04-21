@@ -67,7 +67,7 @@ export function PreassignedTripActions({
         onClick={() => setActiveMode("update-preassigned")}
         className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
       >
-        Volver a Preasignar
+        Modificar
       </button>
       <button
         type="button"
