@@ -123,3 +123,41 @@ export function remitoHtml(data: RemitoEmailData): string {
 
   return layout("Confirmacion de entrega — ReySil", body);
 }
+
+// ─── HU-NOT-003: Solicitud created notification ──────────────────────
+
+export type SolicitudEmailData = {
+  clientName: string;
+  tipoSolicitud: "Reparto" | "Contenedor";
+  origen: string;
+  destino: string;
+  fecha: string;
+  detalles?: string;
+};
+
+export function solicitudSubject(data: SolicitudEmailData): string {
+  return `ReySil — Nueva solicitud de ${data.tipoSolicitud} — ${data.destino}`;
+}
+
+export function solicitudHtml(data: SolicitudEmailData): string {
+  const body = `
+    <h2 style="margin:0 0 8px;color:${BRAND_RED_DARK};font-size:18px;">Solicitud de ${data.tipoSolicitud}</h2>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5;">
+      Hola <strong>${data.clientName}</strong>, se ha registrado una nueva solicitud de ${data.tipoSolicitud.toLowerCase()}
+      en el sistema.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:16px;">
+      <tbody>
+        ${dataRow("Tipo", data.tipoSolicitud)}
+        ${dataRow("Origen", data.origen)}
+        ${dataRow("Destino", data.destino)}
+        ${dataRow("Fecha de carga", data.fecha)}
+        ${data.detalles ? dataRow("Detalles", data.detalles) : ""}
+      </tbody>
+    </table>
+    <p style="margin:0;color:#6b7280;font-size:13px;">
+      Por favor, revisa la solicitud en tu cuenta de ReySil.
+    </p>`;
+
+  return layout(`Solicitud de ${data.tipoSolicitud} — ReySil`, body);
+}

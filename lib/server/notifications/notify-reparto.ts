@@ -4,6 +4,11 @@ import {
   getClientMailsForSolicitud,
   getReysilNotificationEmails,
 } from "./client-preferences-queries";
+import {
+  solicitudSubject,
+  solicitudHtml,
+  type SolicitudEmailData,
+} from "./templates";
 
 /**
  * HU-NOT-003: Send email to client and ReySil when a REPARTO or CONTENEDOR
@@ -63,51 +68,40 @@ export async function notifyRepartoCreated(tripId: string): Promise<void> {
       ? trip.containers[0]
       : trip.containers;
 
-    // Build email subject and body based on tipo
-    const tipoViaje = trip.tipo === "REPARTO" ? "Reparto" : "Contenedor";
-    const subject = `Solicitud de ${tipoViaje} — ${(client as { nombre: string }).nombre}`;
+    const tipoSolicitud: "Reparto" | "Contenedor" =
+      trip.tipo === "REPARTO" ? "Reparto" : "Contenedor";
 
-    let html = `
-      <h2>Nueva Solicitud de ${tipoViaje}</h2>
-      <p><strong>Cliente:</strong> ${(client as { nombre: string }).nombre}</p>
-      <p><strong>Fecha:</strong> ${trip.fecha_solicitada ? new Date(trip.fecha_solicitada).toLocaleDateString("es-AR") : "—"}</p>
-      <p><strong>Origen:</strong> ${trip.origen_descripcion || "—"}</p>
-      <p><strong>Destino:</strong> ${trip.destino_descripcion || "—"}</p>
-    `;
-
+    // Build detalles string based on tipo
+    let detalles = "";
     if (trip.tipo === "REPARTO" && repartoFields) {
-      html += `
-        <h3>Detalles del Reparto</h3>
-        <ul>
-          <li><strong>NDV:</strong> ${(repartoFields as { ndv: string | null }).ndv || "—"}</li>
-          <li><strong>Peso:</strong> ${(repartoFields as { peso_kg: number | null }).peso_kg || "—"} kg</li>
-        </ul>
-      `;
+      const reparto = repartoFields as {
+        ndv: string | null;
+        peso_kg: number | null;
+      };
+      detalles = `NDV: ${reparto.ndv || "—"}, Peso: ${reparto.peso_kg || "—"} kg`;
     } else if (trip.tipo === "CONTENEDOR" && container) {
       const cont = container as {
         numero: string | null;
         tipo: string | null;
-        peso_carga_kg: number | null;
-        reservations: { numero_booking: string | null; naviera: string | null } | null;
       };
-      html += `
-        <h3>Detalles del Contenedor</h3>
-        <ul>
-          <li><strong>Número:</strong> ${cont.numero || "—"}</li>
-          <li><strong>Tipo:</strong> ${cont.tipo || "—"}</li>
-          <li><strong>Peso:</strong> ${cont.peso_carga_kg || "—"} kg</li>
-          ${cont.reservations ? `<li><strong>Booking:</strong> ${cont.reservations.numero_booking || "—"}</li>` : ""}
-          ${cont.reservations ? `<li><strong>Naviera:</strong> ${cont.reservations.naviera || "—"}</li>` : ""}
-        </ul>
-      `;
+      detalles = `Contenedor ${cont.numero || "?"} (${cont.tipo || "?"})`;
     }
 
-    html += `<p>Por favor, revise la solicitud en el sistema.</p>`;
+    const emailData: SolicitudEmailData = {
+      clientName: (client as { nombre: string }).nombre,
+      tipoSolicitud,
+      origen: trip.origen_descripcion || "—",
+      destino: trip.destino_descripcion || "—",
+      fecha: trip.fecha_solicitada
+        ? new Date(trip.fecha_solicitada).toLocaleDateString("es-AR")
+        : "—",
+      detalles: detalles || undefined,
+    };
 
     await sendEmail({
       to: recipients,
-      subject,
-      html,
+      subject: solicitudSubject(emailData),
+      html: solicitudHtml(emailData),
     });
   } catch (err) {
     console.error("[notify-reparto] Unexpected error:", err);
