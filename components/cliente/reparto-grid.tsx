@@ -12,6 +12,7 @@ type Deposit = { id: string; nombre: string; direccion: string | null; tipo: str
 
 type GridRow = {
   key: number;
+  hoja_ruta: string;
   fecha_solicitada: string;
   fecha_entrega: string;
   origen_deposit_id: string;
@@ -35,6 +36,7 @@ type GridRow = {
 function emptyRow(key: number): GridRow {
   return {
     key,
+    hoja_ruta: "",
     fecha_solicitada: "",
     fecha_entrega: "",
     origen_deposit_id: "",
@@ -88,6 +90,7 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
 
   function handleSubmit(formData: FormData) {
     const payload = rows.map((r) => ({
+      hoja_ruta: r.hoja_ruta,
       fecha_solicitada: r.fecha_solicitada,
       fecha_entrega: r.fecha_entrega,
       origen_deposit_id: r.origen_deposit_id === "otro" || !r.origen_deposit_id ? null : r.origen_deposit_id,
@@ -129,6 +132,7 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
           <thead className="bg-neutral-50">
             <tr>
               <th className={cellClass}>#</th>
+              <th className={cellClass}>Hoja de Ruta</th>
               <th className={cellClass}>Fecha carga *</th>
               <th className={cellClass}>Fecha entrega</th>
               <th className={cellClass}>Deposito</th>
@@ -154,6 +158,16 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
               <tr key={row.key}>
                 <td className={`${cellClass} text-center text-neutral-400`}>
                   {idx + 1}
+                </td>
+                <td className={cellClass}>
+                  <input
+                    type="text"
+                    value={row.hoja_ruta}
+                    onChange={(e) =>
+                      updateRow(row.key, "hoja_ruta", e.target.value)
+                    }
+                    className={inputClass}
+                  />
                 </td>
                 <td className={cellClass}>
                   <input
