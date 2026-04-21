@@ -5,6 +5,10 @@ import {
   assignmentHtml,
   type AssignmentEmailData,
 } from "./templates";
+import {
+  getClientMailsForAsignacion,
+  getReysilNotificationEmails,
+} from "./client-preferences-queries";
 
 /**
  * HU-NOT-001: Send email to all client emails when a driver + patente
@@ -37,15 +41,20 @@ export async function notifyAssignment(tripId: string): Promise<void> {
       return;
     }
 
-    // Get all emails for this client
-    const { data: emails } = await supabase
-      .from("client_emails")
-      .select("email")
-      .eq("client_id", trip.client_id);
+    // Get client emails configured for assignment notifications
+    const clientMails = await getClientMailsForAsignacion(trip.client_id);
 
-    const recipients = (emails ?? []).map((e) => e.email);
+    // Get ReySil internal emails configured for assignments
+    const reysilMails = await getReysilNotificationEmails("asignaciones");
+
+    // Combine and deduplicate
+    const recipients = Array.from(new Set([...clientMails, ...reysilMails]));
+
     if (recipients.length === 0) {
-      console.warn("[notify-assignment] No emails for client", trip.client_id);
+      console.warn(
+        "[notify-assignment] No emails configured for trip",
+        tripId,
+      );
       return;
     }
 

@@ -59,6 +59,15 @@ export async function getClientMailsForAsignacion(
     .map((p) => p.email);
 }
 
+export type ReysilNotificationEmail = {
+  id: string;
+  email: string;
+  enviar_solicitudes: boolean;
+  enviar_asignaciones: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 /**
  * Obtener mails internos de ReySil para notificaciones
  */
@@ -78,4 +87,23 @@ export async function getReysilNotificationEmails(type: "solicitudes" | "asignac
   }
 
   return (data || []).map((row) => (row as { email: string }).email);
+}
+
+/**
+ * Obtener todos los mails internos de ReySil
+ */
+export async function getAllReysilNotificationEmails(): Promise<ReysilNotificationEmail[]> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("reysil_notification_emails")
+    .select("*")
+    .order("email");
+
+  if (error) {
+    console.error("[notifications] Error fetching all ReySil emails:", error);
+    return [];
+  }
+
+  return (data as ReysilNotificationEmail[]) || [];
 }

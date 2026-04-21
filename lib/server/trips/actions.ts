@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { CreateRepartoSchema, CreateContenedorSchema } from "@/lib/validators/trip";
+import { notifyRepartoCreated, notifyContenedorCreated } from "@/lib/server/notifications/notify-reparto";
 
 export type TripActionState = {
   error?: string;
@@ -114,6 +115,9 @@ export async function createRepartoAction(
   if (fieldsError) {
     return { error: `Error al crear campos de reparto: ${fieldsError.message}` };
   }
+
+  // Fire-and-forget notification
+  notifyRepartoCreated(trip.id).catch(() => {});
 
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
@@ -323,22 +327,29 @@ export async function createContenedorAction(
       return { error: `Contenedor ${i + 1}: ${contError.message}` };
     }
 
-    const { error: tripError } = await supabase.from("trips").insert({
-      client_id: user.profile.client_id,
-      tipo: "CONTENEDOR",
-      estado: "PENDIENTE",
-      container_id: container.id,
-      origen_deposit_id: d.origen_deposit_id || null,
-      origen_descripcion: origenDescripcion,
-      destino_descripcion: d.destino_descripcion || null,
-      fecha_solicitada: d.fecha_carga || null,
-      observaciones_cliente: d.observaciones || null,
-      created_by: user.id,
-    });
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .insert({
+        client_id: user.profile.client_id,
+        tipo: "CONTENEDOR",
+        estado: "PENDIENTE",
+        container_id: container.id,
+        origen_deposit_id: d.origen_deposit_id || null,
+        origen_descripcion: origenDescripcion,
+        destino_descripcion: d.destino_descripcion || null,
+        fecha_solicitada: d.fecha_carga || null,
+        observaciones_cliente: d.observaciones || null,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
 
     if (tripError) {
       return { error: `Viaje del contenedor ${i + 1}: ${tripError.message}` };
     }
+
+    // Fire-and-forget notification for this container
+    notifyContenedorCreated(trip.id).catch(() => {});
   }
 
   revalidatePath("/cliente/solicitudes");

@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/operador/reportes", label: "Reportes" },
   { href: "/operador/clientes", label: "Clientes" },
   { href: "/operador/choferes", label: "Choferes" },
+  { href: "/operador/configuracion", label: "Configuración" },
 ] as const;
 
 const DOC_ITEMS = [
