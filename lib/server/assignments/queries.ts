@@ -21,6 +21,7 @@ export type OperatorTripRow = {
     patente: string;
     patente_acoplado: string | null;
     driver_id: string;
+    comentario_asignacion: string | null;
     drivers: { id: string; nombre: string; apellido: string; codigo: string };
   } | null;
   trip_reparto_fields: {
@@ -75,7 +76,7 @@ const OPERATOR_TRIP_SELECT = `
   origen_descripcion, destino_descripcion,
   fecha_solicitada, observaciones_cliente, created_at,
   clients(nombre, codigo),
-  trip_assignments(id, patente, patente_acoplado, driver_id, drivers(id, nombre, apellido, codigo)),
+  trip_assignments(id, patente, patente_acoplado, driver_id, comentario_asignacion, drivers(id, nombre, apellido, codigo)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   trip_events(id, tipo, ocurrido_at, observaciones),

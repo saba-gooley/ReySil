@@ -65,6 +65,16 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
 
   return (
     <div className="space-y-4">
+      {/* Comentario de asignación */}
+      {trip.trip_assignments?.comentario_asignacion && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-xs font-semibold text-amber-900">Nota del operador</p>
+          <p className="text-sm text-amber-800 mt-1">
+            {trip.trip_assignments.comentario_asignacion}
+          </p>
+        </div>
+      )}
+
       {/* Trip events: Llegada al cliente / Salida del cliente */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-neutral-400 uppercase">
