@@ -2,7 +2,7 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-21 (cierre sesion 6 — 8 modulos + bug fixes y refinamiento)
+> Ultima actualizacion: 2026-04-21 (cierre sesion 7 — features y refinamiento)
 
 ---
 
@@ -29,66 +29,71 @@
 ---
 
 ## Trabajo Completado en Esta Sesion (2026-04-21)
-🔧 **Ciclo de Refinamiento y Bug Fixes** (no es un modulo nuevo, sino corrections sobre Modulos 4, 5, 6, 8 ya construidos):
+🔧 **Features, Comentarios de Operador y Reorganizacion de Datos Chofer**:
 
-**Fixes Operador (HU-OPE-001 a HU-OPE-008):**
-- [x] Search con espacios multipalabra funcionando correctamente (token-based en trip-table.tsx)
-- [x] Agregada columna Origen a todas las tablas (operator + client)
-- [x] Sort por fecha_solicitada (ascendente para activos, descendente para historial)
-- [x] Nuevos campos de contenedor visibles (Orden, Mercaderia, Despacho, Carga, Terminal, Devuelve en, Libre hasta)
-- [x] Remitos con styling verde "Ver remito" + fallback "no hay remito cargado"
-- [x] Remitos visibles en vista En Curso
+**Features en Panel Operadores (viajes PENDIENTE/PREASIGNADO):**
+- [x] Agregada columna "Hoja de Ruta" como primer campo en grilla de solicitudes (reparto-grid.tsx)
+- [x] Hoja de Ruta incluida en payload de form y guardada en BD
+- [x] Implementados botones para viajes PREASIGNADO: "Modificar" (reasignar sin cambiar estado) y "Confirmar" (pasar a ASIGNADO)
+- [x] Nueva acción `updatePreassignedTripAction` para cambiar preasignaciones manteniendo estado PREASIGNADO
 
-**Fixes Cliente (HU-CLI-001 a HU-CLI-005):**
-- [x] Chofer/Patente ahora visible en tabla de viajes
-- [x] Todos los datos de solicitud (reparto o contenedor) en detalle expandido
-- [x] RLS bypass en client queries (switch a adminClient)
-- [x] Normalizador robusto para relaciones 1:1 anidadas (drivers en trip_assignments)
+**Comentarios del Operador (Asignaciones/Reasignaciones):**
+- [x] Campo `comentario_asignacion` guardado en PREASSIGN, REASSIGN, y UPDATE-PREASSIGNED actions
+- [x] Comentario existente mostrado al abrir formulario de asignación (en PREASIGNADO y ASIGNADO)
+- [x] Comentario visualizado en panel de detalles de viajes (trip-table.tsx, sección "Asignacion")
+- [x] Label de botón cambió de "Reasignar" a "Modificar" para mayor claridad
+- [x] Soporte en AsignadoView para pasar y mostrar comentarios existentes
 
-**Fixes Chofer (HU-CHO-001 a HU-CHO-006):**
-- [x] Form Guardar datos deshabilitado cuando trip.estado === FINALIZADO
+**Reorganizacion de Datos Chofer (Turnos vs Viajes):**
+- [x] Sección "Tipo de carga" (Km 50%, Km 100%, KM, Pernoctada) removida de Viajes (trip-data-form.tsx)
+- [x] Nuevos campos implementados en Turnos (shift-view.tsx) con layout mejorado: radio selector Km 50/100 + campo único de KM
+- [x] Lógica inteligente: dependiendo del radio seleccionado, el KM se guarda en km_50 o km_100
+- [x] Pernoctada mantiene checkbox en Turnos
 
-**Fixes Administracion (HU-ADMIN-001 a HU-ADMIN-002):**
-- [x] Depositos ahora persisten correctamente al editar cliente
-- [x] Fix: sync usa update/insert/deactivate en vez de delete (FK constraints en trips)
-- [x] Client queries (listClients, getClientById) usan adminClient para consistencia
-
-**Archivos modificados en esta sesion (8 commits):**
-- `components/operador/trip-table.tsx` — search fix, Origen column, remito styling
-- `components/cliente/trip-list.tsx` — simplified table, full contenedor details
-- `lib/server/trips/queries.ts` — switch to adminClient, robust normalizer, new fields
-- `lib/server/assignments/queries.ts` — new fields in OPERATOR_TRIP_SELECT, sort fixes
-- `lib/server/clients/queries.ts` — switch to adminClient
-- `lib/server/clients/actions.ts` — deposits sync logic (update/insert/deactivate), add logging
-- `components/chofer/trip-data-form.tsx` — disable form when finalized
-- `app/operador/en-curso/page.tsx` — add showRemitos prop
+**Archivos modificados en esta sesion (7 commits):**
+- `components/cliente/reparto-grid.tsx` — add hoja_ruta input cell, include in payload
+- `app/chofer/layout.tsx` — remove WhatsApp FAB
+- `components/operador/preassigned-trip-actions.tsx` — NEW: buttons for Modificar/Confirmar on PREASIGNADO
+- `components/operador/pendientes-view.tsx` — use PreassignedTripActions for PREASIGNADO trips
+- `lib/server/assignments/actions.ts` — add comentario_asignacion to preassignTripAction, NEW updatePreassignedTripAction
+- `components/operador/assign-trip-form.tsx` — support update-preassigned mode, explicit Record types, pass currentComentario
+- `components/operador/asignado-view.tsx` — pass currentComentario to AssignTripForm
+- `components/operador/trip-table.tsx` — display comentario_asignacion in Asignacion section
+- `components/chofer/shift-view.tsx` — refactor to radio selector + single KM input, new logic for kmType
+- `components/chofer/trip-data-form.tsx` — remove Tipo de carga section, simplify finalization
 
 ---
 
 ## Proximo Paso Exacto
-**El proyecto está funcional tras el ciclo de fixes. Proximos pasos:**
+**El proyecto está funcional. Flujo de comentarios del operador y reorganización KM completados.**
 
-1. **Testing por rol (flujo completo end-to-end):**
-   - **CLIENTE Seguimiento**: Crear viaje (reparto o contenedor) → Ver en tabla con Chofer/Patente una vez asignado → Expandir detalle → Verificar todos los campos de solicitud + reseerva si aplica
-   - **CLIENTE Historial**: Viajes finalizados → Verificar ordenados por fecha desc → Verificar Origen column → Expandir detalle → Verificar remito con link verde
-   - **OPERADOR Pendientes/Chofer Asignado**: Buscar por cliente/chofer/patente con espacios (ej: "Juan Garcia") → Verificar search funciona → Expandir detail → Verificar todos los datos
-   - **OPERADOR En Curso**: Expandir → Verificar remitos si hay cargado
-   - **CHOFER**: Ver viajes del dia (incluyendo FINALIZADO) → Expandir → Verificar form deshabilitado si FINALIZADO → Registrar datos si estado permite
+**Próximo ciclo de testing y validación:**
+
+1. **Testing del flujo de asignaciones con comentarios:**
+   - En /operador/pendientes: crear viaje (estado PENDIENTE) → Preasignar con comentario → Verificar comentario en BD (trip_assignments.comentario_asignacion)
+   - Volver a la vista → Click en "Modificar" → Verificar que comentario existente aparece pre-cargado en textarea
+   - Cambiar comentario → Click "Guardar cambios" → Verificar actualización en BD
+   - Click "Confirmar" (pasar a ASIGNADO) → En /operador/chofer-asignado, verificar comentario se ve en detalle expandido
+   - En /operador/chofer-asignado, click "Modificar" → Verificar comentario pre-cargado
    
-2. **Validar depositos:**
-   - Ir a /operador/clientes → editar cliente de prueba que tenia depositos previos → cambiar nombre, agregar/quitar depositos → guardar → verificar en BD que se actualizaron (update + insert + deactivate, sin delete)
+2. **Testing de KM en Turnos:**
+   - En /chofer/turno: verificar que al seleccionar "Km 50%" y ingresar valor → se guarda en km_50
+   - Seleccionar "Km 100%" y valor diferente → se guarda en km_100
+   - Verificar que los dos campos NO aparecen simultáneamente (solo el valor del tipo seleccionado)
+   - Verificar que Pernoctada funciona como checkbox
 
-3. **Verificar datos complejos:**
-   - Crear contenedor en cliente → ver en operador → expandir → verificar todos los campos (Orden, Mercaderia, Despacho, etc.) visibles
-   - Contenedor debe mostrar Fecha del Viaje, Deposito, Destino, Orden, Mercaderia, Despacho, Carga, Terminal, Contenedor, Devuelve en
+3. **Testing que KM fue removido de Viajes:**
+   - En /chofer/viajes: expandir viaje → NO debe mostrar sección "Tipo de carga" (KM, selector 50/100)
+   - Verificar que solo muestran: eventos (LLEGADA_DESTINO_CLIENTE, SALIDA_CLIENTE), remito, botón Finalizar
+   
+4. **Testing de Hoja de Ruta:**
+   - En /cliente/solicitudes (crearReparto): ingresar "Hoja de Ruta" en primer campo
+   - Enviar viaje → En BD verificar que se guardó (trips.metadata.hoja_de_ruta o donde corresponda)
+   - En /operador/pendientes, expandir detalle → Verificar "Hoja de Ruta" visible
 
-4. **Deployment a Vercel:**
-   - Todos los cambios estan en `main` (8 commits: aba819b → a3ae447 → 5b395ac → ab7f1e5 → a3ae447 → c14de78 → 5b395ac → a3ae447)
-   - Verificar en Vercel que las rutas responden correctamente
-
-5. **Deuda pendiente de resolver:**
-   - Debug logging de deposits aun activo (`console.log` en updateClientAction) — remover antes de release si todo funciona
-   - Testing en mobile (PWA chofer)
+5. **Deployment a Vercel:**
+   - Todos los cambios en `main` (11 commits: 9971eb4 → 2608ec5 → 2984177 → c2174ce)
+   - Verificar que rutas responden: /cliente/solicitudes, /operador/pendientes, /chofer/turno, /chofer (viajes)
 
 ---
 
@@ -104,6 +109,12 @@
 - **PEON como enum SI/NO**: no es numerico, es un campo de seleccion binaria (dropdown en el form).
 - **Notificaciones fire-and-forget**: las llamadas a SendGrid nunca bloquean la operacion principal. Si falla, se loguea y se continua.
 - **Google Drive Service Account Key en base64**: el JSON completo se codifica en base64 para almacenarlo como variable de entorno sin problemas de escape.
+
+**Decisiones Sesion 7 (2026-04-21):**
+- **PreassignedTripActions component**: UI con dos botones ("Modificar" y "Confirmar") para viajes PREASIGNADO. Permite cambiar chofer/patente/comentario sin cambiar estado, o confirmar a ASIGNADO. Mejor UX que un único dropdown con modos.
+- **updatePreassignedTripAction**: nueva acción separada (en vez de reutilizar reassignTripAction) para actualizar preasignaciones. reassignTripAction chequea estado === ASIGNADO, no era viable para PREASIGNADO.
+- **KM fields en shift_logs**: se movieron de trip_driver_data a shift_logs (km_50, km_100). Cambio arquitectonico: KM es por turno (jornada laboral), no por viaje individual. Turnos pueden tener múltiples viajes; el chofer reporta KM al final del turno, no al finalizar cada viaje.
+- **Radio selector para KM tipo**: en shift-view, en lugar de dos campos (KM al 50%, KM al 100%), hay un selector radio + campo único. Mejor UX: el chofer elige el tipo de carga primero, luego ingresa el valor. El sistema guarda en el campo correspondiente (km_50 o km_100) automáticamente.
 
 ---
 

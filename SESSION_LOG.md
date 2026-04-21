@@ -6,6 +6,79 @@
 
 ---
 
+## Sesion 2026-04-21 — Features: Comentarios Operador, Preasignaciones, KM en Turnos
+
+### ✅ Completado
+
+**Features de Comentarios del Operador (Asignaciones):**
+- Agregado campo `comentario_asignacion` al insert en `preassignTripAction`
+  - Archivo: `lib/server/assignments/actions.ts:194-202`
+- Creada nueva acción `updatePreassignedTripAction` para cambiar preasignaciones sin cambiar estado
+  - Verifica que trip.estado === PREASIGNADO antes de actualizar
+  - Archivo: `lib/server/assignments/actions.ts:226-275`
+- Soporte en `AssignTripForm` para nuevo modo "update-preassigned"
+  - Agregado explicit Record<> typing a ACTIONS y LABELS para type safety
+  - Archivo: `components/operador/assign-trip-form.tsx:25-37`
+- Comentario existente mostrado al abrir formulario de asignación (currentComentario prop)
+  - Archivos: `components/operador/assign-trip-form.tsx`, `components/operador/asignado-view.tsx`, `components/operador/preassigned-trip-actions.tsx`
+- Comentario visualizado en panel de detalles (trip-table.tsx)
+  - Agregada fila "Comentario del operador" en sección Asignacion cuando existe
+  - Archivo: `components/operador/trip-table.tsx:419-422`
+- Label de botón cambió de "Reasignar" a "Modificar" para mayor claridad
+  - Archivo: `components/operador/assign-trip-form.tsx:36`
+
+**Features de Preasignaciones (PREASIGNADO trips):**
+- Creada nueva vista `PreassignedTripActions` con dos botones
+  - "Modificar": abre form en modo update-preassigned (cambiar chofer/patente/comentario)
+  - "Confirmar": abre form en modo assign (pasar a ASIGNADO)
+  - Archivo: `components/operador/preassigned-trip-actions.tsx` (NEW)
+- Integrada en `PendientesView`: trips con estado PREASIGNADO muestran PreassignedTripActions
+  - Trips PENDIENTE siguen mostrando preassign form
+  - Archivo: `components/operador/pendientes-view.tsx:27-36`
+
+**Features de Hoja de Ruta (Cliente Portal):**
+- Agregado campo `hoja_ruta` como primer input en grilla de solicitudes
+  - Archivo: `components/cliente/reparto-grid.tsx:161-169`
+- Incluido en payload del form
+  - Archivo: `components/cliente/reparto-grid.tsx:92`
+
+**Refactor: KM 50/100 y Pernoctada de Viajes → Turnos:**
+- Removida sección "Tipo de carga" completamente de `trip-data-form.tsx`
+  - Eliminada sección HTML (líneas 98-174 original)
+  - Removidas variables de estado kmType, kmValue, pernocto, obs
+  - Removido registerTripDataAction import (no usado en finalizacion)
+  - Removida función DataSubmitBtn
+  - Archivo: `components/chofer/trip-data-form.tsx`
+- Refactorizada `shift-view.tsx` con nuevo layout:
+  - Radio selector: "Km 50%" / "Km 100%" (en lugar de dos campos separados)
+  - Campo único de KM con placeholder "Ingrese km"
+  - Lógica: dependiendo del radio seleccionado, se guarda en km_50 o km_100
+  - Pernoctada mantiene checkbox
+  - Archivo: `components/chofer/shift-view.tsx:27-123`
+- Removida WhatsApp FAB de chofer layout
+  - Archivo: `app/chofer/layout.tsx`
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- Testing completo del flujo de comentarios: preasignar → modificar → confirmar → visualizar en detalles
+- Testing de KM en turnos: seleccionar Km 50 vs 100 → ingresar valor → verificar en BD
+- Testing de Hoja de Ruta: ingresar en solicitud → verificar guardado → visualizar en operador
+- Validar que KM NO aparece más en viajes (solo en turnos)
+- Deployment a Vercel y testing en producción
+
+### 💡 Decisiones tomadas
+- Crear `PreassignedTripActions` component separado en lugar de agregar lógica compleja a PendientesView — mejora mantenimiento y reutilización
+- Usar `updatePreassignedTripAction` separada de `reassignTripAction` porque reassign chequea estado ASIGNADO (no flexible)
+- KM 50/100 en shift_logs (turno) en lugar de trip_driver_data — arquitectura: KM es por jornada laboral completa, no por viaje
+- Radio selector en shift-view (en lugar de dos campos) — mejor UX para chofer: elige tipo primero, luego ingresa valor
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesion 2026-04-21 — Ciclo de Bug Fixes y Refinamiento
 
 ### ✅ Completado
