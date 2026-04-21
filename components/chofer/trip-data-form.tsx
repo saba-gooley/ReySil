@@ -132,7 +132,7 @@ function FinalizeSection({
   async function handleFinalize(skipRemito: boolean) {
     setLoading(true);
     setError(null);
-    const result = await finalizeTripAction(tripId, skipRemito, null);
+    const result = await finalizeTripAction(tripId, skipRemito, undefined);
     setLoading(false);
 
     if (result.error === "__NO_REMITO__") {
