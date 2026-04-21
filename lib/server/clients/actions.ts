@@ -30,8 +30,6 @@ export async function createClientAction(
   const { codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
 
-  console.log("[createClientAction] depositos count:", depositos.length, JSON.stringify(depositos));
-
   const admin = createAdminClient();
 
   // Check unique codigo
@@ -160,8 +158,6 @@ export async function updateClientAction(
 
   const { id, codigo, nombre, cuit, telefono, direccion, emails, depositos } =
     parsed.data;
-
-  console.log("[updateClientAction] depositos count:", depositos.length, JSON.stringify(depositos));
 
   const admin = createAdminClient();
 
@@ -342,8 +338,9 @@ export async function updateClientAction(
           activo: d.activo,
         })),
       );
+
     if (depError) {
-      return { error: `Error al crear depositos: ${depError.message}` };
+      return { error: `Error al actualizar depositos: ${depError.message}` };
     }
   }
 
