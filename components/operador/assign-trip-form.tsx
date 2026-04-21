@@ -46,6 +46,7 @@ export function AssignTripForm({
   const [state, formAction] = useFormState(action, initialState);
   const [driverId, setDriverId] = useState(currentDriverId ?? "");
   const [patente, setPatente] = useState(currentPatente ?? "");
+  const [comentario, setComentario] = useState("");
 
   if (state.success) {
     onDone?.();
@@ -58,6 +59,7 @@ export function AssignTripForm({
         trip_id: tripId,
         driver_id: driverId,
         patente,
+        comentario_asignacion: comentario || null,
       }),
     );
     formAction(formData);
@@ -67,32 +69,43 @@ export function AssignTripForm({
     "rounded-md border border-neutral-300 px-2 py-1 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red";
 
   return (
-    <form action={handleSubmit} className="flex flex-wrap items-end justify-end gap-1">
+    <form action={handleSubmit} className="space-y-2">
       {state.error && (
         <span className="text-xs text-red-600">{state.error}</span>
       )}
-      <select
-        value={driverId}
-        onChange={(e) => setDriverId(e.target.value)}
-        required
-        className={`${inputClass} w-32 text-xs`}
-      >
-        <option value="">Chofer...</option>
-        {drivers.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.apellido}, {d.nombre} ({d.codigo})
-          </option>
-        ))}
-      </select>
-      <input
-        type="text"
-        value={patente}
-        onChange={(e) => setPatente(e.target.value.toUpperCase())}
-        placeholder="Patente"
-        required
-        className={`${inputClass} w-24 font-mono text-xs`}
+      <div className="flex flex-wrap gap-1">
+        <select
+          value={driverId}
+          onChange={(e) => setDriverId(e.target.value)}
+          required
+          className={`${inputClass} w-32 text-xs`}
+        >
+          <option value="">Chofer...</option>
+          {drivers.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.apellido}, {d.nombre} ({d.codigo})
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={patente}
+          onChange={(e) => setPatente(e.target.value.toUpperCase())}
+          placeholder="Patente"
+          required
+          className={`${inputClass} w-24 font-mono text-xs`}
+        />
+      </div>
+      <textarea
+        value={comentario}
+        onChange={(e) => setComentario(e.target.value)}
+        placeholder="Comentario (opcional)"
+        className={`${inputClass} w-full text-xs resize-none`}
+        rows={2}
       />
-      <SubmitBtn label={LABELS[mode]} />
+      <div className="flex justify-end">
+        <SubmitBtn label={LABELS[mode]} />
+      </div>
     </form>
   );
 }

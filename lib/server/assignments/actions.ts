@@ -16,6 +16,7 @@ const AssignSchema = z.object({
   driver_id: z.string().uuid(),
   patente: z.string().min(1, "Patente requerida"),
   patente_acoplado: z.string().optional().default(""),
+  comentario_asignacion: z.string().optional().nullable(),
 });
 
 /**
@@ -61,6 +62,7 @@ export async function assignTripAction(
         driver_id: d.driver_id,
         patente: d.patente,
         patente_acoplado: d.patente_acoplado || null,
+        comentario_asignacion: d.comentario_asignacion || null,
         asignado_by: user.id,
       })
       .eq("trip_id", d.trip_id);
@@ -74,6 +76,7 @@ export async function assignTripAction(
         driver_id: d.driver_id,
         patente: d.patente,
         patente_acoplado: d.patente_acoplado || null,
+        comentario_asignacion: d.comentario_asignacion || null,
         asignado_by: user.id,
       });
     if (assignErr) return { error: `Error al asignar: ${assignErr.message}` };
@@ -138,6 +141,7 @@ export async function reassignTripAction(
       driver_id: d.driver_id,
       patente: d.patente,
       patente_acoplado: d.patente_acoplado || null,
+      comentario_asignacion: d.comentario_asignacion || null,
     })
     .eq("trip_id", d.trip_id);
 

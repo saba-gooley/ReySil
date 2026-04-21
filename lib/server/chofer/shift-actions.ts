@@ -57,3 +57,35 @@ export async function registerShiftEvent(
     return { error: `Error: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
+
+export async function updateShiftData(
+  shiftId: string,
+  data: {
+    km_50?: number | null;
+    km_100?: number | null;
+    pernoctada?: boolean;
+  },
+): Promise<ChoferActionState> {
+  try {
+    const supabase = createAdminClient();
+
+    const updateData: Record<string, unknown> = {};
+    if (data.km_50 !== undefined) updateData.km_50 = data.km_50;
+    if (data.km_100 !== undefined) updateData.km_100 = data.km_100;
+    if (data.pernoctada !== undefined) updateData.pernoctada = data.pernoctada;
+    updateData.updated_at = new Date().toISOString();
+
+    const { error } = await supabase
+      .from("shift_logs")
+      .update(updateData)
+      .eq("id", shiftId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: `Error: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { registerShiftEvent } from "@/lib/server/chofer/shift-actions";
+import { registerShiftEvent, updateShiftData } from "@/lib/server/chofer/shift-actions";
 
 type Shift = {
   id: string;
@@ -11,6 +11,9 @@ type Shift = {
   salida_deposito: string | null;
   vuelta_deposito: string | null;
   fin_turno: string | null;
+  km_50: number | null;
+  km_100: number | null;
+  pernoctada: boolean;
 } | null;
 
 const SHIFT_EVENTS = [
@@ -23,9 +26,38 @@ const SHIFT_EVENTS = [
 export function ShiftView({ shift }: { shift: Shift }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [km50, setKm50] = useState<string>(shift?.km_50?.toString() ?? "");
+  const [km100, setKm100] = useState<string>(shift?.km_100?.toString() ?? "");
+  const [pernoctada, setPernoctada] = useState(shift?.pernoctada ?? false);
+  const [savingData, setSavingData] = useState(false);
+
   const completedCount = SHIFT_EVENTS.filter(
     (ev) => shift?.[ev.field] != null,
   ).length;
+
+  async function handleSaveShiftData() {
+    if (!shift?.id) return;
+    setSavingData(true);
+    setError("");
+
+    try {
+      const result = await updateShiftData(shift.id, {
+        km_50: km50 ? parseFloat(km50) : null,
+        km_100: km100 ? parseFloat(km100) : null,
+        pernoctada,
+      });
+
+      setSavingData(false);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      setSavingData(false);
+      setError(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -54,6 +86,65 @@ export function ShiftView({ shift }: { shift: Shift }) {
           onDone={() => router.refresh()}
         />
       ))}
+
+      {/* KM y Pernoctada */}
+      <div className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
+        <p className="text-sm font-semibold text-neutral-900">Datos del Turno</p>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="block text-xs font-medium text-neutral-700 mb-1">
+              KM al 50%
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={km50}
+              onChange={(e) => setKm50(e.target.value)}
+              placeholder="0"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-neutral-700 mb-1">
+              KM al 100%
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={km100}
+              onChange={(e) => setKm100(e.target.value)}
+              placeholder="0"
+              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="pernoctada"
+            checked={pernoctada}
+            onChange={(e) => setPernoctada(e.target.checked)}
+            className="h-4 w-4 rounded border-neutral-300 text-reysil-red focus:ring-reysil-red"
+          />
+          <label htmlFor="pernoctada" className="text-sm font-medium text-neutral-700">
+            Pernoctada
+          </label>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSaveShiftData}
+          disabled={savingData}
+          className="w-full rounded-md bg-reysil-red px-4 py-2 text-sm font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
+        >
+          {savingData ? "Guardando..." : "Guardar datos del turno"}
+        </button>
+      </div>
     </div>
   );
 }
