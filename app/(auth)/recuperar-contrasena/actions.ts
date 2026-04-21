@@ -58,8 +58,8 @@ export async function recoverPasswordAction(
     };
   }
 
-  const redirectUrl = `${origin}/auth/callback?next=/restablecer-contrasena`;
-  console.log(`[recoverPassword] Using origin: ${origin}, redirectTo: ${redirectUrl}`);
+  const redirectUrl = `${origin}/auth/callback`;
+  console.log(`[recoverPassword] Using redirectTo: ${redirectUrl}`);
 
   const supabase = createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(
@@ -70,7 +70,11 @@ export async function recoverPasswordAction(
   );
 
   if (error) {
-    console.error("[recoverPassword] Error from Supabase:", error);
+    console.error("[recoverPassword] Supabase error:", {
+      message: error.message,
+      status: error.status,
+      code: (error as any).code,
+    });
   }
 
   // Si el error es de configuracion (URL invalida, etc), lo reportamos.
