@@ -38,21 +38,40 @@ export async function recoverPasswordAction(
     return { fieldErrors };
   }
 
-  // Construir el redirectTo absoluto a partir del host del request.
-  const headersList = headers();
-  const host = headersList.get("host");
-  const proto = headersList.get("x-forwarded-proto") ?? "https";
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    (host ? `${proto}://${host}` : "");
+  // Construir el redirectTo absoluto. IMPORTANTE: debe coincidir exactamente con
+  // "Authorized redirect URLs" en Supabase Auth > URL Configuration.
+  // Preferir NEXT_PUBLIC_APP_URL; fallback solo si no estamos en produccion.
+  let origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+
+  if (!origin) {
+    // Solo para desarrollo local
+    const headersList = headers();
+    const host = headersList.get("host");
+    const proto = headersList.get("x-forwarded-proto") ?? "https";
+    origin = host ? `${proto}://${host}` : "";
+  }
+
+  if (!origin) {
+    return {
+      error:
+        "Error de configuracion: NEXT_PUBLIC_APP_URL no esta configurado.",
+    };
+  }
+
+  const redirectUrl = `${origin}/auth/callback?next=/restablecer-contrasena`;
+  console.log(`[recoverPassword] Using origin: ${origin}, redirectTo: ${redirectUrl}`);
 
   const supabase = createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
     {
-      redirectTo: `${origin}/auth/callback?next=/restablecer-contrasena`,
+      redirectTo: redirectUrl,
     },
   );
+
+  if (error) {
+    console.error("[recoverPassword] Error from Supabase:", error);
+  }
 
   // Si el error es de configuracion (URL invalida, etc), lo reportamos.
   // Pero si es "email not found" o similar, lo silenciamos por seguridad.
