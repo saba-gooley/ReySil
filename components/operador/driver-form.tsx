@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import {
   createDriverAction,
   updateDriverAction,
+  resetDriverPasswordAction,
   type DriverActionState,
 } from "@/lib/server/drivers/actions";
 import type { DriverRow } from "@/lib/server/drivers/queries";
@@ -166,6 +167,8 @@ export function DriverForm({ driver }: { driver?: DriverRow }) {
         )}
       </fieldset>
 
+      {isEdit && driver && <PasswordResetSection driverId={driver.id} />}
+
       <div className="flex items-center justify-between">
         <button
           type="button"
@@ -194,5 +197,100 @@ function SubmitButton({ isEdit }: { isEdit: boolean }) {
           ? "Guardar cambios"
           : "Crear chofer"}
     </button>
+  );
+}
+
+function PasswordResetSection({ driverId }: { driverId: string }) {
+  const [state, formAction] = useFormState(resetDriverPasswordAction, {});
+  const [isResetting, setIsResetting] = useState(false);
+
+  if (state.success && state.generatedCredentials) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-5">
+          <h3 className="text-base font-semibold text-yellow-900">
+            Contraseña reseteada
+          </h3>
+          <p className="mt-2 text-sm text-yellow-800">
+            Se ha generado una nueva contraseña temporal. Copialas ahora — no se
+            van a volver a mostrar.
+          </p>
+          <dl className="mt-4 space-y-2 rounded-md border border-yellow-200 bg-white p-4 font-mono text-sm">
+            <div className="flex gap-2">
+              <dt className="w-24 font-medium text-neutral-600">Email:</dt>
+              <dd className="select-all text-neutral-900">
+                {state.generatedCredentials.email}
+              </dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-24 font-medium text-neutral-600">Password:</dt>
+              <dd className="select-all text-neutral-900">
+                {state.generatedCredentials.password}
+              </dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            onClick={() => setIsResetting(false)}
+            className="mt-4 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700"
+          >
+            Ok
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isResetting) {
+    return (
+      <form action={formAction} className="space-y-4">
+        <input type="hidden" name="driver_id" value={driverId} />
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-5">
+          <h3 className="text-base font-semibold text-yellow-900">
+            ¿Resetear contraseña?
+          </h3>
+          <p className="mt-2 text-sm text-yellow-800">
+            Se generará una nueva contraseña temporal para este chofer. Se
+            mostrarán las nuevas credenciales.
+          </p>
+          {state.error && (
+            <div className="mt-3 rounded bg-red-100 p-2 text-sm text-red-700">
+              {state.error}
+            </div>
+          )}
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setIsResetting(false)}
+              className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700"
+            >
+              Resetear contraseña
+            </button>
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white p-5">
+      <h3 className="text-sm font-semibold text-neutral-700">Seguridad</h3>
+      <p className="mt-1 text-xs text-neutral-500">
+        Si el chofer olvidó su contraseña, puedes resetearla aquí.
+      </p>
+      <button
+        type="button"
+        onClick={() => setIsResetting(true)}
+        className="mt-3 rounded-md border border-neutral-300 bg-white px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
+      >
+        Resetear contraseña
+      </button>
+    </div>
   );
 }

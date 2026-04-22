@@ -86,14 +86,9 @@ export function TruckSelectList({
             ) : selectedTruck ? (
               <div className="flex items-center justify-between gap-2 w-full">
                 <span className="font-mono font-semibold">{selectedTruck.patente}</span>
-                <div className="flex gap-1">
-                  <span className="text-sm text-gray-600">
-                    {selectedTruck.marca} {selectedTruck.modelo}
-                  </span>
-                  <Badge className={statusConfig[selectedTruck.estado].className}>
-                    {statusConfig[selectedTruck.estado].label}
-                  </Badge>
-                </div>
+                <Badge className={statusConfig[selectedTruck.estado].className}>
+                  {statusConfig[selectedTruck.estado].label}
+                </Badge>
               </div>
             ) : (
               <SelectValue placeholder="Selecciona una patente" />
@@ -116,11 +111,8 @@ export function TruckSelectList({
               filteredTrucks.map((truck) => (
                 <SelectItem key={truck.patente} value={truck.patente}>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-semibold w-20">
+                    <span className="font-mono font-semibold">
                       {truck.patente}
-                    </span>
-                    <span className="text-sm text-gray-600">
-                      {truck.marca} {truck.modelo}
                     </span>
                     <Badge
                       variant="outline"
@@ -138,7 +130,7 @@ export function TruckSelectList({
 
       {selectedTruck && (
         <div className="text-xs text-gray-500">
-          {selectedTruck.marca} {selectedTruck.modelo} — Estado:{" "}
+          Estado:{" "}
           <span className="font-semibold">
             {statusConfig[selectedTruck.estado].label}
           </span>

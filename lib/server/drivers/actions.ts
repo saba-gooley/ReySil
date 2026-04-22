@@ -230,6 +230,58 @@ export async function toggleDriverAction(
   return { success: true };
 }
 
+/**
+ * Reset driver password and return new temporary credentials.
+ * Only accessible by OPERADOR/ADMIN roles.
+ */
+export async function resetDriverPasswordAction(
+  _prev: DriverActionState,
+  formData: FormData,
+): Promise<DriverActionState> {
+  const driverId = formData.get("driver_id") as string;
+
+  if (!driverId) {
+    return { error: "ID de chofer requerido" };
+  }
+
+  const admin = createAdminClient();
+
+  // Fetch driver to get DNI
+  const { data: driver, error: driverFetchErr } = await admin
+    .from("drivers")
+    .select("id, dni")
+    .eq("id", driverId)
+    .single();
+
+  if (driverFetchErr || !driver) {
+    return { error: "Chofer no encontrado" };
+  }
+
+  // Generate new password
+  const generatedPassword = generateTempPassword();
+  const driverEmail = `chofer.${driver.dni}@reysil.app`;
+
+  // Update auth user password
+  const { error: updateErr } = await admin.auth.admin.updateUserById(
+    driverId,
+    { password: generatedPassword },
+  );
+
+  if (updateErr) {
+    return { error: `Error al resetear contraseña: ${updateErr.message}` };
+  }
+
+  revalidatePath("/operador/choferes");
+  revalidatePath(`/operador/choferes/${driverId}`);
+  return {
+    success: true,
+    generatedCredentials: {
+      email: driverEmail,
+      password: generatedPassword,
+    },
+  };
+}
+
 function generateTempPassword(): string {
   const chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";

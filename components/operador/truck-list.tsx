@@ -122,6 +122,7 @@ export function TruckList({ trucks, onEdit, onRefresh }: TruckListProps) {
                           disabled={loading}
                         >
                           <Pencil className="h-4 w-4" />
+                          Editar
                         </Button>
                         <Button
                           size="sm"
@@ -130,7 +131,7 @@ export function TruckList({ trucks, onEdit, onRefresh }: TruckListProps) {
                           onClick={() => handleDeactivate(truck)}
                           disabled={loading}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          Desactivar
                         </Button>
                       </div>
                     </TableCell>

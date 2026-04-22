@@ -95,14 +95,9 @@ export function DriverSelectList({
                 <span className="text-sm">
                   {selectedDriver.apellido}, {selectedDriver.nombre}
                 </span>
-                <div className="flex gap-1">
-                  <span className="text-xs text-gray-600">
-                    ({selectedDriver.codigo})
-                  </span>
-                  <Badge className={statusConfig[selectedDriver.estado].className}>
-                    {statusConfig[selectedDriver.estado].label}
-                  </Badge>
-                </div>
+                <Badge className={statusConfig[selectedDriver.estado].className}>
+                  {statusConfig[selectedDriver.estado].label}
+                </Badge>
               </div>
             ) : (
               <SelectValue placeholder="Selecciona un chofer" />
@@ -128,9 +123,6 @@ export function DriverSelectList({
                     <span className="text-sm">
                       {driver.apellido}, {driver.nombre}
                     </span>
-                    <span className="text-xs text-gray-600">
-                      ({driver.codigo})
-                    </span>
                     <Badge
                       variant="outline"
                       className={statusConfig[driver.estado].className}
@@ -147,7 +139,7 @@ export function DriverSelectList({
 
       {selectedDriver && (
         <div className="text-xs text-gray-500">
-          {selectedDriver.codigo} — Estado:{" "}
+          Estado:{" "}
           <span className="font-semibold">
             {statusConfig[selectedDriver.estado].label}
           </span>
