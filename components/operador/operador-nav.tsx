@@ -32,11 +32,20 @@ const MAIN_ITEMS = [
 export function OperadorNav() {
   const pathname = usePathname();
 
+  const isConfiguracionItemActive = (href: string) => {
+    // For "General", only show as active if exactly at that page
+    if (href === "/operador/configuracion") {
+      return pathname === "/operador/configuracion";
+    }
+    // For other items, use startsWith
+    return pathname.startsWith(href);
+  };
+
   const isSolicitudesActive = SOLICITUDES_ITEMS.some((item) =>
     pathname.startsWith(item.href),
   );
   const isConfiguracionActive = CONFIGURACION_ITEMS.some((item) =>
-    pathname.startsWith(item.href),
+    isConfiguracionItemActive(item.href),
   );
   const isDocumentationActive = DOC_ITEMS.some((item) =>
     pathname.startsWith(item.href),
@@ -109,7 +118,7 @@ export function OperadorNav() {
         </summary>
         <div className="absolute left-0 z-10 mt-1 min-w-48 rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
           {CONFIGURACION_ITEMS.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive = isConfiguracionItemActive(item.href);
             return (
               <Link
                 key={item.href}
