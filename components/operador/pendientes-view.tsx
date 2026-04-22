@@ -33,6 +33,7 @@ export function PendientesView({
               mode="preassign"
               currentDriverId={trip.trip_assignments?.driver_id}
               currentPatente={trip.trip_assignments?.patente}
+              fecha={trip.fecha_solicitada || undefined}
               onDone={() => router.refresh()}
             />
           );
@@ -45,6 +46,7 @@ export function PendientesView({
               currentDriverId={trip.trip_assignments?.driver_id}
               currentPatente={trip.trip_assignments?.patente}
               currentComentario={trip.trip_assignments?.comentario_asignacion}
+              fecha={trip.fecha_solicitada || undefined}
               onDone={() => router.refresh()}
             />
           );

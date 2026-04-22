@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-22 (cierre sesion 8 — password recovery bugfix)
+> Ultima actualizacion: 2026-04-22 (cierre sesion 9 — Gestión de Camiones y Disponibilidad)
 
 ---
 
 ## Estado General
-✅ Proyecto completo — 8 de 8 modulos construidos y mergeados a main.
+🔄 Proyecto funcional — 8 módulos completos + Módulo 9 (Gestión de Camiones) en revisión. Listo para testing.
 
 ---
 
@@ -23,33 +23,55 @@
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
 | 7 | Notificaciones | ✅ Completo | SendGrid: email al asignar chofer (HU-NOT-001) y al subir remito (HU-NOT-002). Fire-and-forget. PR #7 mergeado |
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
+| 9 | Gestión de Camiones y Disponibilidad | 🔄 En revisión | ABM camiones, tablero de disponibilidad diaria, selectlists de trucks/drivers con status, menu reorganizado |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
 ---
 
 ## Trabajo Completado en Esta Sesion (2026-04-22)
-🔐 **Password Recovery Bug Fix - Autenticación**:
+🚚 **Módulo 9: Gestión de Camiones y Disponibilidad Diaria**:
 
-**Problema diagnosticado y resuelto:**
-- [x] Error "otp_expired" en Vercel password recovery
-- [x] Detectado: Supabase usando servicio de email built-in (sin configuración)
-- [x] Configurado Google Workspace SMTP en Supabase Auth (App Password generada)
-- [x] Modificado `/auth/callback` para detectar flujo de Supabase `/auth/v1/verify`
-- [x] Incluido `type=recovery` en redirectUrl para mantener parámetro en redirección
-- [x] Email ahora llega correctamente y redirige a `/restablecer-contrasena`
+**Completado:**
 
-**Archivos modificados:**
-- `app/auth/callback/route.ts` — agregar detección de sesión sin code para flujo recovery
-- `app/(auth)/recuperar-contrasena/actions.ts` — incluir type=recovery en redirectUrl
+**A. Base de Datos (Migration 0009):**
+- [x] Tabla `trucks` (id UUID, marca, modelo, patente UNIQUE, is_active, timestamps)
+- [x] Vista `truck_daily_status` (calcula LIBRE/PREASIGNADO/ASIGNADO por fecha)
+- [x] Vista `driver_daily_status` (mismo patrón para drivers)
+- [x] RLS policies: OPERADOR/ADMIN pueden ver y modificar trucks
+- [x] FK en trip_assignments: truck_id references trucks(id)
+- [x] Archivo: `supabase/migrations/0009_trucks_and_availability.sql`
 
-**Commits:** 1d2979d, 51ae24b
+**B. Server-Side Logic:**
+- [x] `lib/server/trucks/queries.ts` — listActiveTrucks, getAllTrucks, getTruckStatusByDate, getTruckById, getTruckByPatente
+- [x] `lib/server/trucks/actions.ts` — createTruckAction, updateTruckAction, deactivateTruckAction, reactivateTruckAction
+- [x] `lib/validators/truck.ts` — TruckSchema con validación de patente (AAA123BB)
+- [x] Driver queries extendidas: getDriverStatusByDate, listActiveDrivers
 
-**Flujo completo ahora funciona:**
-- Usuario solicita password recovery en /recuperar-contrasena
-- Email llega con link correcto (via Google Workspace SMTP)
-- Click en link redirige a /restablecer-contrasena
-- Usuario cambia contraseña exitosamente
+**C. ABM Camiones (/operador/configuracion/camiones):**
+- [x] `components/operador/truck-form.tsx` — Dialog form para crear/editar camiones
+- [x] `components/operador/truck-list.tsx` — Tabla con separación activos/inactivos
+- [x] `app/operador/configuracion/camiones/page.tsx` — ABM page
+
+**D. Selectlists para Asignaciones:**
+- [x] `components/operador/truck-select-list.tsx` — SelectList con status indicators (LIBRE/PREASIGNADO/ASIGNADO)
+- [x] `components/operador/driver-select-list.tsx` — Equivalent para drivers
+- [x] Integradas en `assign-trip-form.tsx` reemplazando inputs text de patente
+- [x] Fecha awareness: ambos selectlists cargan status de la fecha solicitada
+
+**E. Tablero de Disponibilidad (/operador/disponibilidad):**
+- [x] `components/operador/availability-board.tsx` — Grilla de trucks y drivers con status visual
+- [x] Date selector con navegación (prev/next day, today button)
+- [x] Legend de colores (verde/amarillo/rojo para LIBRE/PREASIGNADO/ASIGNADO)
+- [x] Resumen de estadísticas (conteos por estado)
+- [x] `app/operador/disponibilidad/page.tsx`
+
+**F. Menu Reorganization:**
+- [x] `components/operador/operador-nav.tsx` actualizado:
+  - Main items: Inicio, Disponibilidad, Toneladas, Reportes
+  - Solicitudes dropdown: Pendientes, Chofer Asignado, En Curso, Finalizadas
+  - Configuración dropdown: Clientes, Choferes, Camiones, General
+  - Documentación dropdown: Remitos, Inspecciones
 
 ---
 
@@ -90,13 +112,36 @@
 ---
 
 ## Proximo Paso Exacto
-**El proyecto está funcional. Todos los 8 módulos completos. Password recovery reparado.**
 
-**Próxima sesión puede enfocarse en:**
-- Testing completo del flujo de sesión 7 (comentarios operador, preasignaciones, KM reorganizado) si no fue validado aún
-- Cualquier nueva funcionalidad o requerimiento del cliente
-- Optimizaciones de performance o UX
-- El sistema está listo para producción
+**Module 9 está implementado. Antes de merge a main:**
+
+1. **Testing del ABM Camiones:**
+   - Crear nuevo camión en `/operador/configuracion/camiones` (validar patente)
+   - Editar camión existente
+   - Desactivar/reactivar camión
+   - Verificar que selectlist muestra solo activos
+
+2. **Testing de Disponibilidad:**
+   - Ir a `/operador/disponibilidad`
+   - Cambiar fecha con date picker / prev/next buttons / today button
+   - Verificar que selectlists (en asignación) cargan estado correcto para la fecha
+   - Verificar que trucks/drivers aparecen con status correcto en el tablero
+
+3. **Testing de Asignación:**
+   - Crear viaje con fecha X
+   - Ir a Pendientes → form de asignación
+   - Selectlist de choferes debe cargar con status de fecha X
+   - Selectlist de camiones debe reemplazar text input
+   - Asignar chofer + camión → verificar guardado en BD
+   - Ir a Disponibilidad (fecha X) → debe mostrar truck como PREASIGNADO
+
+4. **Antes de merge:**
+   - Ejecutar migración 0009 en Supabase (si no se ejecutó ya)
+   - Verificar que no hay conflictos con módulos anteriores
+   - Actualizar PLAN.md si hay cambios en arquitectura
+   - Crear PR y merge a main
+
+**Deuda técnica:** Ninguna — Module 9 completo sin compromisos.
 
 ---
 
@@ -114,25 +159,33 @@
 - **Google Drive Service Account Key en base64**: el JSON completo se codifica en base64 para almacenarlo como variable de entorno sin problemas de escape.
 
 **Decisiones Sesion 7 (2026-04-21):**
-- **PreassignedTripActions component**: UI con dos botones ("Modificar" y "Confirmar") para viajes PREASIGNADO. Permite cambiar chofer/patente/comentario sin cambiar estado, o confirmar a ASIGNADO. Mejor UX que un único dropdown con modos.
-- **updatePreassignedTripAction**: nueva acción separada (en vez de reutilizar reassignTripAction) para actualizar preasignaciones. reassignTripAction chequea estado === ASIGNADO, no era viable para PREASIGNADO.
-- **KM fields en shift_logs**: se movieron de trip_driver_data a shift_logs (km_50, km_100). Cambio arquitectonico: KM es por turno (jornada laboral), no por viaje individual. Turnos pueden tener múltiples viajes; el chofer reporta KM al final del turno, no al finalizar cada viaje.
-- **Radio selector para KM tipo**: en shift-view, en lugar de dos campos (KM al 50%, KM al 100%), hay un selector radio + campo único. Mejor UX: el chofer elige el tipo de carga primero, luego ingresa el valor. El sistema guarda en el campo correspondiente (km_50 o km_100) automáticamente.
+- **PreassignedTripActions component**: UI con dos botones ("Modificar" y "Confirmar") para viajes PREASIGNADO.
+- **updatePreassignedTripAction**: nueva acción separada para actualizar preasignaciones.
+- **KM fields en shift_logs**: arquitectura: KM es por turno, no por viaje.
+- **Radio selector para KM tipo**: mejor UX en shift-view.
+
+**Decisiones Sesion 9 (2026-04-22 — Module 9):**
+- **SQL views para status diario**: `truck_daily_status` y `driver_daily_status` son vistas que calculan estado bajo demanda desde trips. Nunca se sincroniza: single source of truth (trips table) → evita desincronización.
+- **TruckSelectList usa patente como value**: el value del select es patente (no ID) porque los assignment actions esperan patente. Simplifica integración.
+- **Fecha parametrizada**: getTruckStatusByDate(fecha) no usa CURRENT_DATE hardcoded. Application layer puede seleccionar cualquier fecha. Flexible para asignaciones futuras.
+- **RLS policies en trucks**: solo OPERADOR/ADMIN pueden crear/leer/modificar trucks. Admin client bypassa RLS para queries en queries.ts (intentar con anon key fallaría).
+- **Menu reorganized con dropdowns**: Solicitudes, Configuración, Documentación agrupan items. Reduce ruido visual. Clientes/Choferes/Camiones ahora bajo Configuración (no en main nav).
 
 ---
 
 ## Bloqueantes Activos
-- **Ninguno** — todos los módulos funcionales. Password recovery completamente resuelto.
+- **Ninguno** — Module 9 implementado sin blockers. Listo para testing.
 
 ---
 
 ## Deuda Tecnica Anotada
-- **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP). Trackear para iteracion futura.
-- **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request para obtener el rol. En produccion con mucho trafico podria ser un cuello de botella. Considerar cache en cookie para futuro.
-- **`listUsers()` en updateClientAction**: para banear usuarios al remover emails, se llama a `admin.auth.admin.listUsers()` que trae TODOS los usuarios. Para pocos usuarios esta bien, pero con muchos hay que paginar o buscar por email directamente.
-- **PDF de inspeccion se genera fire-and-forget**: si falla el upload a Drive, el campo `pdf_url` queda null. No hay retry. El chofer puede ver "Inspeccion completada" pero sin link al PDF.
-- **Remito upload sin validacion de tamaño/tipo de archivo**: el form acepta `image/*` pero no hay limite de tamaño server-side. Considerar validar max ~10MB.
-- **Service Worker para PWA offline**: el manifest.json esta configurado pero no hay service worker real. Para funcionamiento offline del chofer habria que implementar caching con Workbox.
+- **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP).
+- **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request. En producción con mucho tráfico, considerar cache en cookie.
+- **`listUsers()` en updateClientAction**: trae TODOS los usuarios. Con muchos usuarios, paginar o buscar por email.
+- **PDF de inspección fire-and-forget**: si falla upload a Drive, no hay retry.
+- **Remito upload sin validación de tamaño**: considerar validar max ~10MB server-side.
+- **Service Worker para PWA offline**: manifest.json configurado pero sin service worker real.
+- **Module 9 testing antes de merge**: migration 0009 debe ejecutarse en Supabase. Selectlists deben validar carga de status correctamente. Tablero de disponibilidad debe ser actualizado en tiempo real si se asigna un viaje.
 
 ---
 

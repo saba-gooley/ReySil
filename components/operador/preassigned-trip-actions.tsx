@@ -11,6 +11,7 @@ type Props = {
   currentDriverId?: string;
   currentPatente?: string;
   currentComentario?: string | null;
+  fecha?: string;
   onDone?: () => void;
 };
 
@@ -20,6 +21,7 @@ export function PreassignedTripActions({
   currentDriverId,
   currentPatente,
   currentComentario,
+  fecha,
   onDone,
 }: Props) {
   const [activeMode, setActiveMode] = useState<"update-preassigned" | "assign" | null>(
@@ -35,6 +37,7 @@ export function PreassignedTripActions({
         currentDriverId={currentDriverId}
         currentPatente={currentPatente}
         currentComentario={currentComentario}
+        fecha={fecha}
         onDone={() => {
           setActiveMode(null);
           onDone?.();
@@ -52,6 +55,7 @@ export function PreassignedTripActions({
         currentDriverId={currentDriverId}
         currentPatente={currentPatente}
         currentComentario={currentComentario}
+        fecha={fecha}
         onDone={() => {
           setActiveMode(null);
           onDone?.();

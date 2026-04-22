@@ -6,6 +6,78 @@
 
 ---
 
+## Sesión 2026-04-22 — Módulo 9: Gestión de Camiones y Disponibilidad
+
+### ✅ Completado
+
+**A. Base de Datos — Migration 0009:**
+- Creada tabla `trucks` con campos: id UUID, marca, modelo, patente UNIQUE, is_active, timestamps
+- Creadas vistas `truck_daily_status` y `driver_daily_status` que calculan LIBRE/PREASIGNADO/ASIGNADO
+- Agregado FK `truck_id` a `trip_assignments` table
+- Implementadas RLS policies: OPERADOR/ADMIN pueden leer/escribir trucks
+- Archivo: `supabase/migrations/0009_trucks_and_availability.sql`
+
+**B. Queries y Server Actions:**
+- `lib/server/trucks/queries.ts`: listActiveTrucks, getAllTrucks, getTruckStatusByDate, getTruckById, getTruckByPatente
+- `lib/server/trucks/actions.ts`: createTruckAction, updateTruckAction, deactivateTruckAction, reactivateTruckAction
+- `lib/validators/truck.ts`: TruckSchema con validación de patente format (AAA123BB)
+- Extendido driver queries: getDriverStatusByDate, listActiveDrivers, tipo DriverWithStatus
+
+**C. ABM Camiones (Vehicles Management):**
+- `components/operador/truck-form.tsx`: Dialog form para crear/editar camiones con validación
+- `components/operador/truck-list.tsx`: Tabla con separación visual de camiones activos/inactivos
+- `app/operador/configuracion/camiones/page.tsx`: Página del ABM con server-side data fetch
+
+**D. Selectlists con Status Indicators:**
+- `components/operador/truck-select-list.tsx`: SelectList de camiones mostrando marca/modelo/status badges
+- `components/operador/driver-select-list.tsx`: SelectList de choferes mostrando código/status badges
+- Ambos paramétrizados por fecha (getTruckStatusByDate, getDriverStatusByDate)
+- Colores: Verde=LIBRE, Amarillo=PREASIGNADO, Rojo=ASIGNADO
+
+**E. AssignTripForm Refactor:**
+- Reemplazado input text de patente → TruckSelectList
+- Agregado DriverSelectList con status indicators
+- Agregado prop `fecha` para cargar status de la fecha específica
+- Actualizado AssignTripForm en: pendientes-view, asignado-view, preassigned-trip-actions
+- Integración con Textarea component de shadcn/ui
+
+**F. Availability Board (Tablero de Disponibilidad):**
+- `components/operador/availability-board.tsx`: Grilla con dos columnas (Trucks, Drivers)
+- Date selector: input date, prev/next day buttons, today button
+- Vista de status: tarjetas por entidad con color y estado
+- Resumen con conteos (Libres, Preasignados, Asignados)
+- `app/operador/disponibilidad/page.tsx`: Ruta principal
+
+**G. Menu Reorganization:**
+- `components/operador/operador-nav.tsx` refactorizado:
+  - Main items (no dropdown): Inicio, Disponibilidad, Toneladas, Reportes
+  - Solicitudes dropdown: Pendientes, Chofer Asignado, En Curso, Finalizadas
+  - Configuración dropdown: Clientes, Choferes, Camiones, General
+  - Documentación dropdown: Remitos, Inspecciones
+
+### 🔄 En progreso
+- Ninguno — Module 9 completo
+
+### ⏭️ Próximos pasos
+1. Ejecutar migration 0009 en Supabase (asignar role admin para migration)
+2. Testing del ABM camiones: crear, editar, desactivar
+3. Testing de selectlists: verificar que cargan status correcto por fecha
+4. Testing de disponibilidad: tablero debe mostrar status actualizado
+5. Crear PR, review, merge a main
+6. Validar que no hay conflictos con módulos anteriores
+
+### 💡 Decisiones tomadas
+- **SQL views vs explicit assignment table**: Truck_daily_status es una vista calculada, no tabla. Single source of truth es trips table. Evita sincronización manual.
+- **TruckSelectList usa patente como value**: El value es patente string (no ID), porque assignment actions esperan patente en payload.
+- **Fecha parametrizada**: No hardcodeamos CURRENT_DATE. Application layer selecciona fecha (flexible para asignaciones futuras).
+- **Menu grouping**: Solicitudes, Configuración, Documentación en dropdowns. Clientes/Choferes/Camiones bajo Configuración (no main nav) para reducir ruido.
+- **Admin client para queries**: `createAdminClient()` bypassa RLS en trucks queries. RLS protect writes pero admin queries necesitan leer todos los trucks.
+
+### ⚠️ Problemas / blockers
+- Ninguno — Module 9 implementado sin compromisos
+
+---
+
 ## Sesión 2026-04-22 — Password Recovery Bug Fix
 
 ### ✅ Completado

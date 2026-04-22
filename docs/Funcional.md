@@ -403,4 +403,17 @@ Módulo de reportes accesible para los operadores de ReySil. Permite filtrar por
 
 ---
 
+## Nuevo Requerimiento - 2026-04-22
+
+### ABM de Camiones y Tablero de Disponibilidad Diaria
+
+**Resumen Funcional:**
+- **ABM de Camiones:** Módulo de administración para registrar camiones (marca, modelo, patente) con opción de activar/desactivar. Accesible desde menú Configuración.
+- **Tablero de Disponibilidad:** Vista que muestra, para una fecha seleccionable, el estado de cada camión y chofer (Libre/Preasignado/Asignado) en formato tipo ajedrez con indicadores visuales por color.
+- **Flujo de Asignación Mejorado:** Al asignar chofer y patente a un viaje, mostrar selectlists en lugar de ingreso libre, indicando visualmente (colores) el estado actual de cada recurso. Permite asignar incluso si ya están en uso (múltiples viajes por día son permitidos).
+- **Reorganización de Menú:** Menú principal del operador reorganizado con grupos: Solicitudes (Pendientes, Chofer Asignado, En Curso, Finalizadas), Disponibilidad, Remitos, Toneladas, Reportes, y Configuración (Clientes, Choferes, Camiones).
+- **Arquitectura:** Vista SQL que calcula estado diario cruzando trips + trip_assignments + trucks, permitiendo consultas por fecha flexible y garantizando consistencia con única fuente de verdad.
+
+---
+
 *— Fin del Documento —*

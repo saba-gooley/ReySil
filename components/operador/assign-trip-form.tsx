@@ -9,6 +9,9 @@ import {
   updatePreassignedTripAction,
   type AssignmentActionState,
 } from "@/lib/server/assignments/actions";
+import { TruckSelectList } from "./truck-select-list";
+import { DriverSelectList } from "./driver-select-list";
+import { Textarea } from "@/components/ui/textarea";
 
 type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 
@@ -19,6 +22,7 @@ type Props = {
   currentDriverId?: string;
   currentPatente?: string;
   currentComentario?: string | null;
+  fecha?: string;
   onDone?: () => void;
 };
 
@@ -51,6 +55,7 @@ export function AssignTripForm({
   currentDriverId,
   currentPatente,
   currentComentario,
+  fecha,
   onDone,
 }: Props) {
   const action = ACTIONS[mode];
@@ -58,6 +63,9 @@ export function AssignTripForm({
   const [driverId, setDriverId] = useState(currentDriverId ?? "");
   const [patente, setPatente] = useState(currentPatente ?? "");
   const [comentario, setComentario] = useState(currentComentario ?? "");
+
+  // Use provided fecha or default to today
+  const fechaToUse = fecha || new Date().toISOString().split("T")[0];
 
   if (state.success) {
     onDone?.();
@@ -69,51 +77,50 @@ export function AssignTripForm({
       JSON.stringify({
         trip_id: tripId,
         driver_id: driverId,
-        patente,
+        patente: patente || "",
         comentario_asignacion: comentario || null,
       }),
     );
     formAction(formData);
   }
 
-  const inputClass =
-    "rounded-md border border-neutral-300 px-2 py-1 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red";
-
   return (
-    <form action={handleSubmit} className="space-y-2">
+    <form action={handleSubmit} className="space-y-3">
       {state.error && (
         <span className="text-xs text-red-600">{state.error}</span>
       )}
-      <div className="flex flex-wrap gap-1">
-        <select
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium">Chofer</label>
+        <DriverSelectList
           value={driverId}
-          onChange={(e) => setDriverId(e.target.value)}
-          required
-          className={`${inputClass} w-32 text-xs`}
-        >
-          <option value="">Chofer...</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.apellido}, {d.nombre} ({d.codigo})
-            </option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={patente}
-          onChange={(e) => setPatente(e.target.value.toUpperCase())}
-          placeholder="Patente"
-          required
-          className={`${inputClass} w-24 font-mono text-xs`}
+          onValueChange={setDriverId}
+          fecha={fechaToUse}
+          disabled={false}
         />
       </div>
-      <textarea
-        value={comentario}
-        onChange={(e) => setComentario(e.target.value)}
-        placeholder="Comentario (opcional)"
-        className={`${inputClass} w-full text-xs resize-none`}
-        rows={2}
-      />
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium">Camión</label>
+        <TruckSelectList
+          value={patente}
+          onValueChange={setPatente}
+          fecha={fechaToUse}
+          disabled={false}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-medium">Comentario (opcional)</label>
+        <Textarea
+          value={comentario}
+          onChange={(e) => setComentario(e.target.value)}
+          placeholder="Agregá un comentario sobre la asignación"
+          className="text-xs resize-none"
+          rows={2}
+        />
+      </div>
+
       <div className="flex justify-end">
         <SubmitBtn label={LABELS[mode]} />
       </div>
