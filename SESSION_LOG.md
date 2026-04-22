@@ -44,10 +44,21 @@
 - Útil para debuggear why emails no se envían (key missing, tablas vacías, etc)
 - Commit: `a502cae`
 
+**E. Dialog Z-Index & Overlay Opacity Fixes (Critical #2):**
+- SelectContent z-index fix en `components/ui/select.tsx`
+  - Cambio: z-50 → z-[10000]
+  - Asegura dropdowns (TruckSelectList, DriverSelectList) aparezcan arriba de dialogs
+  - Previene que menus queden escondidos detrás de overlays
+  - Commit: `372ce92`
+- DialogOverlay opacity fix en `components/ui/dialog.tsx`
+  - Cambio: bg-black/10 → bg-black/40
+  - Oscurece más el background para mejor visual clarity
+  - Reduce confusión visual cuando elementos se superponen
+  - Commit: `dae457a`
+
 **Otros:**
 - ✅ Build successful (no new errors)
-- ✅ Git push a main exitoso
-- ✅ 4 commits relevantes
+- ✅ Git push a main exitoso (6 commits totales)
 - ✅ Deployment a Vercel en progreso (automatic)
 
 ### 🔄 En Progreso

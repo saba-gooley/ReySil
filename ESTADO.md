@@ -34,32 +34,39 @@
 
 **Completado:**
 
-**A. Menu Navigation Fix:**
+**A. Menu Navigation Fix (Critical #1):**
 - [x] Fix menu dropdown logic en `operador-nav.tsx`
 - [x] "Camiones" y "General" ya no se marcan activos simultáneamente
 - [x] Implementado `isConfiguracionItemActive()` helper con lógica exacta para "General"
+- Commit: `cbaed7b`
 
-**B. Chofer Asignado Interface:**
+**B. Chofer Asignado Interface (Critical #3):**
 - [x] Nuevo componente `assigned-trip-actions.tsx`
 - [x] Añadido "Modificar" button que togglea el formulario de edición
 - [x] Matches pattern de `preassigned-trip-actions.tsx` para UX consistente
 - [x] Actualizado `asignado-view.tsx` para usar nuevo componente
+- Commit: `af711a0`
 
-**C. Driver Password Management:**
+**C. Driver Password Management (Critical #7, #8):**
 - [x] `resetDriverPasswordAction()` en `lib/server/drivers/actions.ts` — permite a operadores resetear contraseñas
 - [x] `changePasswordAction()` en `lib/server/auth/change-password.ts` — permite a drivers cambiar su propia contraseña (futuro)
 - [x] `PasswordResetSection` component en `driver-form.tsx` para edit mode
-- [x] Muestra nuevas credenciales después de reset (una sola vez)
+- [x] Muestra nuevas credenciales después de reset (una sola vez, no envía email)
+- Commit: `7c3f72d`
 
 **D. Email Notification Diagnostics:**
 - [x] `/api/admin/notifications-diagnostics` endpoint — inspecciona configuración de sendgrid y tablas de preferencias
 - [x] Ayuda a debuggear why emails no se envían (falta de SENDGRID_API_KEY, o tablas vacías)
+- Commit: `a502cae`
 
-**Commits realizados:**
-1. `cbaed7b` — fix: menu dropdown logic (camiones vs general)
-2. `af711a0` — fix: add modify button toggle for assigned trips
-3. `a502cae` — add: notification diagnostics endpoint
-4. `7c3f72d` — feat: add password reset functionality
+**E. Dialog Z-Index & Overlay Fixes (Critical #2):**
+- [x] SelectContent z-index: z-50 → z-[10000] en `components/ui/select.tsx`
+  - Asegura que dropdowns (TruckSelectList, DriverSelectList) aparezcan siempre arriba de dialogs
+  - Evita que Select menus queden escondidos detrás de dialog overlays
+- [x] DialogOverlay opacity: bg-black/10 → bg-black/40 en `components/ui/dialog.tsx`
+  - Oscurece más el fondo para mejor contraste visual
+  - Reduce confusión cuando hay elementos superpuestos
+- Commits: `372ce92`, `dae457a`
 
 **Archivos modificados:**
 - `components/operador/operador-nav.tsx`
