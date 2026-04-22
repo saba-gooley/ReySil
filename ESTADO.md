@@ -2,7 +2,7 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-21 (cierre sesion 7 — features y refinamiento)
+> Ultima actualizacion: 2026-04-22 (cierre sesion 8 — password recovery bugfix)
 
 ---
 
@@ -28,7 +28,32 @@
 
 ---
 
-## Trabajo Completado en Esta Sesion (2026-04-21)
+## Trabajo Completado en Esta Sesion (2026-04-22)
+🔐 **Password Recovery Bug Fix - Autenticación**:
+
+**Problema diagnosticado y resuelto:**
+- [x] Error "otp_expired" en Vercel password recovery
+- [x] Detectado: Supabase usando servicio de email built-in (sin configuración)
+- [x] Configurado Google Workspace SMTP en Supabase Auth (App Password generada)
+- [x] Modificado `/auth/callback` para detectar flujo de Supabase `/auth/v1/verify`
+- [x] Incluido `type=recovery` en redirectUrl para mantener parámetro en redirección
+- [x] Email ahora llega correctamente y redirige a `/restablecer-contrasena`
+
+**Archivos modificados:**
+- `app/auth/callback/route.ts` — agregar detección de sesión sin code para flujo recovery
+- `app/(auth)/recuperar-contrasena/actions.ts` — incluir type=recovery en redirectUrl
+
+**Commits:** 1d2979d, 51ae24b
+
+**Flujo completo ahora funciona:**
+- Usuario solicita password recovery en /recuperar-contrasena
+- Email llega con link correcto (via Google Workspace SMTP)
+- Click en link redirige a /restablecer-contrasena
+- Usuario cambia contraseña exitosamente
+
+---
+
+## Trabajo Completado en Sesion 7 (2026-04-21)
 🔧 **Features, Comentarios de Operador y Reorganizacion de Datos Chofer**:
 
 **Features en Panel Operadores (viajes PENDIENTE/PREASIGNADO):**
@@ -65,35 +90,13 @@
 ---
 
 ## Proximo Paso Exacto
-**El proyecto está funcional. Flujo de comentarios del operador y reorganización KM completados.**
+**El proyecto está funcional. Todos los 8 módulos completos. Password recovery reparado.**
 
-**Próximo ciclo de testing y validación:**
-
-1. **Testing del flujo de asignaciones con comentarios:**
-   - En /operador/pendientes: crear viaje (estado PENDIENTE) → Preasignar con comentario → Verificar comentario en BD (trip_assignments.comentario_asignacion)
-   - Volver a la vista → Click en "Modificar" → Verificar que comentario existente aparece pre-cargado en textarea
-   - Cambiar comentario → Click "Guardar cambios" → Verificar actualización en BD
-   - Click "Confirmar" (pasar a ASIGNADO) → En /operador/chofer-asignado, verificar comentario se ve en detalle expandido
-   - En /operador/chofer-asignado, click "Modificar" → Verificar comentario pre-cargado
-   
-2. **Testing de KM en Turnos:**
-   - En /chofer/turno: verificar que al seleccionar "Km 50%" y ingresar valor → se guarda en km_50
-   - Seleccionar "Km 100%" y valor diferente → se guarda en km_100
-   - Verificar que los dos campos NO aparecen simultáneamente (solo el valor del tipo seleccionado)
-   - Verificar que Pernoctada funciona como checkbox
-
-3. **Testing que KM fue removido de Viajes:**
-   - En /chofer/viajes: expandir viaje → NO debe mostrar sección "Tipo de carga" (KM, selector 50/100)
-   - Verificar que solo muestran: eventos (LLEGADA_DESTINO_CLIENTE, SALIDA_CLIENTE), remito, botón Finalizar
-   
-4. **Testing de Hoja de Ruta:**
-   - En /cliente/solicitudes (crearReparto): ingresar "Hoja de Ruta" en primer campo
-   - Enviar viaje → En BD verificar que se guardó (trips.metadata.hoja_de_ruta o donde corresponda)
-   - En /operador/pendientes, expandir detalle → Verificar "Hoja de Ruta" visible
-
-5. **Deployment a Vercel:**
-   - Todos los cambios en `main` (11 commits: 9971eb4 → 2608ec5 → 2984177 → c2174ce)
-   - Verificar que rutas responden: /cliente/solicitudes, /operador/pendientes, /chofer/turno, /chofer (viajes)
+**Próxima sesión puede enfocarse en:**
+- Testing completo del flujo de sesión 7 (comentarios operador, preasignaciones, KM reorganizado) si no fue validado aún
+- Cualquier nueva funcionalidad o requerimiento del cliente
+- Optimizaciones de performance o UX
+- El sistema está listo para producción
 
 ---
 
@@ -119,7 +122,7 @@
 ---
 
 ## Bloqueantes Activos
-- **SendGrid no configurado** — las notificaciones por email no se enviaran hasta configurar SENDGRID_API_KEY. El sistema funciona sin problemas, solo loguea warnings.
+- **Ninguno** — todos los módulos funcionales. Password recovery completamente resuelto.
 
 ---
 

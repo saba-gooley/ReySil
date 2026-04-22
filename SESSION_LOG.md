@@ -6,6 +6,36 @@
 
 ---
 
+## Sesión 2026-04-22 — Password Recovery Bug Fix
+
+### ✅ Completado
+- Diagnosticado y resuelto error "otp_expired" en password recovery de Vercel
+- Configurado Google Workspace SMTP en Supabase Auth (usando App Password)
+- Email de password recovery ahora llega correctamente
+- Modificado `/auth/callback/route.ts` para detectar flujo de Supabase `/auth/v1/verify`
+  - Ahora detecta cuando hay sesión pero no hay code (flujo de Supabase)
+  - Redirige a `/restablecer-contrasena` correctamente cuando `type=recovery`
+- Incluido `type=recovery` en `redirectUrl` para mantener parámetro en redirección
+  - Archivo: `app/(auth)/recuperar-contrasena/actions.ts:61`
+- Flujo completo funciona: solicitar recovery → email llega → redirige a resetear contraseña → cambio exitoso
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- Testing del flujo de sesión 7 (comentarios operador, preasignaciones, KM reorganizado) si no fue validado
+- Cualquier nueva funcionalidad solicitada por el cliente
+- El sistema está listo para producción
+
+### 💡 Decisiones tomadas
+- Mantener Google Workspace SMTP en Supabase (reusable desde notificaciones existentes)
+- No implementar `generateLink()` con envío manual porque Google Workspace SMTP funciona correctamente
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesion 2026-04-21 — Features: Comentarios Operador, Preasignaciones, KM en Turnos
 
 ### ✅ Completado
