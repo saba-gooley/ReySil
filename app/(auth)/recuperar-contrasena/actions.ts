@@ -58,7 +58,7 @@ export async function recoverPasswordAction(
     };
   }
 
-  const redirectUrl = `${origin}/auth/callback`;
+  const redirectUrl = `${origin}/auth/callback?type=recovery`;
   console.log(`[recoverPassword] Using redirectTo: ${redirectUrl}`);
 
   const supabase = createClient();
