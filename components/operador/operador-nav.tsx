@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 
 const SOLICITUDES_ITEMS = [
   { href: "/operador/pendientes", label: "Pendientes" },
@@ -29,15 +30,34 @@ const MAIN_ITEMS = [
   { href: "/operador/reportes", label: "Reportes" },
 ] as const;
 
+type DropdownId = "solicitudes" | "configuracion" | "documentacion";
+
 export function OperadorNav() {
   const pathname = usePathname();
+  const [openDropdown, setOpenDropdown] = useState<DropdownId | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close dropdown on navigation
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [pathname]);
+
+  const toggle = (id: DropdownId) =>
+    setOpenDropdown((prev) => (prev === id ? null : id));
 
   const isConfiguracionItemActive = (href: string) => {
-    // For "General", only show as active if exactly at that page
-    if (href === "/operador/configuracion") {
-      return pathname === "/operador/configuracion";
-    }
-    // For other items, use startsWith
+    if (href === "/operador/configuracion") return pathname === "/operador/configuracion";
     return pathname.startsWith(href);
   };
 
@@ -54,118 +74,104 @@ export function OperadorNav() {
   const isMainItemActive = (href: string) =>
     href === "/operador" ? pathname === "/operador" : pathname.startsWith(href);
 
+  const dropdownClass = "absolute left-0 z-50 mt-1 min-w-48 rounded-md border border-neutral-200 bg-white p-1 shadow-lg";
+
+  const triggerClass = (isActive: boolean) =>
+    `cursor-pointer rounded-md px-3 py-2 text-sm font-medium transition ${
+      isActive
+        ? "bg-reysil-red text-white"
+        : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+    }`;
+
+  const itemClass = (isActive: boolean) =>
+    `block rounded-md px-3 py-2 text-sm transition ${
+      isActive ? "bg-reysil-red text-white" : "text-neutral-700 hover:bg-neutral-100"
+    }`;
+
   return (
-    <nav className="flex flex-wrap gap-1">
+    <nav ref={navRef} className="flex flex-wrap gap-1">
       {/* Main Items */}
-      {MAIN_ITEMS.map((item) => {
-        const isActive = isMainItemActive(item.href);
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-              isActive
-                ? "bg-reysil-red text-white"
-                : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-            }`}
-          >
-            {item.label}
-          </Link>
-        );
-      })}
+      {MAIN_ITEMS.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={triggerClass(isMainItemActive(item.href))}
+        >
+          {item.label}
+        </Link>
+      ))}
 
       {/* Solicitudes Dropdown */}
-      <details className="relative">
-        <summary
-          className={`cursor-pointer list-none rounded-md px-3 py-2 text-sm font-medium transition ${
-            isSolicitudesActive
-              ? "bg-reysil-red text-white"
-              : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-          }`}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => toggle("solicitudes")}
+          className={triggerClass(isSolicitudesActive)}
         >
           Solicitudes
-        </summary>
-        <div className="absolute left-0 z-10 mt-1 min-w-48 rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
-          {SOLICITUDES_ITEMS.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
+        </button>
+        {openDropdown === "solicitudes" && (
+          <div className={dropdownClass}>
+            {SOLICITUDES_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-md px-3 py-2 text-sm transition ${
-                  isActive
-                    ? "bg-reysil-red text-white"
-                    : "text-neutral-700 hover:bg-neutral-100"
-                }`}
+                className={itemClass(pathname.startsWith(item.href))}
               >
                 {item.label}
               </Link>
-            );
-          })}
-        </div>
-      </details>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Configuración Dropdown */}
-      <details className="relative">
-        <summary
-          className={`cursor-pointer list-none rounded-md px-3 py-2 text-sm font-medium transition ${
-            isConfiguracionActive
-              ? "bg-reysil-red text-white"
-              : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-          }`}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => toggle("configuracion")}
+          className={triggerClass(isConfiguracionActive)}
         >
           Configuración
-        </summary>
-        <div className="absolute left-0 z-10 mt-1 min-w-48 rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
-          {CONFIGURACION_ITEMS.map((item) => {
-            const isActive = isConfiguracionItemActive(item.href);
-            return (
+        </button>
+        {openDropdown === "configuracion" && (
+          <div className={dropdownClass}>
+            {CONFIGURACION_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-md px-3 py-2 text-sm transition ${
-                  isActive
-                    ? "bg-reysil-red text-white"
-                    : "text-neutral-700 hover:bg-neutral-100"
-                }`}
+                className={itemClass(isConfiguracionItemActive(item.href))}
               >
                 {item.label}
               </Link>
-            );
-          })}
-        </div>
-      </details>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* Documentation Dropdown */}
-      <details className="relative">
-        <summary
-          className={`cursor-pointer list-none rounded-md px-3 py-2 text-sm font-medium transition ${
-            isDocumentationActive
-              ? "bg-reysil-red text-white"
-              : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-          }`}
+      {/* Documentación Dropdown */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => toggle("documentacion")}
+          className={triggerClass(isDocumentationActive)}
         >
           Documentación
-        </summary>
-        <div className="absolute left-0 z-10 mt-1 min-w-48 rounded-md border border-neutral-200 bg-white p-1 shadow-lg">
-          {DOC_ITEMS.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
+        </button>
+        {openDropdown === "documentacion" && (
+          <div className={dropdownClass}>
+            {DOC_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`block rounded-md px-3 py-2 text-sm transition ${
-                  isActive
-                    ? "bg-reysil-red text-white"
-                    : "text-neutral-700 hover:bg-neutral-100"
-                }`}
+                className={itemClass(pathname.startsWith(item.href))}
               >
                 {item.label}
               </Link>
-            );
-          })}
-        </div>
-      </details>
+            ))}
+          </div>
+        )}
+      </div>
     </nav>
   );
 }

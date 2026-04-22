@@ -137,14 +137,6 @@ export function DriverSelectList({
         </Select>
       </div>
 
-      {selectedDriver && (
-        <div className="text-xs text-gray-500">
-          Estado:{" "}
-          <span className="font-semibold">
-            {statusConfig[selectedDriver.estado].label}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

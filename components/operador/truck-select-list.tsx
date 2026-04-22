@@ -128,14 +128,6 @@ export function TruckSelectList({
         </Select>
       </div>
 
-      {selectedTruck && (
-        <div className="text-xs text-gray-500">
-          Estado:{" "}
-          <span className="font-semibold">
-            {statusConfig[selectedTruck.estado].label}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
