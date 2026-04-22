@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
 import { TripTable } from "./trip-table";
-import { AssignTripForm } from "./assign-trip-form";
+import { AssignedTripActions } from "./assigned-trip-actions";
 
 type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 
@@ -24,10 +24,9 @@ export function AsignadoView({
       enableDateDriverFilters
       driversForFilter={drivers}
       actions={(trip) => (
-        <AssignTripForm
+        <AssignedTripActions
           tripId={trip.id}
           drivers={drivers}
-          mode="reassign"
           currentDriverId={trip.trip_assignments?.driver_id}
           currentPatente={trip.trip_assignments?.patente}
           currentComentario={trip.trip_assignments?.comentario_asignacion}
