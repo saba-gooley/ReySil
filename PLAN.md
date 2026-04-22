@@ -42,6 +42,11 @@ app/
 │   ├── chofer-asignado/
 │   ├── en-curso/
 │   ├── finalizadas/
+│   ├── disponibilidad/       # Nuevo: tablero de disponibilidad diaria
+│   ├── configuracion/        # Nuevo: agrupa Clientes, Choferes, Camiones
+│   │   ├── clientes/
+│   │   ├── choferes/
+│   │   └── camiones/
 │   ├── remitos/
 │   ├── toneladas/
 │   └── reportes/
@@ -63,6 +68,7 @@ lib/
 ├── server/                   # Logica de negocio server-side organizada por dominio
 │   ├── clients/              # ABM de clientes
 │   ├── drivers/              # ABM de choferes
+│   ├── trucks/               # ABM de camiones y disponibilidad diaria
 │   ├── trips/                # Viajes (Reparto + Contenedor)
 │   ├── reservations/         # Reservas de Contenedor
 │   ├── assignments/          # Asignacion de chofer/patente
@@ -111,6 +117,8 @@ public/
 | `inspections` | Inspecciones de camion por turno |
 | `inspection_items` | Items individuales de cada inspeccion (cumple/no cumple) |
 | `shift_logs` | Registro de turno diario del chofer |
+| `trucks` | Camiones (marca, modelo, patente, estado activo/inactivo) |
+| `truck_daily_status` | Vista SQL que calcula el estado diario de cada camion (LIBRE/PREASIGNADO/ASIGNADO) cruzando trips + trip_assignments |
 
 Todas las tablas tienen Row Level Security activado. Las policies aseguran que cada rol solo ve/modifica los datos que le corresponden:
 - **CLIENTE**: solo sus propios viajes y reservas (filtrado por `client_id` derivado del user_profile)
@@ -171,8 +179,9 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 | 6 | PWA Chofer | Viajes del dia, registro de turno, datos por viaje, foto remito, inspeccion, PDF inspeccion (rutas /chofer/* mobile-first con Service Worker) | HU-CHO-001 a HU-CHO-006 | 28 | Modulos 2, 5 | ✅ Completo |
 | 7 | Notificaciones | Email automatico al asignar chofer, email automatico al subir remito (SendGrid) | HU-NOT-001, HU-NOT-002 | 5 | Modulos 5, 6 | ✅ Completo |
 | 8 | Integraciones | Google Drive (upload remitos + PDF inspecciones), generacion PDF con @react-pdf/renderer | — | — | Modulo 7 | ✅ Completo |
+| 9 | Gestion de Camiones y Disponibilidad | ABM de camiones (marca, modelo, patente), tablero de disponibilidad diaria (tipo ajedrez), flujo mejorado de asignacion con selectlists de choferes/patentes indicando estado | — | 13 | Modulos 3, 5 | 🔄 En progreso |
 
-**Total: 25 historias | 94 puntos de historia | ~4.7 sprints estimados**
+**Total: 25 historias + nuevas | 94 puntos + 13 puntos | Módulos 1-8 Completos, Módulo 9 En Progreso**
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
