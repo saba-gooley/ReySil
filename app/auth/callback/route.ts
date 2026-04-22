@@ -17,12 +17,40 @@ export async function GET(request: NextRequest) {
 
   console.log(`[auth/callback] code present: ${!!code}, type: ${type}`);
 
+  const supabase = createClient();
+
+  // Si no hay code, verificar si hay una sesión (puede ser del flujo de Supabase /auth/v1/verify)
   if (!code) {
-    console.log("[auth/callback] No code found, redirecting to login");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      // Hay sesión pero no hay code — viene del flujo de /auth/v1/verify de Supabase
+      console.log(
+        "[auth/callback] No code but valid session (from Supabase verify)"
+      );
+
+      if (type === "recovery") {
+        console.log(
+          "[auth/callback] Recovery flow detected, redirecting to restablecer-contrasena"
+        );
+        return NextResponse.redirect(`${origin}/restablecer-contrasena`);
+      }
+
+      // Si hay sesión pero no es recovery, redirige al login
+      console.log(
+        "[auth/callback] Session without code and not recovery, redirecting to login"
+      );
+      return NextResponse.redirect(`${origin}/login`);
+    }
+
+    // Sin sesión y sin code → a login
+    console.log("[auth/callback] No code and no session found, redirecting to login");
     return NextResponse.redirect(`${origin}/login`);
   }
 
-  const supabase = createClient();
+  // Tiene code — intercambiar por sesión
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
