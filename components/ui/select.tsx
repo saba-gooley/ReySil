@@ -178,9 +178,38 @@ function SelectScrollDownButton({
   )
 }
 
+/**
+ * SelectContent without a Portal wrapper.
+ * Use this when the Select is already inside a Dialog (which has its own portal).
+ * Avoids the double-portal problem that causes overlapping/positioning issues.
+ */
+function SelectContentInline({
+  className,
+  children,
+  position = "popper",
+  align = "start",
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  return (
+    <SelectPrimitive.Content
+      data-slot="select-content"
+      position={position}
+      align={align}
+      className={cn(
+        "relative z-50 max-h-72 min-w-36 overflow-x-hidden overflow-y-auto rounded-lg border border-neutral-200 bg-white text-neutral-900 shadow-lg",
+        className
+      )}
+      {...props}
+    >
+      <SelectPrimitive.Viewport>{children}</SelectPrimitive.Viewport>
+    </SelectPrimitive.Content>
+  )
+}
+
 export {
   Select,
   SelectContent,
+  SelectContentInline,
   SelectGroup,
   SelectItem,
   SelectLabel,

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
-  SelectContent,
+  SelectContentInline,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -103,7 +103,7 @@ export function DriverSelectList({
               <SelectValue placeholder="Selecciona un chofer" />
             )}
           </SelectTrigger>
-          <SelectContent>
+          <SelectContentInline>
             <div className="p-2">
               <Input
                 placeholder="Buscar por apellido, nombre o código..."
@@ -133,7 +133,7 @@ export function DriverSelectList({
                 </SelectItem>
               ))
             )}
-          </SelectContent>
+          </SelectContentInline>
         </Select>
       </div>
 
