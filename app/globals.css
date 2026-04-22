@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-
 @layer base {
   :root {
     --reysil-red: #dc2626;
