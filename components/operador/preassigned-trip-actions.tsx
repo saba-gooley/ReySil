@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { AssignTripForm } from "./assign-trip-form";
+import { AssignTripDialog } from "./assign-trip-dialog";
 
 type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 
@@ -24,13 +23,9 @@ export function PreassignedTripActions({
   fecha,
   onDone,
 }: Props) {
-  const [activeMode, setActiveMode] = useState<"update-preassigned" | "assign" | null>(
-    null
-  );
-
-  if (activeMode === "update-preassigned") {
-    return (
-      <AssignTripForm
+  return (
+    <div className="flex gap-2">
+      <AssignTripDialog
         tripId={tripId}
         drivers={drivers}
         mode="update-preassigned"
@@ -38,17 +33,9 @@ export function PreassignedTripActions({
         currentPatente={currentPatente}
         currentComentario={currentComentario}
         fecha={fecha}
-        onDone={() => {
-          setActiveMode(null);
-          onDone?.();
-        }}
+        onDone={onDone}
       />
-    );
-  }
-
-  if (activeMode === "assign") {
-    return (
-      <AssignTripForm
+      <AssignTripDialog
         tripId={tripId}
         drivers={drivers}
         mode="assign"
@@ -56,30 +43,10 @@ export function PreassignedTripActions({
         currentPatente={currentPatente}
         currentComentario={currentComentario}
         fecha={fecha}
-        onDone={() => {
-          setActiveMode(null);
-          onDone?.();
-        }}
+        onDone={onDone}
+        triggerLabel="Confirmar"
+        triggerClassName="rounded-md bg-reysil-red px-2 py-1 text-xs font-medium text-white hover:bg-reysil-red-dark"
       />
-    );
-  }
-
-  return (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={() => setActiveMode("update-preassigned")}
-        className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
-      >
-        Modificar
-      </button>
-      <button
-        type="button"
-        onClick={() => setActiveMode("assign")}
-        className="rounded-md bg-reysil-red px-2 py-1 text-xs font-medium text-white hover:bg-reysil-red-dark"
-      >
-        Confirmar
-      </button>
     </div>
   );
 }

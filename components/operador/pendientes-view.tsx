@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
 import { TripTable } from "./trip-table";
-import { AssignTripForm } from "./assign-trip-form";
+import { AssignTripDialog } from "./assign-trip-dialog";
 import { PreassignedTripActions } from "./preassigned-trip-actions";
 
 type Driver = { id: string; codigo: string; nombre: string; apellido: string };
@@ -27,7 +27,7 @@ export function PendientesView({
       actions={(trip) => {
         if (trip.estado === "PENDIENTE") {
           return (
-            <AssignTripForm
+            <AssignTripDialog
               tripId={trip.id}
               drivers={drivers}
               mode="preassign"
