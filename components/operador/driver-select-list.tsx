@@ -10,9 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DriverWithStatus } from "@/lib/server/drivers/queries";
-import { getDriverStatusByDate } from "@/lib/server/drivers/queries";
 import { Loader2 } from "lucide-react";
+
+type DriverWithStatus = {
+  id: string;
+  codigo: string;
+  dni: string;
+  nombre: string;
+  apellido: string;
+  telefono: string | null;
+  activo: boolean;
+  created_at: string;
+  estado: "LIBRE" | "PREASIGNADO" | "ASIGNADO";
+};
 
 interface DriverSelectListProps {
   value: string;
@@ -44,7 +54,9 @@ export function DriverSelectList({
     const loadDrivers = async () => {
       setLoading(true);
       try {
-        const data = await getDriverStatusByDate(fecha);
+        const res = await fetch(`/api/drivers/status?fecha=${fecha}`);
+        if (!res.ok) throw new Error("Failed to load drivers");
+        const data = await res.json();
         setDrivers(data);
       } catch (error) {
         console.error("Error loading drivers:", error);

@@ -5,15 +5,29 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  getTruckStatusByDate,
-  type TruckWithStatus,
-} from "@/lib/server/trucks/queries";
-import {
-  getDriverStatusByDate,
-  type DriverWithStatus,
-} from "@/lib/server/drivers/queries";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+
+type TruckWithStatus = {
+  id: string;
+  marca: string;
+  modelo: string;
+  patente: string;
+  is_active: boolean;
+  created_at: string;
+  estado: "LIBRE" | "PREASIGNADO" | "ASIGNADO";
+};
+
+type DriverWithStatus = {
+  id: string;
+  codigo: string;
+  dni: string;
+  nombre: string;
+  apellido: string;
+  telefono: string | null;
+  activo: boolean;
+  created_at: string;
+  estado: "LIBRE" | "PREASIGNADO" | "ASIGNADO";
+};
 
 interface AvailabilityBoardProps {}
 
@@ -49,10 +63,16 @@ export function AvailabilityBoard({}: AvailabilityBoardProps) {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [truckData, driverData] = await Promise.all([
-          getTruckStatusByDate(fecha),
-          getDriverStatusByDate(fecha),
+        const [truckRes, driverRes] = await Promise.all([
+          fetch(`/api/trucks/status?fecha=${fecha}`),
+          fetch(`/api/drivers/status?fecha=${fecha}`),
         ]);
+
+        if (!truckRes.ok || !driverRes.ok) throw new Error("Failed to load data");
+
+        const truckData = await truckRes.json();
+        const driverData = await driverRes.json();
+
         setTrucks(truckData);
         setDrivers(driverData);
       } catch (error) {

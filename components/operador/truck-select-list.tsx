@@ -10,9 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TruckWithStatus } from "@/lib/server/trucks/queries";
-import { getTruckStatusByDate } from "@/lib/server/trucks/queries";
 import { Loader2 } from "lucide-react";
+
+type TruckWithStatus = {
+  id: string;
+  marca: string;
+  modelo: string;
+  patente: string;
+  is_active: boolean;
+  created_at: string;
+  estado: "LIBRE" | "PREASIGNADO" | "ASIGNADO";
+};
 
 interface TruckSelectListProps {
   value: string; // patente
@@ -44,7 +52,9 @@ export function TruckSelectList({
     const loadTrucks = async () => {
       setLoading(true);
       try {
-        const data = await getTruckStatusByDate(fecha);
+        const res = await fetch(`/api/trucks/status?fecha=${fecha}`);
+        if (!res.ok) throw new Error("Failed to load trucks");
+        const data = await res.json();
         setTrucks(data);
       } catch (error) {
         console.error("Error loading trucks:", error);
