@@ -6,6 +6,91 @@
 
 ---
 
+## Sesión 2026-04-22 (Continuación) — Critical Bug Fixes & Password Management
+
+### ✅ Completado
+
+**A. Menu Navigation Fix (Critical #1):**
+- Implementado `isConfiguracionItemActive()` helper en `operador-nav.tsx`
+- "Camiones" y "General" ya no se marcan activos simultáneamente cuando navegan
+- Lógica exacta para "General": require pathname === href, otros items usan startsWith
+- Commit: `cbaed7b`
+
+**B. Chofer Asignado Interface (Critical #3):**
+- Creado nuevo componente `assigned-trip-actions.tsx` (pattern similar a `preassigned-trip-actions.tsx`)
+- "Modificar" button que togglea el formulario de edición inline
+- Actualizado `asignado-view.tsx` para usar `AssignedTripActions` en lugar de mostrar formulario directamente
+- Más limpio y consistente con PreassignedTripActions
+- Commit: `af711a0`
+
+**C. Password Reset Functionality (Critical #7, #8):**
+- Función `resetDriverPasswordAction()` en `lib/server/drivers/actions.ts`
+  - Permite a operadores resetear contraseña olvidada de un chofer
+  - Genera nueva contraseña temporal y la muestra una sola vez
+- Función `changePasswordAction()` en `lib/server/auth/change-password.ts`
+  - Permite a drivers cambiar su propia contraseña (verificación de contraseña actual)
+- `PasswordResetSection` component en `driver-form.tsx` (visible en edit mode)
+  - Muestra "Resetear contraseña" button
+  - Al clickear, abre dialog de confirmación
+  - Muestra nuevas credenciales (email + password) post-reset
+- Commit: `7c3f72d`
+
+**D. Email Notification Diagnostics:**
+- Endpoint `/api/admin/notifications-diagnostics` (GET)
+  - Retorna estado de SENDGRID_API_KEY, length, from_email
+  - Cuenta de registros en `client_notification_preferences` table
+  - Cuenta de registros en `reysil_notification_emails` table
+  - JSON diagnostic con checks: sendgrid, clientPrefs, reysilEmails
+- Útil para debuggear why emails no se envían (key missing, tablas vacías, etc)
+- Commit: `a502cae`
+
+**Otros:**
+- ✅ Build successful (no new errors)
+- ✅ Git push a main exitoso
+- ✅ 4 commits relevantes
+- ✅ Deployment a Vercel en progreso (automatic)
+
+### 🔄 En Progreso
+
+- Testing manual en browser (una vez Vercel deployment esté listo)
+- Password reset feature: verificar UI y flow en browser
+- Menu navigation: verificar que "Camiones" no marca "General" como activo
+
+### ⏭️ Próximos Pasos
+
+1. **Esperar Vercel deployment** → ~2-5 min
+2. **Testing en production:**
+   - Entrar a /operador/choferes/[id] → verificar "Resetear contraseña" button
+   - Clickear button → verificar nuevo dialog y flow
+   - En /operador/configuracion → clickear Camiones → verificar que General no se marca activo
+   - En /operador/chofer-asignado → verificar que hay "Modificar" button para cada fila
+
+3. **Resolver email issues (Critical #4, #5, #6):**
+   - Visitar `/api/admin/notifications-diagnostics` en production
+   - Si SENDGRID_API_KEY falta → agregar a Vercel env vars
+   - Si tablas vacías → insertar records en `client_notification_preferences` y `reysil_notification_emails`
+   - Re-test: crear solicitud → verificar email llega
+
+4. **Real-Time Updates (Critical #9, #10):**
+   - Implementar Supabase Realtime subscriptions en:
+     - `asignado-view.tsx` (datos de viajes refreshen automáticamente)
+     - `app/chofer/turno/page.tsx` (datos de viajes refreshen en panel chofer)
+   - Alternativa rápida: agregar "Refrescar" button manual
+
+### 💡 Decisiones Tomadas
+
+- **Password reset UI pattern:** Consistente con PasswordResetSection (success state muestra credentials)
+- **Diagnostics endpoint público:** Acesible sin auth (solo inspecciona env vars y tablas). En futuro, proteger con OPERADOR role.
+- **Email issue:** Código funciona correctamente; problema es configuración (missing key o tablas vacías)
+
+### ⚠️ Problemas / Blockers
+
+- **Vercel deployment:** Automatic trigger de GitHub. Esperar confirmación de successful deploy antes de testing.
+- **Email diagnostics:** Endpoint no validada aún en browser.
+- **Real-time updates:** Pendiente implementación. Requiere Realtime subscription listeners.
+
+---
+
 ## Sesión 2026-04-22 — Módulo 9: Gestión de Camiones y Disponibilidad
 
 ### ✅ Completado

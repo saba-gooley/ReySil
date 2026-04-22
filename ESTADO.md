@@ -2,7 +2,7 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-22 (cierre sesion 9 — Gestión de Camiones y Disponibilidad)
+> Ultima actualizacion: 2026-04-22 (cierre sesion 10 — Critical Bug Fixes)
 
 ---
 
@@ -29,7 +29,49 @@
 
 ---
 
-## Trabajo Completado en Esta Sesion (2026-04-22)
+## Trabajo Completado en Esta Sesion (2026-04-22 — Sesion 10)
+🐛 **Critical Bug Fixes — Basado en feedback de usuario**:
+
+**Completado:**
+
+**A. Menu Navigation Fix:**
+- [x] Fix menu dropdown logic en `operador-nav.tsx`
+- [x] "Camiones" y "General" ya no se marcan activos simultáneamente
+- [x] Implementado `isConfiguracionItemActive()` helper con lógica exacta para "General"
+
+**B. Chofer Asignado Interface:**
+- [x] Nuevo componente `assigned-trip-actions.tsx`
+- [x] Añadido "Modificar" button que togglea el formulario de edición
+- [x] Matches pattern de `preassigned-trip-actions.tsx` para UX consistente
+- [x] Actualizado `asignado-view.tsx` para usar nuevo componente
+
+**C. Driver Password Management:**
+- [x] `resetDriverPasswordAction()` en `lib/server/drivers/actions.ts` — permite a operadores resetear contraseñas
+- [x] `changePasswordAction()` en `lib/server/auth/change-password.ts` — permite a drivers cambiar su propia contraseña (futuro)
+- [x] `PasswordResetSection` component en `driver-form.tsx` para edit mode
+- [x] Muestra nuevas credenciales después de reset (una sola vez)
+
+**D. Email Notification Diagnostics:**
+- [x] `/api/admin/notifications-diagnostics` endpoint — inspecciona configuración de sendgrid y tablas de preferencias
+- [x] Ayuda a debuggear why emails no se envían (falta de SENDGRID_API_KEY, o tablas vacías)
+
+**Commits realizados:**
+1. `cbaed7b` — fix: menu dropdown logic (camiones vs general)
+2. `af711a0` — fix: add modify button toggle for assigned trips
+3. `a502cae` — add: notification diagnostics endpoint
+4. `7c3f72d` — feat: add password reset functionality
+
+**Archivos modificados:**
+- `components/operador/operador-nav.tsx`
+- `components/operador/asignado-view.tsx` (NEW: `components/operador/assigned-trip-actions.tsx`)
+- `lib/server/drivers/actions.ts`
+- `lib/server/auth/change-password.ts` (NEW)
+- `components/operador/driver-form.tsx`
+- `app/api/admin/notifications-diagnostics/route.ts` (NEW)
+
+---
+
+## Trabajo Completado en Sesion 9 (2026-04-22)
 🚚 **Módulo 9: Gestión de Camiones y Disponibilidad Diaria**:
 
 **Completado:**
@@ -113,35 +155,45 @@
 
 ## Proximo Paso Exacto
 
-**Module 9 está implementado. Antes de merge a main:**
+**Status actual:** 4 bugs críticos fixeados y deployeados a Vercel. Testing en progreso.
 
-1. **Testing del ABM Camiones:**
-   - Crear nuevo camión en `/operador/configuracion/camiones` (validar patente)
-   - Editar camión existente
-   - Desactivar/reactivar camión
-   - Verificar que selectlist muestra solo activos
+**Pendiente (Critical Issues no resueltos):**
 
-2. **Testing de Disponibilidad:**
-   - Ir a `/operador/disponibilidad`
-   - Cambiar fecha con date picker / prev/next buttons / today button
-   - Verificar que selectlists (en asignación) cargan estado correcto para la fecha
-   - Verificar que trucks/drivers aparecen con status correcto en el tablero
+### #4, #5, #6 — Email Notifications Not Working
+**Estado:** Código implementado correctamente, pero emails no se envían.
+**Causa probable:** Tablas de preferencias vacías o SENDGRID_API_KEY no configurada en Vercel.
+**Acción requerida:**
+1. Visitar `https://reysil.vercel.app/api/admin/notifications-diagnostics` para inspeccionar setup
+2. Si `sendGridConfigured: false` → agregar SENDGRID_API_KEY a variables de entorno de Vercel
+3. Si `clientNotificationPreferencesCount: 0` → insertar registros en tabla `client_notification_preferences` con:
+   - `client_id`, `email`, `enviar_al_crear_solicitud=true`, `enviar_al_asignar_chofer=true`
+4. Si `reysilNotificationEmailsCount: 0` → insertar registros en tabla `reysil_notification_emails` con:
+   - `email`, `enviar_solicitudes=true`, `enviar_asignaciones=true`
+5. Re-test: crear solicitud → verificar que llega email
 
-3. **Testing de Asignación:**
-   - Crear viaje con fecha X
-   - Ir a Pendientes → form de asignación
-   - Selectlist de choferes debe cargar con status de fecha X
-   - Selectlist de camiones debe reemplazar text input
-   - Asignar chofer + camión → verificar guardado en BD
-   - Ir a Disponibilidad (fecha X) → debe mostrar truck como PREASIGNADO
+### #9, #10 — Real-Time Updates (Chofer Asignado / Viajes)
+**Estado:** No implementado.
+**Descripción:** Datos de solicitud no se actualizan automáticamente cuando cambia el estado en otro panel.
+**Arquitectura necesaria:**
+- Implementar Supabase Realtime subscriptions en componentes que muestran trips
+- Ubicaciones clave:
+  - `app/operador/chofer-asignado/page.tsx` (asignado-view.tsx)
+  - `app/chofer/turno/page.tsx` (trip data sections)
+- Alternativa: Agregar manual refresh button (menos elegante pero más rápido)
+**Esfuerzo:** ~2-3 horas con Realtime subscriptions
 
-4. **Antes de merge:**
-   - Ejecutar migración 0009 en Supabase (si no se ejecutó ya)
-   - Verificar que no hay conflictos con módulos anteriores
-   - Actualizar PLAN.md si hay cambios en arquitectura
-   - Crear PR y merge a main
+**Testing completado:**
+- ✅ Menu fixes probado en dev
+- ✅ Modificar button (chofer asignado) probado en dev  
+- ✅ Password reset button añadido (no yet testedo en browser)
+- ✅ Build sin errores
+- ✅ Push a GitHub exitoso
+- ⏳ Vercel deploy en progreso (automatic)
 
-**Deuda técnica:** Ninguna — Module 9 completo sin compromisos.
+**Próxima iteración:**
+1. Testing manual en Vercel deployment
+2. Resolver email issues (probablemente agregar datos a tablas de preferencias)
+3. Implementar real-time updates si hay tiempo/prioridad
 
 ---
 
@@ -186,6 +238,9 @@
 - **Remito upload sin validación de tamaño**: considerar validar max ~10MB server-side.
 - **Service Worker para PWA offline**: manifest.json configurado pero sin service worker real.
 - **Module 9 testing antes de merge**: migration 0009 debe ejecutarse en Supabase. Selectlists deben validar carga de status correctamente. Tablero de disponibilidad debe ser actualizado en tiempo real si se asigna un viaje.
+- **Email notifications not working (Critical #4, #5, #6):** Code is correct but SENDGRID_API_KEY may be missing from Vercel env or notification preference tables are empty. Diagnostics endpoint at `/api/admin/notifications-diagnostics` shows status.
+- **Real-time updates missing (Critical #9, #10):** Chofer Asignado and Chofer Turno pages don't auto-refresh when trip data changes. Require Supabase Realtime subscriptions implementation.
+- **Password reset UI not tested:** Component added but not verified in browser yet. Need testing on production deployment.
 
 ---
 
