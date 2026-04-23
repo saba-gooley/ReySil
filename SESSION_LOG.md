@@ -6,6 +6,38 @@
 
 ---
 
+## Sesión 2026-04-23 (continuación 2) — feat: Módulo 10 Panel Admin + ABM Operadores
+
+### ✅ Completado
+- **`app/admin/layout.tsx`** — layout exclusivo ADMIN con nav: Admin | Operadores | → Panel Operadores
+- **`app/admin/page.tsx`** — home admin reemplaza placeholder, cards a ABM Operadores y Panel Operadores
+- **`app/admin/operadores/page.tsx`** — lista de operadores activos/inactivos con acciones
+- **`app/admin/operadores/nuevo/page.tsx`** — form crear operador (email + nombre + contraseña inicial)
+- **`app/admin/operadores/[id]/page.tsx`** — editar nombre + reset password
+- **`lib/server/operators/queries.ts`** — `listOperators()`, `getOperatorById()` (cruza user_profiles + auth.users)
+- **`lib/server/operators/actions.ts`** — `createOperatorAction`, `updateOperatorAction`, `deactivateOperatorAction`, `reactivateOperatorAction`, `resetOperatorPasswordAction`
+- **`components/admin/operator-list.tsx`** — tabla con activos/inactivos, botones desactivar/reactivar inline
+- **`components/admin/operator-form.tsx`** — form crear/editar + `ResetPasswordForm` separado
+- Credenciales se muestran una sola vez tras crear o resetear contraseña
+- **PLAN.md** — Módulo 10 agregado
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- Testing en producción: crear primer operador desde /admin/operadores/nuevo
+- Real-time updates en asignado-view y panel chofer (pendiente de sesiones anteriores)
+
+### 💡 Decisiones tomadas
+- **Sin tabla `operators` separada:** los operadores viven en `user_profiles` con `role=OPERADOR`. El ABM opera sobre `auth.users` + `user_profiles` igual que drivers
+- **Contraseña visible al crear:** el admin define la contraseña inicial (no auto-generada) y se muestra una sola vez. Permite que el admin elija algo memorable para comunicar al operador
+- **Admin accede a /operador/* sin cambios:** el layout de operadores ya usa `requireRole("OPERADOR", "ADMIN")`, así que el admin navega al panel operador directamente
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-04-23 (continuación) — feat: Operador carga solicitudes por cliente
 
 ### ✅ Completado
