@@ -6,6 +6,41 @@
 
 ---
 
+## Sesión 2026-04-23 — UX Bug Fixes + Email SMTP + Polish
+
+### ✅ Completado
+
+- **Dialogs superpuestos — solución definitiva:** creado `assign-trip-dialog.tsx` que wrappea `AssignTripForm` en un Dialog real. Los formularios de preasignar/modificar/confirmar ahora abren un modal en lugar de renderizar inline en la tabla (causaba doble portal y textos mezclados)
+- **SelectContentInline:** agregada variante en `components/ui/select.tsx` que no usa portal propio, para usar dentro de dialogs (evita conflicto de portales anidados)
+- **CSS variables faltantes:** `--popover`, `--muted`, `--accent`, etc. agregadas a `app/globals.css`. `bg-popover` era transparente porque la variable no estaba definida, haciendo el dialog invisible
+- **DialogContent:** cambiado a `bg-white` explícito + `shadow-xl`. Overlay a `bg-black/60`
+- **Menu dropdowns controlados:** `operador-nav.tsx` reemplaza `<details>` HTML por `useState`. Al abrir uno se cierran los demás. Click fuera cierra. Navegación cierra
+- **Orden del menú:** Inicio → Solicitudes → Disponibilidad → Toneladas → Reportes → Configuración → Documentación
+- **Estado duplicado eliminado:** removido texto "Estado: Libre/Asignado" debajo de los selects de chofer y camión (ya aparece como badge en el trigger)
+- **Email SMTP Google:** `send-email.ts` reemplazado de SendGrid a nodemailer. Variables: `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`
+- **Fire-and-forget → await:** todas las llamadas a `notifyAssignment`, `notifyRepartoCreated`, `notifyContenedorCreated` cambiadas a `await` para que Vercel no cancele la conexión SMTP antes de completar
+- **Diagnóstico SMTP:** `/api/admin/notifications-diagnostics` actualizado para mostrar estado de variables SMTP además de SendGrid
+- **Email template:** texto de solicitud cambiado a "Te avisaremos cuando se asigne el chofer. También podés revisar el estado en tu cuenta de ReySil."
+- **Emails probados en producción:** funcionan correctamente para creación de solicitud y asignación de chofer
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- Implementar real-time updates en `asignado-view.tsx` y `app/chofer/turno`: usar `supabase.channel('trips').on('postgres_changes', ...)` + `router.refresh()` para auto-refrescar sin intervención del usuario
+- Agregar UI de cambio de contraseña en panel chofer — la acción `changePasswordAction` ya existe en `lib/server/auth/change-password.ts`, solo falta el formulario
+
+### 💡 Decisiones tomadas
+- **AssignTripDialog en lugar de inline form:** formulario inline en tabla causaba doble portal (Dialog portal + Select portal) resultando en textos superpuestos. Dialog modal es la solución arquitectural correcta
+- **SelectContentInline (sin portal):** dentro de un Dialog el Select no necesita portal propio — el Dialog ya está en body. Renderizar sin portal elimina el conflicto
+- **await en notificaciones:** Vercel serverless termina la función al retornar. Fire-and-forget cancela la conexión SMTP. Await agrega ~1-2s de latencia pero garantiza entrega
+- **SMTP Google en lugar de SendGrid:** el cliente ya tenía SMTP de Google configurado. Nodemailer ya estaba instalado en el proyecto
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-04-22 (Continuación) — Critical Bug Fixes & Password Management
 
 ### ✅ Completado
