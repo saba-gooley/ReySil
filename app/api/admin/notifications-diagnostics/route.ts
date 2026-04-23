@@ -18,10 +18,25 @@ export async function GET() {
   // Check if SENDGRID_API_KEY is set
   const sendGridConfigured = !!process.env.SENDGRID_API_KEY;
 
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST ?? "smtp.gmail.com";
+  const smtpPort = process.env.SMTP_PORT ?? "587";
+  const smtpFromEmail = process.env.SMTP_FROM_EMAIL ?? smtpUser ?? "(not set)";
+  const smtpFromName = process.env.SMTP_FROM_NAME ?? "Transportes ReySil";
+  const smtpConfigured = !!smtpUser && !!smtpPass;
+
   return Response.json({
+    smtp: {
+      configured: smtpConfigured,
+      host: smtpHost,
+      port: smtpPort,
+      user: smtpUser ? `${smtpUser.slice(0, 4)}...` : "(not set)",
+      passSet: !!smtpPass,
+      fromEmail: smtpFromEmail,
+      fromName: smtpFromName,
+    },
     sendGridConfigured,
-    sendGridApiKeyLength: process.env.SENDGRID_API_KEY?.length ?? 0,
-    sendGridFromEmail: process.env.SENDGRID_FROM_EMAIL || "notificaciones@reysil.com",
     clientNotificationPreferencesCount: clientPrefs?.length ?? 0,
     clientNotificationPreferences: clientPrefs,
     clientNotificationPreferencesError: clientPrefsError?.message,
@@ -29,7 +44,9 @@ export async function GET() {
     reysilNotificationEmails: reysilEmails,
     reysilNotificationEmailsError: reysilEmailsError?.message,
     diagnostic: {
-      sendgrid: sendGridConfigured ? "✓ Configured" : "✗ Not configured",
+      smtp: smtpConfigured
+        ? `✓ SMTP configured (${smtpHost}:${smtpPort}, user: ${smtpUser?.slice(0, 4)}...)`
+        : `✗ SMTP not configured — SMTP_USER=${smtpUser ? "set" : "MISSING"}, SMTP_PASS=${smtpPass ? "set" : "MISSING"}`,
       clientPrefs:
         (clientPrefs?.length ?? 0) > 0
           ? `✓ ${clientPrefs?.length} preferences set`
