@@ -89,6 +89,11 @@ export function OperadorNav() {
         Inicio
       </Link>
 
+      {/* Nueva Solicitud */}
+      <Link href="/operador/solicitudes" className={triggerClass(pathname.startsWith("/operador/solicitudes"))}>
+        Nueva Solicitud
+      </Link>
+
       {/* Solicitudes Dropdown */}
       <div className="relative">
         <button

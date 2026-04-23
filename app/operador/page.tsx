@@ -2,6 +2,11 @@ import Link from "next/link";
 
 const SECTIONS = [
   {
+    href: "/operador/solicitudes",
+    label: "Nueva Solicitud",
+    desc: "Cargar una solicitud de reparto o contenedor en nombre de un cliente",
+  },
+  {
     href: "/operador/pendientes",
     label: "Pendientes",
     desc: "Viajes sin chofer asignado — asignar chofer y patente",
@@ -42,6 +47,11 @@ const SECTIONS = [
     desc: "Viajes por cliente y por chofer en rango de fechas",
   },
   {
+    href: "/operador/disponibilidad",
+    label: "Disponibilidad",
+    desc: "Tablero diario de camiones y choferes — ver quién está libre o asignado",
+  },
+  {
     href: "/operador/clientes",
     label: "Clientes",
     desc: "ABM de clientes, emails y depositos",
@@ -50,6 +60,16 @@ const SECTIONS = [
     href: "/operador/choferes",
     label: "Choferes",
     desc: "ABM de choferes con generacion de credenciales",
+  },
+  {
+    href: "/operador/configuracion/camiones",
+    label: "Camiones",
+    desc: "ABM de camiones — registrar, editar y activar/desactivar unidades",
+  },
+  {
+    href: "/operador/configuracion",
+    label: "Configuración General",
+    desc: "Configuración general del sistema",
   },
 ];
 

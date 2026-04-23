@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { CreateRepartoSchema, CreateContenedorSchema } from "@/lib/validators/trip";
 import { notifyRepartoCreated, notifyContenedorCreated } from "@/lib/server/notifications/notify-reparto";
@@ -355,5 +356,180 @@ export async function createContenedorAction(
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
   revalidatePath("/operador/pendientes");
+  return { success: true };
+}
+
+/**
+ * Operador crea un reparto en nombre de un cliente.
+ * client_id viene explícito en el payload (no de la sesión).
+ */
+export async function createRepartoForClientAction(
+  _prev: TripActionState,
+  formData: FormData,
+): Promise<TripActionState> {
+  const user = await getCurrentUser();
+  const supabase = createAdminClient();
+
+  const raw = JSON.parse(formData.get("payload") as string);
+  const parsed = CreateRepartoSchema.extend({
+    client_id: z.string().uuid("Seleccioná un cliente"),
+  }).safeParse(raw);
+
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const d = parsed.data;
+  const origenDescripcion = await resolveOrigenDescripcion(
+    supabase as ReturnType<typeof createClient>,
+    d.client_id,
+    d.origen_deposit_id,
+    d.origen_descripcion,
+  );
+
+  if (d.fecha_entrega && d.fecha_solicitada && d.fecha_entrega < d.fecha_solicitada) {
+    return { error: "La fecha de entrega no puede ser anterior a la fecha de carga" };
+  }
+
+  const { data: trip, error: tripError } = await supabase
+    .from("trips")
+    .insert({
+      client_id: d.client_id,
+      tipo: "REPARTO",
+      estado: "PENDIENTE",
+      origen_deposit_id: d.origen_deposit_id || null,
+      origen_descripcion: origenDescripcion,
+      destino_descripcion: d.destino_descripcion || null,
+      fecha_solicitada: d.fecha_solicitada || null,
+      observaciones_cliente: d.observaciones_cliente || null,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (tripError) return { error: `Error al crear viaje: ${tripError.message}` };
+
+  const metadata: Record<string, unknown> = {};
+  if (d.fecha_entrega) metadata.fecha_entrega = d.fecha_entrega;
+  if (d.codigo_postal) metadata.codigo_postal = d.codigo_postal;
+  if (d.zona_tarifa) metadata.zona_tarifa = d.zona_tarifa;
+  if (d.horario) metadata.horario = d.horario;
+  if (d.tipo_camion) metadata.tipo_camion = d.tipo_camion;
+  if (d.peon) metadata.peon = d.peon;
+
+  const { error: fieldsError } = await supabase.from("trip_reparto_fields").insert({
+    trip_id: trip.id,
+    ndv: d.ndv || null,
+    pal: d.pal ?? null,
+    cat: d.cat || null,
+    nro_un: d.nro_un || null,
+    cantidad_bultos: d.cantidad_bultos ?? null,
+    peso_kg: d.peso_kg ?? null,
+    toneladas: d.toneladas ?? null,
+    metadata,
+  });
+
+  if (fieldsError) return { error: `Error al crear campos: ${fieldsError.message}` };
+
+  await notifyRepartoCreated(trip.id);
+
+  revalidatePath("/operador/pendientes");
+  revalidatePath("/operador/solicitudes");
+  return { success: true };
+}
+
+/**
+ * Operador crea un contenedor en nombre de un cliente.
+ * client_id viene explícito en el payload (no de la sesión).
+ */
+export async function createContenedorForClientAction(
+  _prev: TripActionState,
+  formData: FormData,
+): Promise<TripActionState> {
+  const user = await getCurrentUser();
+  const supabase = createAdminClient();
+
+  const raw = JSON.parse(formData.get("payload") as string);
+  const parsed = CreateContenedorSchema.extend({
+    client_id: z.string().uuid("Seleccioná un cliente"),
+  }).safeParse(raw);
+
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const d = parsed.data;
+  const origenDescripcion = await resolveOrigenDescripcion(
+    supabase as ReturnType<typeof createClient>,
+    d.client_id,
+    d.origen_deposit_id,
+    d.origen_descripcion,
+  );
+
+  const { data: reservation, error: resError } = await supabase
+    .from("reservations")
+    .insert({
+      client_id: d.client_id,
+      numero_booking: d.numero_booking || null,
+      naviera: d.naviera || null,
+      buque: d.buque || null,
+      fecha_arribo: d.fecha_arribo || null,
+      fecha_carga: d.fecha_carga || null,
+      orden: d.orden || null,
+      mercaderia: d.mercaderia || null,
+      despacho: d.despacho || null,
+      carga: d.carga || null,
+      terminal: d.terminal || null,
+      devuelve_en: d.devuelve_en || null,
+      libre_hasta: d.libre_hasta || null,
+      observaciones: d.observaciones || null,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (resError) return { error: `Error al crear reserva: ${resError.message}` };
+
+  for (let i = 0; i < d.containers.length; i++) {
+    const c = d.containers[i];
+
+    const { data: container, error: contError } = await supabase
+      .from("containers")
+      .insert({
+        reservation_id: reservation.id,
+        numero: c.numero || null,
+        tipo: c.tipo || null,
+        peso_carga_kg: c.peso_carga_kg ?? null,
+        observaciones: c.observaciones || null,
+      })
+      .select("id")
+      .single();
+
+    if (contError) return { error: `Contenedor ${i + 1}: ${contError.message}` };
+
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .insert({
+        client_id: d.client_id,
+        tipo: "CONTENEDOR",
+        estado: "PENDIENTE",
+        container_id: container.id,
+        origen_deposit_id: d.origen_deposit_id || null,
+        origen_descripcion: origenDescripcion,
+        destino_descripcion: d.destino_descripcion || null,
+        fecha_solicitada: d.fecha_carga || null,
+        observaciones_cliente: d.observaciones || null,
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (tripError) return { error: `Viaje del contenedor ${i + 1}: ${tripError.message}` };
+
+    await notifyContenedorCreated(trip.id);
+  }
+
+  revalidatePath("/operador/pendientes");
+  revalidatePath("/operador/solicitudes");
   return { success: true };
 }
