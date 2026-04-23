@@ -6,6 +6,34 @@
 
 ---
 
+## Sesión 2026-04-23 (continuación) — feat: Operador carga solicitudes por cliente
+
+### ✅ Completado
+- **API `/api/clients/deposits?client_id=`** — devuelve depósitos de un cliente para carga dinámica
+- **Server actions `createRepartoForClientAction` y `createContenedorForClientAction`** en `lib/server/trips/actions.ts` — igual a las del cliente pero con `client_id` explícito en payload y usando `adminClient`
+- **`OperatorRepartoForm`** (`components/operador/operator-reparto-form.tsx`) — mismo form que el cliente + selector de cliente al tope; depósitos cargan automáticamente al seleccionar cliente
+- **`OperatorContenedorForm`** (`components/operador/operator-contenedor-form.tsx`) — ídem para contenedores
+- **Páginas** `app/operador/solicitudes/page.tsx`, `.../reparto/page.tsx`, `.../contenedor/page.tsx`
+- **Nav operador** — link "Nueva Solicitud" entre Inicio y Solicitudes dropdown
+- **Inicio operador** — card "Nueva Solicitud" como primer item
+- Emails se envían a los destinatarios del cliente seleccionado (sin cambios en notify)
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- Testing en producción de la nueva funcionalidad
+- Real-time updates (Supabase Realtime) en asignado-view y panel chofer
+
+### 💡 Decisiones tomadas
+- **adminClient en acciones del operador:** el operador no tiene `client_id` en su perfil, así que se usa adminClient para bypassear RLS y escribir con el `client_id` del cliente seleccionado
+- **Depósitos cargados vía API:** el selector de cliente es un componente client-side; los depósitos se cargan via fetch al API route para evitar server/client mismatch
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-04-23 — UX Bug Fixes + Email SMTP + Polish
 
 ### ✅ Completado
