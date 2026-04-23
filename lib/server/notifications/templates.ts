@@ -156,7 +156,7 @@ export function solicitudHtml(data: SolicitudEmailData): string {
       </tbody>
     </table>
     <p style="margin:0;color:#6b7280;font-size:13px;">
-      Por favor, revisa la solicitud en tu cuenta de ReySil.
+      Te avisaremos cuando se asigne el chofer. También podés revisar el estado en tu cuenta de ReySil.
     </p>`;
 
   return layout(`Solicitud de ${data.tipoSolicitud} — ReySil`, body);
