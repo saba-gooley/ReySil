@@ -23,12 +23,6 @@ const DOC_ITEMS = [
   { href: "/operador/inspecciones", label: "Inspecciones" },
 ] as const;
 
-const MAIN_ITEMS = [
-  { href: "/operador", label: "Inicio" },
-  { href: "/operador/disponibilidad", label: "Disponibilidad" },
-  { href: "/operador/toneladas", label: "Toneladas" },
-  { href: "/operador/reportes", label: "Reportes" },
-] as const;
 
 type DropdownId = "solicitudes" | "configuracion" | "documentacion";
 
@@ -90,16 +84,10 @@ export function OperadorNav() {
 
   return (
     <nav ref={navRef} className="flex flex-wrap gap-1">
-      {/* Main Items */}
-      {MAIN_ITEMS.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={triggerClass(isMainItemActive(item.href))}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {/* Inicio */}
+      <Link href="/operador" className={triggerClass(isMainItemActive("/operador"))}>
+        Inicio
+      </Link>
 
       {/* Solicitudes Dropdown */}
       <div className="relative">
@@ -124,6 +112,17 @@ export function OperadorNav() {
           </div>
         )}
       </div>
+
+      {/* Disponibilidad, Toneladas, Reportes */}
+      {[
+        { href: "/operador/disponibilidad", label: "Disponibilidad" },
+        { href: "/operador/toneladas", label: "Toneladas" },
+        { href: "/operador/reportes", label: "Reportes" },
+      ].map((item) => (
+        <Link key={item.href} href={item.href} className={triggerClass(isMainItemActive(item.href))}>
+          {item.label}
+        </Link>
+      ))}
 
       {/* Configuración Dropdown */}
       <div className="relative">
