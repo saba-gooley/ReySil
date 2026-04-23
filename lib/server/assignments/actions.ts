@@ -92,8 +92,8 @@ export async function assignTripAction(
     return { error: `Error al actualizar estado: ${updateErr.message}` };
   }
 
-  // HU-NOT-001: fire-and-forget email to client
-  notifyAssignment(d.trip_id).catch(() => {});
+  // HU-NOT-001: await email so Vercel doesn't cancel before SMTP completes
+  await notifyAssignment(d.trip_id);
 
   revalidatePath("/operador/pendientes");
   revalidatePath("/operador/chofer-asignado");
@@ -149,8 +149,8 @@ export async function reassignTripAction(
     return { error: `Error al reasignar: ${updateErr.message}` };
   }
 
-  // HU-NOT-001: fire-and-forget email on reassignment
-  notifyAssignment(d.trip_id).catch(() => {});
+  // HU-NOT-001: await email so Vercel doesn't cancel before SMTP completes
+  await notifyAssignment(d.trip_id);;
 
   revalidatePath("/operador/chofer-asignado");
   return { success: true };

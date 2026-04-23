@@ -116,8 +116,8 @@ export async function createRepartoAction(
     return { error: `Error al crear campos de reparto: ${fieldsError.message}` };
   }
 
-  // Fire-and-forget notification
-  notifyRepartoCreated(trip.id).catch(() => {});
+  // await so Vercel doesn't cancel before SMTP completes
+  await notifyRepartoCreated(trip.id);
 
   revalidatePath("/cliente/solicitudes");
   revalidatePath("/cliente/seguimiento");
@@ -348,8 +348,8 @@ export async function createContenedorAction(
       return { error: `Viaje del contenedor ${i + 1}: ${tripError.message}` };
     }
 
-    // Fire-and-forget notification for this container
-    notifyContenedorCreated(trip.id).catch(() => {});
+    // await so Vercel doesn't cancel before SMTP completes
+    await notifyContenedorCreated(trip.id);
   }
 
   revalidatePath("/cliente/solicitudes");
