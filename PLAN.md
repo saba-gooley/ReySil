@@ -179,9 +179,10 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 | 6 | PWA Chofer | Viajes del dia, registro de turno, datos por viaje, foto remito, inspeccion, PDF inspeccion (rutas /chofer/* mobile-first con Service Worker) | HU-CHO-001 a HU-CHO-006 | 28 | Modulos 2, 5 | ✅ Completo |
 | 7 | Notificaciones | Email automatico al asignar chofer, email automatico al subir remito (SendGrid) | HU-NOT-001, HU-NOT-002 | 5 | Modulos 5, 6 | ✅ Completo |
 | 8 | Integraciones | Google Drive (upload remitos + PDF inspecciones), generacion PDF con @react-pdf/renderer | — | — | Modulo 7 | ✅ Completo |
-| 9 | Gestion de Camiones y Disponibilidad | ABM de camiones (marca, modelo, patente), tablero de disponibilidad diaria (tipo ajedrez), flujo mejorado de asignacion con selectlists de choferes/patentes indicando estado | — | 13 | Modulos 3, 5 | 🔄 En progreso |
+| 9 | Gestion de Camiones y Disponibilidad | ABM de camiones (marca, modelo, patente), tablero de disponibilidad diaria (tipo ajedrez), flujo mejorado de asignacion con selectlists de choferes/patentes indicando estado | — | 13 | Modulos 3, 5 | ✅ Completo |
+| 10 | Panel Admin — ABM Operadores | Panel exclusivo para rol ADMIN. ABM de operadores de ReySil: crear usuario en auth.users + user_profiles con rol OPERADOR, editar nombre, desactivar/reactivar. El admin tiene acceso a todo lo del operador mas esta gestion. | — | 5 | Modulo 2 | 🔄 En progreso |
 
-**Total: 25 historias + nuevas | 94 puntos + 13 puntos | Módulos 1-8 Completos, Módulo 9 En Progreso**
+**Total: 25 historias + nuevas | 94 puntos + 18 puntos | Módulos 1-9 Completos, Módulo 10 En Progreso**
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
