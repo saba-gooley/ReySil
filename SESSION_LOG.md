@@ -6,6 +6,34 @@
 
 ---
 
+## Sesión 2026-04-23 — Cierre sesión 12 (módulo 10 + features operador)
+
+### ✅ Completado
+- **Inicio operador** (`app/operador/page.tsx`) — agregadas cards: Nueva Solicitud, Disponibilidad, Camiones, Configuración General
+- **Operador carga solicitudes por cliente** — nuevo flujo completo: `/operador/solicitudes`, `/operador/solicitudes/reparto`, `/operador/solicitudes/contenedor`; selector de cliente con depósitos dinámicos; acciones `createRepartoForClientAction` y `createContenedorForClientAction` con adminClient; emails van a destinatarios del cliente seleccionado
+- **API `/api/clients/deposits?client_id=`** — devuelve depósitos del cliente para el selector dinámico
+- **Nav operador** — link "Nueva Solicitud" directo en el nav
+- **Módulo 10: Panel Admin + ABM Operadores** — layout exclusivo ADMIN, home admin, lista de operadores activos/inactivos, crear/editar/desactivar/reactivar/resetear contraseña; credenciales se muestran una sola vez
+- **PLAN.md** — Módulo 10 documentado
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+- **Real-time updates** en `asignado-view.tsx` y `app/chofer/turno/page.tsx`: `supabase.channel('trips').on('postgres_changes', ...).subscribe()` + `router.refresh()`
+- **UI cambio de contraseña chofer**: agregar form en `app/chofer/turno/page.tsx` usando `changePasswordAction` de `lib/server/auth/change-password.ts`
+- Testing en producción: crear primer operador desde `/admin/operadores/nuevo`
+
+### 💡 Decisiones tomadas
+- **adminClient en acciones del operador para solicitudes:** el operador no tiene client_id en su perfil; se usa adminClient para bypassear RLS y escribir con el client_id explícito del cliente seleccionado
+- **Contraseña visible al crear operador:** el admin define la contraseña inicial (no auto-generada) y se muestra una sola vez para comunicar al operador — más control que auto-generar
+- **Admin accede a /operador/* sin cambios de middleware:** `requireRole("OPERADOR", "ADMIN")` en el layout operador ya lo permite
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-04-23 (continuación 2) — feat: Módulo 10 Panel Admin + ABM Operadores
 
 ### ✅ Completado

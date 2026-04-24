@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-23 (cierre sesion 11 — Bug Fixes + Email SMTP + UX Polish)
+> Ultima actualizacion: 2026-04-23 (cierre sesion 12 — Módulo 10 + Operador carga solicitudes + inicio page)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 9 módulos completos. Emails funcionando vía SMTP Google. UX fixes aplicados y probados en producción.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados.
 
 ---
 
@@ -30,7 +30,37 @@
 
 ---
 
-## Trabajo Completado en Esta Sesion (2026-04-23 — Sesion 11)
+## Trabajo Completado en Esta Sesion (2026-04-23 — Sesion 12)
+🚀 **Módulo 10 + Nuevas features de operador**:
+
+**A. Pantalla de inicio del operador (app/operador/page.tsx):**
+- [x] Agregadas cards: "Nueva Solicitud", "Disponibilidad", "Camiones", "Configuración General"
+
+**B. Operador carga solicitudes por cliente:**
+- [x] `app/api/clients/deposits/route.ts` (NEW) — GET depósitos por client_id
+- [x] `lib/server/trips/actions.ts` — nuevas acciones `createRepartoForClientAction`, `createContenedorForClientAction` (client_id explícito en payload, adminClient)
+- [x] `components/operador/operator-reparto-form.tsx` (NEW) — mismo form que cliente + selector de cliente + depósitos dinámicos
+- [x] `components/operador/operator-contenedor-form.tsx` (NEW) — ídem para contenedores
+- [x] `app/operador/solicitudes/page.tsx` (NEW) — selector Reparto / Contenedor
+- [x] `app/operador/solicitudes/reparto/page.tsx` (NEW)
+- [x] `app/operador/solicitudes/contenedor/page.tsx` (NEW)
+- [x] Nav operador: link "Nueva Solicitud" entre Inicio y Solicitudes dropdown
+
+**C. Módulo 10 — Panel Admin + ABM Operadores:**
+- [x] `app/admin/layout.tsx` (NEW) — layout ADMIN con nav Admin | Operadores | → Panel Operadores
+- [x] `app/admin/page.tsx` — reemplaza placeholder con cards funcionales
+- [x] `app/admin/operadores/page.tsx` (NEW) — lista activos/inactivos
+- [x] `app/admin/operadores/nuevo/page.tsx` (NEW) — form crear operador
+- [x] `app/admin/operadores/[id]/page.tsx` (NEW) — editar + reset password
+- [x] `lib/server/operators/queries.ts` (NEW) — listOperators(), getOperatorById()
+- [x] `lib/server/operators/actions.ts` (NEW) — create/update/deactivate/reactivate/resetPassword
+- [x] `components/admin/operator-list.tsx` (NEW) — tabla activos/inactivos con acciones inline
+- [x] `components/admin/operator-form.tsx` (NEW) — form crear/editar + ResetPasswordForm
+- [x] `PLAN.md` — Módulo 10 agregado
+
+---
+
+## Trabajo Completado en Sesion 11 (2026-04-23 — UX Bug Fixes + Email SMTP)
 🐛 **UX Bug Fixes + Email SMTP + Polish**:
 
 **A. Dialogs Superpuestos — Solución definitiva:**
@@ -198,24 +228,22 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** Todos los bugs críticos resueltos. Emails funcionando. Sistema estable en producción.
+**Status actual:** 10 módulos completos. Sistema estable en producción. Pendientes son mejoras opcionales.
 
-**Pendiente principal:**
-
-### Real-Time Updates (#9, #10)
-**Descripción:** Datos de viajes no se actualizan automáticamente cuando cambia el estado.
-- Panel operador `/operador/chofer-asignado` no refresca cuando el chofer cambia estado del viaje
-- Panel chofer `/chofer/turno` no refresca cuando el operador reasigna
-**Arquitectura:**
-- Agregar Supabase Realtime subscription en `asignado-view.tsx`
-- `useEffect` con `supabase.channel('trips').on('postgres_changes', ...)` 
-- Al recibir cambio, llamar a `router.refresh()`
+### Pendiente 1 — Real-Time Updates
+**Descripción:** Datos no se actualizan automáticamente cuando cambia el estado del viaje.
+- `components/operador/asignado-view.tsx` — no refresca cuando el chofer inicia viaje
+- `app/chofer/turno/page.tsx` — no refresca cuando el operador reasigna
+**Arquitectura para implementar:**
+- En `asignado-view.tsx`: agregar `useEffect` con cliente Supabase browser:
+  `supabase.channel('trips').on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => router.refresh()).subscribe()`
 - Mismo patrón en `app/chofer/turno/page.tsx`
-**Alternativa rápida:** Botón "Actualizar" manual en cada vista
+- Cliente browser: `createBrowserClient` de `@supabase/ssr`
+**Alternativa rápida:** Botón "Actualizar" manual (30 minutos de trabajo)
 
-### Cambiar contraseña — Panel Chofer
-**Descripción:** `changePasswordAction` en `lib/server/auth/change-password.ts` ya existe pero no hay UI en el panel chofer para usarla.
-**Acción:** Agregar sección "Cambiar contraseña" en alguna pantalla del chofer (ej: perfil o turno).
+### Pendiente 2 — Cambiar contraseña en panel chofer
+**Descripción:** `changePasswordAction` existe en `lib/server/auth/change-password.ts` pero no hay UI.
+**Acción:** Agregar sección en `app/chofer/turno/page.tsx` o crear `app/chofer/perfil/page.tsx`.
 
 ---
 
