@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-04-23 (cierre sesion 12 — Módulo 10 + Operador carga solicitudes + inicio page)
+> Ultima actualizacion: 2026-05-05 (sesion 13 — bug fixes prod: middleware ADMIN, banned_until, create operator, back link)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados. Sesión 13: 4 bug fixes de producción mergeados (PRs #16–#19).
 
 ---
 
@@ -27,6 +27,23 @@
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-05 — Sesion 13)
+🐛 **Bug fixes de producción — Módulo 10 (Panel Admin)**:
+
+**A. Middleware: ADMIN bloqueado de /operador/* (PR #16)**
+- [x] `lib/supabase/middleware.ts` — agregado `EXTRA_ALLOWED: { ADMIN: ["/operador"] }` para que el middleware permita al admin acceder al panel de operadores sin ser redirigido a /admin
+
+**B. TypeScript build error: `banned` no existe en tipo User (PR #17)**
+- [x] `lib/server/operators/queries.ts` — reemplazado `authUser.banned` por `!!authUser.banned_until && new Date(authUser.banned_until) > new Date()` en `listOperators()` y `getOperatorById()`
+
+**C. createOperatorAction violaba check constraint (PR #18)**
+- [x] `lib/server/operators/actions.ts` — la acción ahora crea primero la fila en `operators` (nombre/apellido/email), luego auth user, luego `user_profiles` con `operator_id` correcto. Rollback completo en fallo.
+
+**D. Link "← Panel Admin" en panel operadores (PR #19)**
+- [x] `app/operador/layout.tsx` — link condicional visible solo cuando `user.profile.role === "ADMIN"`, en el header junto al email y botón Salir
 
 ---
 
@@ -228,7 +245,7 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable en producción. Pendientes son mejoras opcionales.
+**Status actual:** 10 módulos completos. 4 bug fixes de prod aplicados en sesión 13. Sistema estable.
 
 ### Pendiente 1 — Real-Time Updates
 **Descripción:** Datos no se actualizan automáticamente cuando cambia el estado del viaje.

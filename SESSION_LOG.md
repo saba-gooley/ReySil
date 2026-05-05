@@ -6,6 +6,31 @@
 
 ---
 
+## Sesión 2026-05-05 — Bug fixes producción Módulo 10 (PRs #16–#19)
+
+### ✅ Completado
+- **`lib/supabase/middleware.ts`** — `EXTRA_ALLOWED` permite a ADMIN acceder a `/operador/*`; antes el middleware redirigía al admin de vuelta a `/admin` al intentar acceder al panel de operadores (PR #16)
+- **`lib/server/operators/queries.ts`** — corregido tipo `banned`: Supabase expone `banned_until` (ISO date), no `banned` (boolean); fix en `listOperators()` y `getOperatorById()` (PR #17)
+- **`lib/server/operators/actions.ts`** — `createOperatorAction` ahora crea primero la fila en `operators` antes de `user_profiles`; el check constraint `user_profiles_role_entity_check` requiere `operator_id IS NOT NULL` para OPERADOR (PR #18)
+- **`app/operador/layout.tsx`** — link "← Panel Admin" condicional cuando `user.profile.role === "ADMIN"` en el header del panel de operadores (PR #19)
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+1. **Real-time updates** en `asignado-view.tsx` y `app/chofer/turno/page.tsx`: `supabase.channel('trips').on('postgres_changes', ...).subscribe()` + `router.refresh()`
+2. **UI cambio de contraseña chofer**: form en `app/chofer/turno/page.tsx` usando `changePasswordAction` de `lib/server/auth/change-password.ts`
+
+### 💡 Decisiones tomadas
+- **EXTRA_ALLOWED en middleware**: patrón extensible para roles con acceso a múltiples prefijos; evita hardcodear lógica especial por rol en el loop de enforcement
+- **`createOperatorAction` crea fila en `operators`**: mismo patrón que drivers; `user_profiles.operator_id` no puede ser null para OPERADOR/ADMIN según constraint de BD
+- **`banned_until` vs `banned`**: el SDK de Supabase JS no expone `banned` directamente; el estado de ban se deriva comparando `banned_until` contra `Date.now()`
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-04-23 — Cierre sesión 12 (módulo 10 + features operador)
 
 ### ✅ Completado
