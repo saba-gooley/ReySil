@@ -32,7 +32,7 @@ export async function listOperators(): Promise<OperatorRow[]> {
       id: p.id,
       email: authUser?.email ?? "—",
       full_name: p.full_name,
-      banned: authUser?.banned ?? false,
+      banned: !!authUser?.banned_until && new Date(authUser.banned_until) > new Date(),
       created_at: p.created_at,
     };
   });
@@ -59,7 +59,7 @@ export async function getOperatorById(id: string): Promise<OperatorRow> {
     id: profile.id,
     email: authUser.user.email ?? "—",
     full_name: profile.full_name,
-    banned: authUser.user.banned ?? false,
+    banned: !!authUser.user.banned_until && new Date(authUser.user.banned_until) > new Date(),
     created_at: profile.created_at,
   };
 }
