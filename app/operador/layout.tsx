@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/server/auth/get-current-user";
 import { OperadorNav } from "@/components/operador/operador-nav";
+import Link from "next/link";
 
 export const metadata = { title: "Panel Operadores — ReySil" };
 
@@ -19,6 +20,14 @@ export default async function OperadorLayout({
             <OperadorNav />
           </div>
           <div className="flex items-center gap-4">
+            {user.profile.role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-reysil-red hover:bg-red-50 transition"
+              >
+                ← Panel Admin
+              </Link>
+            )}
             <span className="text-sm text-neutral-500">{user.email}</span>
             <form action="/sign-out" method="post">
               <button
