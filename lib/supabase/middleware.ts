@@ -25,6 +25,12 @@ const ROLE_PREFIX: Record<string, string> = {
   ADMIN: "/admin",
 };
 
+// Prefijos adicionales a los que un rol puede acceder además de su propio home.
+// ADMIN tiene acceso total al panel de operadores ademas de /admin.
+const EXTRA_ALLOWED: Record<string, string[]> = {
+  ADMIN: ["/operador"],
+};
+
 function homePathForRole(role: string | null): string {
   if (!role) return "/login";
   return ROLE_PREFIX[role] ?? "/login";
@@ -151,9 +157,12 @@ export async function updateSession(request: NextRequest) {
   for (const [r, prefix] of Object.entries(ROLE_PREFIX)) {
     if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
       if (r !== role) {
-        const url = request.nextUrl.clone();
-        url.pathname = home;
-        return NextResponse.redirect(url);
+        const extras = EXTRA_ALLOWED[role] ?? [];
+        if (!extras.includes(prefix)) {
+          const url = request.nextUrl.clone();
+          url.pathname = home;
+          return NextResponse.redirect(url);
+        }
       }
       break;
     }
