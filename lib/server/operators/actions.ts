@@ -46,28 +46,43 @@ export async function createOperatorAction(
     return { error: `Ya existe un usuario con el email "${email}"` };
   }
 
-  // 1. Create auth user
+  // 1. Create operators row (required by user_profiles check constraint)
+  const [nombre, ...rest] = full_name.trim().split(" ");
+  const apellido = rest.join(" ") || "—";
+
+  const { data: operator, error: operatorError } = await admin
+    .from("operators")
+    .insert({ nombre, apellido, email, activo: true })
+    .select("id")
+    .single();
+
+  if (operatorError) return { error: `Error al crear operador: ${operatorError.message}` };
+
+  // 2. Create auth user
   const { data: authUser, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
   });
 
-  if (authError) return { error: `Error al crear usuario: ${authError.message}` };
+  if (authError) {
+    await admin.from("operators").delete().eq("id", operator.id);
+    return { error: `Error al crear usuario: ${authError.message}` };
+  }
 
-  // 2. Create user_profile with OPERADOR role
+  // 3. Create user_profile with OPERADOR role linked to operator row
   const { error: profileError } = await admin.from("user_profiles").insert({
     id: authUser.user.id,
     role: "OPERADOR",
     full_name,
     client_id: null,
     driver_id: null,
-    operator_id: null,
+    operator_id: operator.id,
   });
 
   if (profileError) {
-    // Rollback auth user
     await admin.auth.admin.deleteUser(authUser.user.id);
+    await admin.from("operators").delete().eq("id", operator.id);
     return { error: `Error al crear perfil: ${profileError.message}` };
   }
 
