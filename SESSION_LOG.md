@@ -6,6 +6,26 @@
 
 ---
 
+## Sesión 2026-05-12 — Contraseña inicial de chofer desde DNI + mes
+
+### ✅ Completado
+- **`lib/server/drivers/actions.ts`** — `generateTempPassword()` reemplazado por `generateDriverPassword(dni)`: `dni.substring(0, 5) + mes_3_letras`. Aplica en `createDriverAction` y `resetDriverPasswordAction`. Meses: ene/feb/mar/abr/may/jun/jul/ago/sep/oct/nov/dic.
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+1. **Real-time updates** en `asignado-view.tsx` y `app/chofer/turno/page.tsx`
+2. **UI cambio de contraseña chofer**: form en `app/chofer/turno/page.tsx` usando `changePasswordAction`
+
+### 💡 Decisiones tomadas
+- **Password predecible por diseño**: el cliente lo solicitó explícitamente para facilitar el alta a los operadores. El operador puede hacer reset manual desde el panel si el chofer cambia de mes de alta.
+
+### ⚠️ Problemas / blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-05-05 — Bug fixes producción Módulo 10 (PRs #16–#19)
 
 ### ✅ Completado
