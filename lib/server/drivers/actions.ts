@@ -74,7 +74,7 @@ export async function createDriverAction(
 
   // 2. Generate credentials and create auth user
   const generatedEmail = `chofer.${dni}@reysil.app`;
-  const generatedPassword = generateTempPassword();
+  const generatedPassword = generateDriverPassword(dni);
 
   const { data: authUser, error: authError } =
     await admin.auth.admin.createUser({
@@ -258,7 +258,7 @@ export async function resetDriverPasswordAction(
   }
 
   // Generate new password
-  const generatedPassword = generateTempPassword();
+  const generatedPassword = generateDriverPassword(driver.dni);
   const driverEmail = `chofer.${driver.dni}@reysil.app`;
 
   // Update auth user password
@@ -282,12 +282,8 @@ export async function resetDriverPasswordAction(
   };
 }
 
-function generateTempPassword(): string {
-  const chars =
-    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
+function generateDriverPassword(dni: string): string {
+  const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const mes = months[new Date().getMonth()];
+  return dni.substring(0, 5) + mes;
 }

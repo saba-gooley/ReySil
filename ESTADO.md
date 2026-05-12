@@ -7,7 +7,7 @@
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados. Sesión 13: 4 bug fixes de producción mergeados (PRs #16–#19).
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados. Sesión 14: nuevo requerimiento — contraseña inicial del chofer generada desde DNI + mes en curso.
 
 ---
 
@@ -27,6 +27,13 @@
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-12 — Sesion 14)
+🔧 **Mejora Módulo 3 — Generación de contraseña inicial de choferes**:
+
+- [x] `lib/server/drivers/actions.ts` — reemplazado `generateTempPassword()` (random) por `generateDriverPassword(dni)`: los primeros 5 dígitos del DNI + las 3 primeras letras del mes en curso en español. Ejemplo: `22029ene`. Aplica tanto al alta de chofer (`createDriverAction`) como al reset de contraseña (`resetDriverPasswordAction`).
 
 ---
 
