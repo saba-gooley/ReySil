@@ -129,6 +129,7 @@ export async function finalizeTripAction(
   tripId: string,
   skipRemito: boolean,
   kmData?: { kmType: "50" | "100"; kmValue: number; pernocto: boolean; observaciones: string },
+  skipKm = false,
 ): Promise<ChoferActionState> {
   try {
     const user = await getCurrentUser();
@@ -185,15 +186,17 @@ export async function finalizeTripAction(
       }
     }
 
-    // Validate driver data (km)
-    const { data: driverData } = await supabase
-      .from("trip_driver_data")
-      .select("km_50_porc, km_100_porc")
-      .eq("trip_id", tripId)
-      .maybeSingle();
+    // Warn if km not registered (soft check)
+    if (!skipKm) {
+      const { data: driverData } = await supabase
+        .from("trip_driver_data")
+        .select("km_50_porc, km_100_porc")
+        .eq("trip_id", tripId)
+        .maybeSingle();
 
-    if (!driverData || (driverData.km_50_porc == null && driverData.km_100_porc == null)) {
-      return { error: "Falta registrar los km del viaje" };
+      if (!driverData || (driverData.km_50_porc == null && driverData.km_100_porc == null)) {
+        return { error: "__NO_KM__" };
+      }
     }
 
     // Validate remito (warn only)
