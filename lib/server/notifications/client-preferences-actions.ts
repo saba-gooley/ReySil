@@ -58,7 +58,7 @@ export async function updateClientNotificationPreference(
 ): Promise<PreferenceActionState> {
   try {
     const raw = JSON.parse(formData.get("payload") as string);
-    const { id, enviar_al_crear_solicitud, enviar_al_asignar_chofer } = raw;
+    const { id, enviar_al_crear_solicitud, enviar_al_asignar_chofer, enviar_al_cargar_remito } = raw;
 
     if (!id) {
       return { error: "ID de preferencia requerido" };
@@ -70,6 +70,7 @@ export async function updateClientNotificationPreference(
       .update({
         enviar_al_crear_solicitud,
         enviar_al_asignar_chofer,
+        enviar_al_cargar_remito,
       })
       .eq("id", id);
 
@@ -170,7 +171,7 @@ export async function updateReysilNotificationEmail(
 ): Promise<PreferenceActionState> {
   try {
     const raw = JSON.parse(formData.get("payload") as string);
-    const { id, enviar_solicitudes, enviar_asignaciones } = raw;
+    const { id, enviar_solicitudes, enviar_asignaciones, enviar_remitos } = raw;
 
     if (!id) {
       return { error: "ID de email requerido" };
@@ -182,6 +183,7 @@ export async function updateReysilNotificationEmail(
       .update({
         enviar_solicitudes,
         enviar_asignaciones,
+        enviar_remitos,
       })
       .eq("id", id);
 

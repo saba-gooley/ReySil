@@ -34,7 +34,7 @@ export const CreateRepartoSchema = z.object({
   zona_tarifa: z.string().optional().default(""),
   horario: z.string().optional().default(""),
   tipo_camion: z
-    .enum(["", "CHASIS", "SEMI", "710", "PICK UP", "Otro"])
+    .enum(["", "CHASIS", "SEMI", "710", "PICK UP", "Balancín", "Doble Piso", "Otro"])
     .optional()
     .default(""),
   peon: z.enum(["", "SI", "NO"]).optional().default(""),

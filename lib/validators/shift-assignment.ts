@@ -35,6 +35,7 @@ export const ClientNotificationPreferenceSchema = z.object({
   email: z.string().email("Email inválido"),
   enviar_al_crear_solicitud: z.boolean().default(true),
   enviar_al_asignar_chofer: z.boolean().default(true),
+  enviar_al_cargar_remito: z.boolean().default(true),
 });
 
 export type ClientNotificationPreferenceInput = z.infer<
@@ -48,6 +49,7 @@ export const ReysilNotificationEmailSchema = z.object({
   email: z.string().email("Email inválido"),
   enviar_solicitudes: z.boolean().default(false),
   enviar_asignaciones: z.boolean().default(false),
+  enviar_remitos: z.boolean().default(false),
 });
 
 export type ReysilNotificationEmailInput = z.infer<

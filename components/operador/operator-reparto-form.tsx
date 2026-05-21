@@ -169,6 +169,8 @@ export function OperatorRepartoForm({ clients }: { clients: Client[] }) {
               <option value="SEMI">Semi</option>
               <option value="710">710</option>
               <option value="PICK UP">Pick Up</option>
+              <option value="Balancín">Balancín</option>
+              <option value="Doble Piso">Doble Piso</option>
               <option value="Otro">Otro</option>
             </select>
           </div>

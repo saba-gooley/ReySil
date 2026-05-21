@@ -60,7 +60,7 @@ function emptyRow(key: number): GridRow {
 
 const initialState: TripActionState = {};
 
-const TIPO_CAMION_OPTIONS = ["CHASIS", "SEMI", "710", "PICK UP", "Otro"];
+const TIPO_CAMION_OPTIONS = ["CHASIS", "SEMI", "710", "PICK UP", "Balancín", "Doble Piso", "Otro"];
 
 export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
   const [state, formAction] = useFormState(createBulkRepartosAction, initialState);
