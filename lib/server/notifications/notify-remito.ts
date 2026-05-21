@@ -5,6 +5,10 @@ import {
   remitoHtml,
   type RemitoEmailData,
 } from "./templates";
+import {
+  getClientMailsForRemito,
+  getReysilNotificationEmails,
+} from "./client-preferences-queries";
 
 /**
  * HU-NOT-002: Send email to all client emails when the chofer
@@ -38,14 +42,12 @@ export async function notifyRemitoUploaded(
       return;
     }
 
-    const { data: emails } = await supabase
-      .from("client_emails")
-      .select("email")
-      .eq("client_id", trip.client_id);
+    const clientMails = await getClientMailsForRemito(trip.client_id);
+    const reysilMails = await getReysilNotificationEmails("remitos");
+    const recipients = Array.from(new Set([...clientMails, ...reysilMails]));
 
-    const recipients = (emails ?? []).map((e) => e.email);
     if (recipients.length === 0) {
-      console.warn("[notify-remito] No emails for client", trip.client_id);
+      console.warn("[notify-remito] No emails configured for trip", tripId);
       return;
     }
 

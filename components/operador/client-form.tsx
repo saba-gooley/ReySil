@@ -197,8 +197,7 @@ export function ClientForm({ client }: { client?: ClientRow }) {
           Emails de acceso
         </legend>
         <p className="text-xs text-neutral-500">
-          Cada email genera un usuario con acceso al portal del cliente. El
-          email principal recibe las notificaciones.
+          Cada email genera un usuario con acceso al portal del cliente.
         </p>
 
         {emails.map((entry, index) => (

@@ -6,6 +6,7 @@ export type ClientNotificationPreference = {
   email: string;
   enviar_al_crear_solicitud: boolean;
   enviar_al_asignar_chofer: boolean;
+  enviar_al_cargar_remito: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -48,6 +49,18 @@ export async function getClientMailsForSolicitud(
 }
 
 /**
+ * Obtener todos los mails donde enviar al cargar remito para un cliente
+ */
+export async function getClientMailsForRemito(
+  clientId: string,
+): Promise<string[]> {
+  const prefs = await getClientNotificationPreferences(clientId);
+  return prefs
+    .filter((p) => p.enviar_al_cargar_remito)
+    .map((p) => p.email);
+}
+
+/**
  * Obtener todos los mails donde enviar al asignar chofer para un cliente
  */
 export async function getClientMailsForAsignacion(
@@ -64,6 +77,7 @@ export type ReysilNotificationEmail = {
   email: string;
   enviar_solicitudes: boolean;
   enviar_asignaciones: boolean;
+  enviar_remitos: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -71,10 +85,13 @@ export type ReysilNotificationEmail = {
 /**
  * Obtener mails internos de ReySil para notificaciones
  */
-export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones"): Promise<string[]> {
+export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones" | "remitos"): Promise<string[]> {
   const supabase = createAdminClient();
 
-  const column = type === "solicitudes" ? "enviar_solicitudes" : "enviar_asignaciones";
+  const column =
+    type === "solicitudes" ? "enviar_solicitudes" :
+    type === "asignaciones" ? "enviar_asignaciones" :
+    "enviar_remitos";
 
   const { data, error } = await supabase
     .from("reysil_notification_emails")

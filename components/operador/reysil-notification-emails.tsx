@@ -14,6 +14,7 @@ export type ReysilNotificationEmail = {
   email: string;
   enviar_solicitudes: boolean;
   enviar_asignaciones: boolean;
+  enviar_remitos: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -39,6 +40,7 @@ export function ReysilNotificationEmails({ emails }: Props) {
         email: newEmail,
         enviar_solicitudes: true,
         enviar_asignaciones: true,
+        enviar_remitos: true,
       }),
     );
     addAction(formData);
@@ -126,7 +128,7 @@ function EmailRow({
     initialState,
   );
 
-  function handleUpdate(enviar_solicitudes: boolean, enviar_asignaciones: boolean) {
+  function handleUpdate(enviar_solicitudes: boolean, enviar_asignaciones: boolean, enviar_remitos: boolean) {
     const formData = new FormData();
     formData.set(
       "payload",
@@ -134,6 +136,7 @@ function EmailRow({
         id: emailRow.id,
         enviar_solicitudes,
         enviar_asignaciones,
+        enviar_remitos,
       }),
     );
     updateAction(formData);
@@ -157,9 +160,11 @@ function EmailRow({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-neutral-900">{emailRow.email}</p>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {emailRow.enviar_solicitudes && "Solicitudes"}{" "}
-            {emailRow.enviar_solicitudes && emailRow.enviar_asignaciones && "• "}
+            {emailRow.enviar_solicitudes && "Solicitudes"}
+            {emailRow.enviar_solicitudes && (emailRow.enviar_asignaciones || emailRow.enviar_remitos) && " • "}
             {emailRow.enviar_asignaciones && "Asignaciones"}
+            {emailRow.enviar_asignaciones && emailRow.enviar_remitos && " • "}
+            {emailRow.enviar_remitos && "Remitos"}
           </p>
         </div>
         <span className="text-neutral-400">
@@ -175,7 +180,7 @@ function EmailRow({
                 type="checkbox"
                 checked={emailRow.enviar_solicitudes}
                 onChange={(e) =>
-                  handleUpdate(e.target.checked, emailRow.enviar_asignaciones)
+                  handleUpdate(e.target.checked, emailRow.enviar_asignaciones, emailRow.enviar_remitos)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
@@ -189,12 +194,26 @@ function EmailRow({
                 type="checkbox"
                 checked={emailRow.enviar_asignaciones}
                 onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, e.target.checked)
+                  handleUpdate(emailRow.enviar_solicitudes, e.target.checked, emailRow.enviar_remitos)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
                 Enviar copias de asignaciones de chofer
+              </span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={emailRow.enviar_remitos}
+                onChange={(e) =>
+                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, e.target.checked)
+                }
+                className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
+              />
+              <span className="text-sm text-neutral-700">
+                Enviar copias al cargar remito
               </span>
             </label>
           </div>
