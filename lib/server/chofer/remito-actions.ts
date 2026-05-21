@@ -51,17 +51,26 @@ export async function uploadRemitoAction(
     let driveFileId: string;
     try {
       const { uploadToDrive } = await import("@/lib/server/drive/upload");
-      const result = await uploadToDrive({
-        fileName,
-        mimeType: file.type || "image/jpeg",
-        body: buffer,
-        folderId: REMITO_FOLDER_ID,
-      });
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error("drive_timeout")),
+          25_000,
+        ),
+      );
+      const result = await Promise.race([
+        uploadToDrive({
+          fileName,
+          mimeType: file.type || "image/jpeg",
+          body: buffer,
+          folderId: REMITO_FOLDER_ID,
+        }),
+        timeout,
+      ]);
       driveUrl = result.webViewLink;
       driveFileId = result.fileId;
     } catch (err) {
       console.error("[upload-remito] Drive upload error:", err);
-      return { error: "Error al subir archivo a Google Drive" };
+      return { error: "No se pudo subir el remito. Verificá tu conexión e intentá de nuevo." };
     }
 
     // Save remito record
