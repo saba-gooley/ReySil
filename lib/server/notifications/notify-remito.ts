@@ -62,7 +62,8 @@ export async function notifyRemitoUploaded(
       : assignment.drivers;
 
     const container = Array.isArray(trip.containers) ? trip.containers[0] : trip.containers;
-    const reservation = (container as { reservations?: { mercaderia: string | null; orden: string | null } | null } | null)?.reservations;
+    const reservationRaw = (container as { reservations?: { mercaderia: string | null; orden: string | null }[] | null } | null)?.reservations;
+    const reservation = Array.isArray(reservationRaw) ? reservationRaw[0] : reservationRaw;
 
     const data: RemitoEmailData = {
       clientName: (client as { nombre: string }).nombre,
