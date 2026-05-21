@@ -138,21 +138,21 @@ export async function finalizeTripAction(
 
     const supabase = createAdminClient();
 
-    // Validate trip exists and belongs to driver
-    const { data: assignment } = await supabase
-      .from("trip_assignments")
-      .select("trip_id")
-      .eq("trip_id", tripId)
-      .eq("driver_id", driverId)
-      .maybeSingle();
+    // Validate trip and events in parallel
+    const [{ data: assignment }, { data: events }] = await Promise.all([
+      supabase
+        .from("trip_assignments")
+        .select("trip_id")
+        .eq("trip_id", tripId)
+        .eq("driver_id", driverId)
+        .maybeSingle(),
+      supabase
+        .from("trip_events")
+        .select("tipo")
+        .eq("trip_id", tripId),
+    ]);
 
     if (!assignment) return { error: "Viaje no asignado a este chofer" };
-
-    // Validate events
-    const { data: events } = await supabase
-      .from("trip_events")
-      .select("tipo")
-      .eq("trip_id", tripId);
 
     const eventTypes = new Set((events ?? []).map((e) => e.tipo));
     if (!eventTypes.has("LLEGADA_DESTINO_CLIENTE")) {
@@ -186,28 +186,34 @@ export async function finalizeTripAction(
       }
     }
 
-    // Warn if km not registered (soft check)
-    if (!skipKm) {
-      const { data: driverData } = await supabase
-        .from("trip_driver_data")
-        .select("km_50_porc, km_100_porc")
-        .eq("trip_id", tripId)
-        .maybeSingle();
+    // Soft checks — km and remito in parallel
+    const [driverDataRes, remitosRes] = await Promise.all([
+      !skipKm
+        ? supabase
+            .from("trip_driver_data")
+            .select("km_50_porc, km_100_porc")
+            .eq("trip_id", tripId)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      !skipRemito
+        ? supabase
+            .from("remitos")
+            .select("id")
+            .eq("trip_id", tripId)
+            .limit(1)
+        : Promise.resolve({ data: [] }),
+    ]);
 
-      if (!driverData || (driverData.km_50_porc == null && driverData.km_100_porc == null)) {
+    if (!skipKm) {
+      const d = driverDataRes.data as { km_50_porc: number | null; km_100_porc: number | null } | null;
+      if (!d || (d.km_50_porc == null && d.km_100_porc == null)) {
         return { error: "__NO_KM__" };
       }
     }
 
-    // Validate remito (warn only)
     if (!skipRemito) {
-      const { data: remitos } = await supabase
-        .from("remitos")
-        .select("id")
-        .eq("trip_id", tripId)
-        .limit(1);
-
-      if (!remitos || remitos.length === 0) {
+      const r = remitosRes.data as { id: string }[] | null;
+      if (!r || r.length === 0) {
         return { error: "__NO_REMITO__" };
       }
     }
@@ -223,7 +229,6 @@ export async function finalizeTripAction(
 
     if (error) return { error: error.message };
 
-    revalidatePath("/chofer");
     revalidatePath("/operador/en-curso");
     revalidatePath("/operador/finalizadas");
     return { success: true };
