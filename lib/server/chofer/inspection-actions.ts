@@ -106,7 +106,6 @@ export async function updateInspectionItemAction(
       .eq("id", itemId);
 
     if (error) return { error: error.message };
-    revalidatePath("/chofer/inspeccion");
     return { success: true };
   } catch (err) {
     if (err && typeof err === "object" && "digest" in err) throw err;
