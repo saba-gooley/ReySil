@@ -86,8 +86,8 @@ export type RemitoEmailData = {
   destino: string;
   fecha: string;
   remitoUrl: string | null;
+  tipoSolicitud: string;
   numeroContenedor?: string;
-  tipoMercaderia?: string;
 };
 
 export function remitoSubject(data: RemitoEmailData): string {
@@ -112,11 +112,11 @@ export function remitoHtml(data: RemitoEmailData): string {
     </p>
     <table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:16px;">
       <tbody>
+        ${dataRow("Tipo de solicitud", data.tipoSolicitud)}
         ${dataRow("Chofer", data.driverName)}
         ${dataRow("Patente", data.patente)}
         ${dataRow("Destino", data.destino)}
         ${dataRow("Fecha", data.fecha)}
-        ${data.tipoMercaderia ? dataRow("Mercadería", data.tipoMercaderia) : ""}
         ${data.numeroContenedor ? dataRow("Contenedor", data.numeroContenedor) : ""}
       </tbody>
     </table>
