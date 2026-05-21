@@ -220,16 +220,22 @@ function InspectionItemRow({
   onUpdate: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const [localEstado, setLocalEstado] = useState(item.estado);
 
   async function handleState(estado: "CUMPLE" | "NO_CUMPLE") {
+    setLocalEstado(estado);
     setLoading(true);
-    await updateInspectionItemAction(item.id, estado);
+    const result = await updateInspectionItemAction(item.id, estado);
     setLoading(false);
-    onUpdate();
+    if (result.error) {
+      setLocalEstado(item.estado);
+    } else {
+      onUpdate();
+    }
   }
 
-  const isCumple = item.estado === "CUMPLE";
-  const isNoCumple = item.estado === "NO_CUMPLE";
+  const isCumple = localEstado === "CUMPLE";
+  const isNoCumple = localEstado === "NO_CUMPLE";
 
   return (
     <div className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2">
