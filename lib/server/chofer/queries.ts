@@ -80,13 +80,16 @@ function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
 }
 
 /**
- * HU-CHO-001: Viajes asignados al chofer para hoy.
+ * HU-CHO-001: Todos los viajes relevantes del chofer:
+ * - EN_CURSO de cualquier fecha (necesitan ser finalizados)
+ * - ASIGNADO de hoy y fechas futuras
+ * - FINALIZADO de hoy (para verlos durante el día)
+ * Ordenados cronológicamente por fecha_solicitada.
  */
-export async function listTodayTrips(driverId: string) {
+export async function listDriverTrips(driverId: string) {
   const supabase = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
-  // First get trip IDs assigned to this driver
   const { data: assignments } = await supabase
     .from("trip_assignments")
     .select("trip_id")
@@ -99,9 +102,8 @@ export async function listTodayTrips(driverId: string) {
     .from("trips")
     .select(CHOFER_TRIP_SELECT)
     .in("id", assignedTripIds)
-    .eq("fecha_solicitada", today)
-    .in("estado", ["ASIGNADO", "EN_CURSO", "FINALIZADO"])
-    .order("created_at", { ascending: true });
+    .or(`estado.in.(ASIGNADO,EN_CURSO),fecha_solicitada.eq.${today}`)
+    .order("fecha_solicitada", { ascending: true });
 
   if (error) throw error;
   return normalizeChoferTrips(data);
