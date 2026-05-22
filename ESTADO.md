@@ -30,6 +30,13 @@
 
 ---
 
+## Trabajo Completado en Esta Sesion (2026-05-22 — Sesion 17)
+
+🐛 **Fix — Disponibilidad de camiones: todos aparecían como LIBRE (PR #30)**:
+- [x] `supabase/migrations/0012_fix_truck_daily_status_join.sql` — `truck_daily_status` hacía el JOIN por `truck_id` (siempre NULL); cambiado a JOIN por `patente` (clave única del camión). Las acciones de asignación siempre guardaron `patente`, nunca `truck_id`.
+
+---
+
 ## Trabajo Completado en Esta Sesion (2026-05-22 — Sesion 16)
 
 🔧 **Performance PWA Chofer + Features + Bug fixes**:
@@ -311,7 +318,7 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable. PRs #22 y #23 mergeados.
+**Status actual:** 10 módulos completos. Sistema estable. PR #30 mergeado.
 
 ### Pendiente 1 — Real-Time Updates
 **Descripción:** Datos no se actualizan automáticamente cuando cambia el estado del viaje.
