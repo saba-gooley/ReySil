@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-05 (sesion 13 — bug fixes prod: middleware ADMIN, banned_until, create operator, back link)
+> Ultima actualizacion: 2026-05-22 (sesion 16 — performance PWA chofer, viajes futuros/pasados, fixes disponibilidad y email remito)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción con panel admin, ABM operadores, carga de solicitudes por operador y todos los fixes de UX aplicados. Sesión 14: nuevo requerimiento — contraseña inicial del chofer generada desde DNI + mes en curso.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 16: performance PWA chofer (optimistic updates, queries paralelas), viajes futuros/pasados en PWA, fixes de disponibilidad y email de remito.
 
 ---
 
@@ -21,12 +21,71 @@
 | 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
 | 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
-| 7 | Notificaciones | ✅ Completo | SMTP Google (nodemailer): email al crear solicitud, asignar/reasignar chofer. Await (no fire-and-forget). |
+| 7 | Notificaciones | ✅ Completo | SMTP Ferozo (nodemailer): email al crear solicitud, asignar/reasignar chofer, cargar remito. Preferencias por cliente y ReySil. Await (no fire-and-forget). |
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-22 — Sesion 16)
+
+🔧 **Performance PWA Chofer + Features + Bug fixes**:
+
+**A. Performance — Inspección vehicular (PR #24):**
+- [x] `components/chofer/inspection-view.tsx` — optimistic update en `InspectionItemRow`: botón verde al instante sin esperar round-trip
+- [x] `lib/server/chofer/inspection-actions.ts` — eliminado `revalidatePath` redundante en `updateInspectionItemAction` (página es `force-dynamic`)
+
+**B. Performance — Finalizar viaje (PR #25):**
+- [x] `lib/server/chofer/trip-actions.ts` — queries de validación (`trip_assignments` + `trip_events`) y soft checks (km + remito) ahora corren en paralelo con `Promise.all`. Eliminado `revalidatePath("/chofer")` redundante.
+
+**C. Feature — Viajes futuros y pasados EN_CURSO en PWA chofer (PR #26):**
+- [x] `lib/server/chofer/queries.ts` — nueva función `listDriverTrips` reemplaza `listTodayTrips`. Trae viajes EN_CURSO (cualquier fecha), ASIGNADO (hoy y futuras), FINALIZADO (solo hoy)
+- [x] `app/chofer/page.tsx` — usa `listDriverTrips`, título "Mis viajes"
+- [x] `components/chofer/trip-list.tsx` — reorganizado en 3 secciones: "⚠ En curso" (pasados), "Hoy", "Próximos". Viajes futuros son solo lectura
+
+**D. Fix — Email remito: agregar Mercadería y Orden (PR #27):**
+- [x] `lib/server/notifications/notify-remito.ts` — query ampliada: `containers(numero, reservations(mercaderia, orden))`
+- [x] `lib/server/notifications/templates.ts` — `RemitoEmailData` con `mercaderia?` y `orden?`, ambos en el HTML
+
+**E. Fix — Timeout en upload de remito a Google Drive (PR #28):**
+- [x] `lib/server/chofer/remito-actions.ts` — `Promise.race` con timeout de 25s. Si Drive no responde, el chofer ve mensaje claro en lugar del spinner infinito
+
+**F. Fix — Disponibilidad: EN_CURSO aparecía como LIBRE (PR #29):**
+- [x] `supabase/migrations/0011_fix_availability_en_curso.sql` — recrea `truck_daily_status` y `driver_daily_status` incluyendo `EN_CURSO` en el cálculo de ASIGNADO. Migración aplicada manualmente en Supabase.
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-21 — Sesion 15)
+🔧 **Módulo 7 — Notificaciones: preferencias remito + tipos camión + SMTP Ferozo**:
+
+**A. Fix texto incorrecto en formulario de cliente:**
+- [x] `components/operador/client-form.tsx` — eliminada frase "El email principal recibe las notificaciones" (era falsa; las notifs van a `client_notification_preferences`)
+
+**B. Tipos de camión Balancín y Doble Piso (PR #22):**
+- [x] `lib/validators/trip.ts` — enum Zod actualizado
+- [x] `components/operador/operator-reparto-form.tsx` — nuevas options
+- [x] `components/cliente/reparto-form.tsx` — nuevas options
+- [x] `components/cliente/reparto-grid.tsx` — `TIPO_CAMION_OPTIONS` actualizado
+
+**C. Alinear notify-remito con sistema de preferencias (PR #22):**
+- [x] `supabase/migrations/0010_add_remito_notification_preference.sql` — agrega `enviar_al_cargar_remito` a `client_notification_preferences` y `enviar_remitos` a `reysil_notification_emails`
+- [x] `lib/validators/shift-assignment.ts` — nuevos campos en schemas Zod
+- [x] `lib/server/notifications/client-preferences-queries.ts` — nueva función `getClientMailsForRemito()`, `getReysilNotificationEmails` acepta `"remitos"`
+- [x] `lib/server/notifications/client-preferences-actions.ts` — update actions pasan `enviar_al_cargar_remito` y `enviar_remitos`
+- [x] `lib/server/notifications/notify-remito.ts` — reemplaza query directa a `client_emails` por preferencias + ReySil
+- [x] `components/operador/client-notification-preferences.tsx` — nuevo checkbox "Enviar al cargar remito"
+- [x] `components/operador/reysil-notification-emails.tsx` — nuevo checkbox "Enviar copias al cargar remito"
+
+**D. Mejorar template email de remito (PR #23):**
+- [x] `lib/server/notifications/templates.ts` — agrega `tipoSolicitud` y `numeroContenedor` (opcional, solo CONTENEDOR)
+- [x] `lib/server/notifications/notify-remito.ts` — query ampliada para traer `tipo` y `containers ( numero )`
+
+**E. SMTP migrado de Gmail a Ferozo:**
+- [x] Variables SMTP actualizadas en Vercel y `.env.local`: `SMTP_HOST=fe000466.ferozo.com`, usuario `administracion@tfaster.com.ar`
+- [ ] Pendiente: confirmar que mails llegan correctamente desde Ferozo en producción
 
 ---
 
@@ -252,7 +311,7 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. 4 bug fixes de prod aplicados en sesión 13. Sistema estable.
+**Status actual:** 10 módulos completos. Sistema estable. PRs #22 y #23 mergeados.
 
 ### Pendiente 1 — Real-Time Updates
 **Descripción:** Datos no se actualizan automáticamente cuando cambia el estado del viaje.
@@ -327,9 +386,13 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# SendGrid
-SENDGRID_API_KEY=your-sendgrid-api-key
-SENDGRID_FROM_EMAIL=notificaciones@reysil.com
+# SMTP (Ferozo)
+SMTP_HOST=fe000466.ferozo.com
+SMTP_PORT=587
+SMTP_USER=administracion@tfaster.com.ar
+SMTP_PASS=...
+SMTP_FROM_EMAIL=administracion@tfaster.com.ar
+SMTP_FROM_NAME=Transportes ReySil
 
 # Google Drive
 GOOGLE_DRIVE_SERVICE_ACCOUNT_KEY=base64-encoded-service-account-json

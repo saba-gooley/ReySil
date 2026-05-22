@@ -6,6 +6,67 @@
 
 ---
 
+## Sesión 2026-05-22 — Performance PWA chofer, viajes futuros/pasados, fixes disponibilidad y remito
+
+### ✅ Completado
+- **PR #24** `components/chofer/inspection-view.tsx` — optimistic update en checks de inspección: botón verde al instante. `lib/server/chofer/inspection-actions.ts` — eliminado `revalidatePath` redundante
+- **PR #25** `lib/server/chofer/trip-actions.ts` — queries paralelas en `finalizeTripAction` con `Promise.all`. Eliminado `revalidatePath("/chofer")` redundante
+- **PR #26** `lib/server/chofer/queries.ts` — nueva `listDriverTrips`. `components/chofer/trip-list.tsx` — 3 secciones (En curso / Hoy / Próximos). Viajes futuros solo lectura
+- **PR #27** `lib/server/notifications/notify-remito.ts` + `templates.ts` — Mercadería y Orden en email de remito (solo CONTENEDOR)
+- **PR #28** `lib/server/chofer/remito-actions.ts` — timeout 25s en upload a Google Drive con mensaje de error claro
+- **PR #29** `supabase/migrations/0011_fix_availability_en_curso.sql` — vistas de disponibilidad ahora incluyen EN_CURSO como ASIGNADO. Migración aplicada en Supabase
+
+### 🔄 En progreso
+- Ninguno
+
+### ⏭️ Próximos pasos
+1. Confirmar funcionamiento SMTP Ferozo en producción (disparar notificación real)
+2. **Real-time updates** en `asignado-view.tsx` y `app/chofer/turno/page.tsx`
+3. **UI cambio de contraseña chofer** en `app/chofer/turno/page.tsx`
+
+### 💡 Decisiones tomadas
+- Optimistic update en inspección sin tocar server action — el `router.refresh()` sigue corriendo en fondo para mantener `allDone` actualizado
+- Viajes futuros en PWA: solo lectura completa (sin `TripDataForm`), fecha visible en card header
+- Timeout de 25s en Drive upload — suficiente para Vercel Pro (60s) y cubre casos de conexión lenta del chofer
+
+### ⚠️ Problemas / blockers
+- Juan Yaque: remito quedó colgado en "Subiendo" por timeout de Drive. Solución: recargar la página y reintentar. El fix de timeout (PR #28) previene que vuelva a pasar.
+- Regla de trabajo: nunca hacer merge a main sin que el usuario lo pida explícitamente
+
+---
+
+## Sesión 2026-05-21 — Notificaciones: preferencias remito, tipos camión, SMTP Ferozo
+
+### ✅ Completado
+- **`components/operador/client-form.tsx`** — eliminado texto falso "El email principal recibe las notificaciones"
+- **`lib/validators/trip.ts`, `operator-reparto-form.tsx`, `reparto-form.tsx`, `reparto-grid.tsx`** — agregados tipos de camión Balancín y Doble Piso
+- **`supabase/migrations/0010_add_remito_notification_preference.sql`** — agrega `enviar_al_cargar_remito` y `enviar_remitos` a las tablas de preferencias (migración aplicada manualmente en Supabase)
+- **`lib/server/notifications/notify-remito.ts`** — reemplazada query directa a `client_emails` por `getClientMailsForRemito()` + `getReysilNotificationEmails("remitos")`. Alineado con el resto del sistema de preferencias
+- **`lib/server/notifications/client-preferences-queries.ts`** — nueva función `getClientMailsForRemito()`, `getReysilNotificationEmails` acepta tipo `"remitos"`
+- **`lib/server/notifications/client-preferences-actions.ts`** — update actions incluyen `enviar_al_cargar_remito` y `enviar_remitos`
+- **`components/operador/client-notification-preferences.tsx`** — nuevo checkbox "Enviar al cargar remito"
+- **`components/operador/reysil-notification-emails.tsx`** — nuevo checkbox "Enviar copias al cargar remito"
+- **`lib/server/notifications/templates.ts`** — mail de remito ahora incluye Tipo de solicitud y Nro. de Contenedor (solo CONTENEDOR)
+- **SMTP migrado**: de Gmail a Ferozo (`fe000466.ferozo.com`). Vars actualizadas en Vercel y `.env.local`
+- PRs #22 y #23 mergeados a main
+
+### 🔄 En progreso
+- Verificar que mails salgan correctamente desde Ferozo en producción (pendiente prueba real)
+
+### ⏭️ Próximos pasos
+1. Confirmar funcionamiento SMTP Ferozo en producción (disparar una notificación real)
+2. **Real-time updates** en `asignado-view.tsx` y `app/chofer/turno/page.tsx`
+3. **UI cambio de contraseña chofer**: form en `app/chofer/turno/page.tsx` usando `changePasswordAction`
+
+### 💡 Decisiones tomadas
+- **`enviar_al_cargar_remito` vs `enviar_remitos`**: nombres distintos porque son tablas distintas (`client_notification_preferences` vs `reysil_notification_emails`), siguiendo la convención ya existente en el código
+- **notify-remito usaba `client_emails` directamente**: era un bug de consistencia. Ahora usa el mismo sistema de preferencias que los otros dos eventos
+
+### ⚠️ Problemas / blockers
+- Inline comments en `.env.local` (formato `KEY=value # comentario`) pueden ser incluidos como parte del valor por dotenv. Hay que evitarlos
+
+---
+
 ## Sesión 2026-05-12 — Contraseña inicial de chofer desde DNI + mes
 
 ### ✅ Completado
