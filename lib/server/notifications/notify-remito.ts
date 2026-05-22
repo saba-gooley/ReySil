@@ -34,7 +34,7 @@ export async function notifyRemitoUploaded(
         client_id,
         clients!inner ( nombre ),
         trip_assignments!inner ( patente, drivers!inner ( nombre, apellido ) ),
-        containers ( numero )
+        containers ( numero, reservations ( mercaderia, orden ) )
       `)
       .eq("id", tripId)
       .single();
@@ -62,6 +62,8 @@ export async function notifyRemitoUploaded(
       : assignment.drivers;
 
     const container = Array.isArray(trip.containers) ? trip.containers[0] : trip.containers;
+    const reservationRaw = (container as { reservations?: { mercaderia: string | null; orden: string | null }[] | null } | null)?.reservations;
+    const reservation = Array.isArray(reservationRaw) ? reservationRaw[0] : reservationRaw;
 
     const data: RemitoEmailData = {
       clientName: (client as { nombre: string }).nombre,
@@ -74,6 +76,8 @@ export async function notifyRemitoUploaded(
       remitoUrl,
       tipoSolicitud: trip.tipo === "REPARTO" ? "Reparto" : "Contenedor",
       numeroContenedor: (container as { numero: string | null } | null)?.numero ?? undefined,
+      mercaderia: reservation?.mercaderia ?? undefined,
+      orden: reservation?.orden ?? undefined,
     };
 
     await sendEmail({
