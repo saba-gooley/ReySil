@@ -1,5 +1,6 @@
 import { getReportData } from "@/lib/server/assignments/queries";
 import { ReportesView } from "@/components/operador/reportes-view";
+import { todayAR } from "@/lib/utils/date";
 
 export const dynamic = "force-dynamic";
 
@@ -8,10 +9,9 @@ export default async function ReportesPage({
 }: {
   searchParams: { from?: string; to?: string };
 }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAR();
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000)
-    .toISOString()
-    .split("T")[0];
+    .toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
 
   const from = searchParams.from ?? thirtyDaysAgo;
   const to = searchParams.to ?? today;

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
+import { todayAR } from "@/lib/utils/date";
 import { z } from "zod";
 
 export type ChoferActionState = {
@@ -37,7 +38,7 @@ export async function registerShiftEvent(
   if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
   const supabase = createAdminClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAR();
   const value = timestamp ?? new Date().toISOString();
 
   // Upsert: create shift if not exists, update the field
@@ -210,7 +211,7 @@ export async function uploadRemitoAction(
 
   const clientObj = trip?.clients;
   const clientName = (Array.isArray(clientObj) ? clientObj[0] : clientObj)?.nombre ?? "Cliente";
-  const fecha = trip?.fecha_solicitada ?? new Date().toISOString().split("T")[0];
+  const fecha = trip?.fecha_solicitada ?? todayAR();
   const ext = file.name.split(".").pop() ?? "jpg";
   const fileName = `${clientName}-${fecha}-${tripId.slice(0, 8)}.${ext}`;
 
@@ -320,7 +321,7 @@ export async function startInspectionAction(
     if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
     const supabase = createAdminClient();
-    const today = new Date().toISOString().split("T")[0];
+    const today = todayAR();
 
     // Check if inspection already exists
     const { data: existing } = await supabase

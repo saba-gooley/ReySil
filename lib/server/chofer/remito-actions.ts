@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
+import { todayAR } from "@/lib/utils/date";
 
 export type ChoferActionState = {
   error?: string;
@@ -39,7 +40,7 @@ export async function uploadRemitoAction(
 
     const clientObj = trip?.clients;
     const clientName = (Array.isArray(clientObj) ? clientObj[0] : clientObj)?.nombre ?? "Cliente";
-    const fecha = trip?.fecha_solicitada ?? new Date().toISOString().split("T")[0];
+    const fecha = trip?.fecha_solicitada ?? todayAR();
     const ext = file.name.split(".").pop() ?? "jpg";
     const fileName = `${clientName}-${fecha}-${tripId.slice(0, 8)}.${ext}`;
 
