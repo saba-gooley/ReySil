@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
+import { todayAR } from "@/lib/utils/date";
 
 export type ChoferActionState = {
   error?: string;
@@ -25,7 +26,7 @@ export async function registerShiftEvent(
     if (!driverId) return { error: "Usuario no vinculado a un chofer" };
 
     const supabase = createAdminClient();
-    const today = new Date().toISOString().split("T")[0];
+    const today = todayAR();
     const value = timestamp ?? new Date().toISOString();
 
     const { data: existing } = await supabase

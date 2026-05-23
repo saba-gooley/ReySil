@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/server";
+import { todayAR } from "@/lib/utils/date";
 
 export type ChoferTripRow = {
   id: string;
@@ -88,7 +89,7 @@ function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
  */
 export async function listDriverTrips(driverId: string) {
   const supabase = createAdminClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAR();
 
   const { data: assignments } = await supabase
     .from("trip_assignments")
@@ -114,7 +115,7 @@ export async function listDriverTrips(driverId: string) {
  */
 export async function getTodayShift(driverId: string) {
   const supabase = createAdminClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAR();
 
   const { data, error } = await supabase
     .from("shift_logs")
@@ -132,7 +133,7 @@ export async function getTodayShift(driverId: string) {
  */
 export async function getTodayInspection(driverId: string) {
   const supabase = createAdminClient();
-  const today = new Date().toISOString().split("T")[0];
+  const today = todayAR();
 
   const { data, error } = await supabase
     .from("inspections")

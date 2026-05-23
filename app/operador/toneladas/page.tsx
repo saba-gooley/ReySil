@@ -1,5 +1,6 @@
 import { getToneladasByDate } from "@/lib/server/assignments/queries";
 import { ToneladasView } from "@/components/operador/toneladas-view";
+import { todayAR } from "@/lib/utils/date";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function ToneladasPage({
   searchParams: { fecha?: string };
 }) {
   const fecha =
-    searchParams.fecha ?? new Date().toISOString().split("T")[0];
+    searchParams.fecha ?? todayAR();
   const data = await getToneladasByDate(fecha);
 
   return (
