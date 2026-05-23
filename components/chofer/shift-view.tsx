@@ -14,6 +14,7 @@ type Shift = {
   km_50: number | null;
   km_100: number | null;
   pernoctada: boolean;
+  carga_peligrosa: boolean;
 } | null;
 
 const SHIFT_EVENTS = [
@@ -33,6 +34,7 @@ export function ShiftView({ shift }: { shift: Shift }) {
     (shift?.km_100 ?? shift?.km_50)?.toString() ?? "",
   );
   const [pernoctada, setPernoctada] = useState(shift?.pernoctada ?? false);
+  const [cargaPeligrosa, setCargaPeligrosa] = useState(shift?.carga_peligrosa ?? false);
   const [savingData, setSavingData] = useState(false);
 
   const completedCount = SHIFT_EVENTS.filter(
@@ -50,6 +52,7 @@ export function ShiftView({ shift }: { shift: Shift }) {
         km_50: kmType === "50" ? kmNum : null,
         km_100: kmType === "100" ? kmNum : null,
         pernoctada,
+        carga_peligrosa: cargaPeligrosa,
       });
 
       setSavingData(false);
@@ -147,6 +150,19 @@ export function ShiftView({ shift }: { shift: Shift }) {
           />
           <label htmlFor="pernoctada" className="text-sm font-medium text-neutral-700">
             Pernoctada
+          </label>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="carga_peligrosa"
+            checked={cargaPeligrosa}
+            onChange={(e) => setCargaPeligrosa(e.target.checked)}
+            className="h-4 w-4 rounded border-neutral-300 text-reysil-red focus:ring-reysil-red"
+          />
+          <label htmlFor="carga_peligrosa" className="text-sm font-medium text-neutral-700">
+            Carga peligrosa
           </label>
         </div>
 

@@ -64,6 +64,7 @@ export async function updateShiftData(
     km_50?: number | null;
     km_100?: number | null;
     pernoctada?: boolean;
+    carga_peligrosa?: boolean;
   },
 ): Promise<ChoferActionState> {
   try {
@@ -73,6 +74,7 @@ export async function updateShiftData(
     if (data.km_50 !== undefined) updateData.km_50 = data.km_50;
     if (data.km_100 !== undefined) updateData.km_100 = data.km_100;
     if (data.pernoctada !== undefined) updateData.pernoctada = data.pernoctada;
+    if (data.carga_peligrosa !== undefined) updateData.carga_peligrosa = data.carga_peligrosa;
     updateData.updated_at = new Date().toISOString();
 
     const { error } = await supabase
