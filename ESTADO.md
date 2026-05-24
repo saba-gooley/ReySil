@@ -30,10 +30,22 @@
 
 ---
 
-## Trabajo Completado en Esta Sesion (2026-05-22 — Sesion 17)
+## Trabajo Completado en Esta Sesion (2026-05-23 — Sesion 17)
 
-🐛 **Fix — Disponibilidad de camiones: todos aparecían como LIBRE (PR #30)**:
+🐛 **3 bug fixes — Disponibilidad camiones, Carga peligrosa turno, Timezone Argentina**:
+
+**A. Fix — Disponibilidad de camiones: todos aparecían como LIBRE (PR #30)**:
 - [x] `supabase/migrations/0012_fix_truck_daily_status_join.sql` — `truck_daily_status` hacía el JOIN por `truck_id` (siempre NULL); cambiado a JOIN por `patente` (clave única del camión). Las acciones de asignación siempre guardaron `patente`, nunca `truck_id`.
+
+**B. Feature — Campo Carga peligrosa en turno (PR #31)**:
+- [x] `supabase/migrations/0013_add_carga_peligrosa_shift.sql` — columna `carga_peligrosa BOOLEAN DEFAULT FALSE` en `shift_logs`
+- [x] `lib/server/chofer/shift-actions.ts` — `updateShiftData` acepta `carga_peligrosa`
+- [x] `components/chofer/shift-view.tsx` — checkbox en sección "Datos del Turno" junto a Pernoctada
+
+**C. Fix — Timezone Argentina en toda lógica de fechas server-side (PR #32)**:
+- [x] `lib/utils/date.ts` — nuevo helper `todayAR()`: `new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })`
+- [x] `lib/server/chofer/shift-actions.ts`, `queries.ts`, `inspection-actions.ts`, `actions.ts`, `remito-actions.ts` — reemplazado `new Date().toISOString().split("T")[0]` por `todayAR()`
+- [x] `app/operador/reportes/page.tsx`, `app/operador/toneladas/page.tsx` — ídem
 
 ---
 
@@ -318,7 +330,11 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable. PR #30 mergeado.
+**Status actual:** 10 módulos completos. Sistema estable. PRs #30, #31 y #32 mergeados.
+
+### Pendiente 0 — Timezone en display (baja prioridad)
+**Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
+**Acción:** Agregar `timeZone: "America/Argentina/Buenos_Aires"` en todos los displays de hora/fecha. Hacer cuando haya otros cambios en esos componentes.
 
 ### Pendiente 1 — Real-Time Updates
 **Descripción:** Datos no se actualizan automáticamente cuando cambia el estado del viaje.
@@ -379,6 +395,7 @@
 - **Service Worker para PWA offline**: manifest.json configurado pero sin service worker real.
 - **Module 9 testing antes de merge**: migration 0009 debe ejecutarse en Supabase. Selectlists deben validar carga de status correctamente. Tablero de disponibilidad debe ser actualizado en tiempo real si se asigna un viaje.
 - **Real-time updates missing (#9, #10):** Chofer Asignado y panel chofer no auto-refrescan cuando cambia estado. Requiere Supabase Realtime subscriptions en `asignado-view.tsx` y `app/chofer/turno`.
+- **Timezone en display:** `toLocaleTimeString` sin `timeZone` explícito en componentes cliente. Usuarios fuera de Argentina ven hora local. Fix: agregar `timeZone: "America/Argentina/Buenos_Aires"` en todos los displays de hora/fecha.
 - **Cambiar contraseña chofer:** `changePasswordAction` existe en `lib/server/auth/change-password.ts` pero no hay UI en el panel chofer para usarla.
 
 ---

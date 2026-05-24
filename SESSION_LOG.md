@@ -6,6 +6,29 @@
 
 ---
 
+## Sesión 2026-05-23 — Fix disponibilidad camiones, campo Carga peligrosa, timezone Argentina
+
+### Done
+- [PR #30] `supabase/migrations/0012_fix_truck_daily_status_join.sql` — `truck_daily_status` JOIN cambiado de `truck_id` (siempre NULL) a `patente`. Todos los camiones aparecían como LIBRE.
+- [PR #31] `supabase/migrations/0013_add_carga_peligrosa_shift.sql` + `shift-actions.ts` + `shift-view.tsx` — nuevo campo Carga peligrosa (boolean) en datos del turno del chofer
+- [PR #32] `lib/utils/date.ts` → helper `todayAR()`. Reemplazado `new Date().toISOString().split("T")[0]` por `todayAR()` en 7 archivos server-side (shift-actions, queries, inspection-actions, actions, remito-actions, reportes page, toneladas page)
+
+### In progress
+- Nada
+
+### Next
+- Timezone en display: agregar `timeZone: "America/Argentina/Buenos_Aires"` en todos los `toLocaleTimeString`/`toLocaleDateString` de componentes (pendiente para hacer junto con otros cambios)
+- Real-time updates: `asignado-view.tsx` y `app/chofer/turno/page.tsx` (pendiente, ver Pendiente 1 en ESTADO.md)
+
+### Decisions
+- `todayAR()` es el helper canónico para obtener fecha actual en servidor. Toda nueva lógica de fecha debe usarlo.
+- Timezone en display dejada como deuda técnica — baja prioridad mientras los choferes y operadores operen desde Argentina.
+
+### Blockers
+- Ninguno
+
+---
+
 ## Sesión 2026-05-22 — Performance PWA chofer, viajes futuros/pasados, fixes disponibilidad y remito
 
 ### ✅ Completado
