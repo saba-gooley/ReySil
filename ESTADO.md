@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-22 (sesion 16 — performance PWA chofer, viajes futuros/pasados, fixes disponibilidad y email remito)
+> Ultima actualizacion: 2026-05-28 (sesion 18 — Reporte Control de Turno)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 16: performance PWA chofer (optimistic updates, queries paralelas), viajes futuros/pasados en PWA, fixes de disponibilidad y email de remito.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 18: nuevo reporte Control de Turno (Reportes > Turnos) con filtros por fecha, chofer y llegada tardía; vista detalle; edición de horarios por operadores.
 
 ---
 
@@ -27,6 +27,20 @@
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-28 — Sesion 18)
+
+🆕 **Feature — Reporte Control de Turno (Reportes > Turnos)**:
+
+- [x] `lib/server/reports/shift-queries.ts` — `listShiftReport(filters)`: query a `shift_logs` JOIN `drivers`, filtros por rango de fechas, chofer y "llegada después de [hora]". El filtro de hora se aplica en JS comparando el timestamp en timezone AR (maneja correctamente el wrap-around de medianoche)
+- [x] `lib/server/reports/shift-actions.ts` — `updateShiftTimeAction(shiftId, field, timeAR)`: reconstruye el timestamp conservando la fecha original del turno + nueva hora AR, guarda con offset `-03:00` para que PostgreSQL convierta a UTC
+- [x] `app/operador/reportes/turnos/page.tsx` — página server con `force-dynamic`, filtra por searchParams, carga datos en paralelo
+- [x] `components/operador/shift-report-filters.tsx` — filtros: rango de fechas, selector de chofer, input time "llegada después de". Actualiza URL con router.push
+- [x] `components/operador/shift-report-table.tsx` — tabla con columnas requeridas. Paradas muestra "—" (pendiente futura funcionalidad). Click en fila abre detalle. Horas siempre en timezone AR
+- [x] `components/operador/shift-detail-dialog.tsx` — modal con dos modos: vista (km_50, km_100, total km, pernoctado) y edición (inputs type="time" solo para hora). Botón "Editar" solo visible al abrir el dialog
+- [x] `components/operador/operador-nav.tsx` — "Reportes" convertido de link directo a dropdown con dos items: "Viajes" (`/operador/reportes`) y "Turnos" (`/operador/reportes/turnos`)
 
 ---
 
