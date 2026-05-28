@@ -6,6 +6,14 @@ import { ShiftDetailDialog } from "./shift-detail-dialog";
 
 const TZ = "America/Argentina/Buenos_Aires";
 
+function formatDuracion(min: number | null): string {
+  if (!min) return "—";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
 export function formatTimeAR(ts: string | null): string {
   if (!ts) return "—";
   return new Date(ts).toLocaleTimeString("es-AR", {
@@ -65,6 +73,9 @@ export function ShiftReportTable({ rows }: Props) {
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">
                 Paradas
               </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                Dur. Paradas
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
@@ -97,6 +108,9 @@ export function ShiftReportTable({ rows }: Props) {
                 </td>
                 <td className="px-4 py-3 text-neutral-700">
                   {row.paradas_count > 0 ? row.paradas_count : "—"}
+                </td>
+                <td className="px-4 py-3 text-neutral-700">
+                  {formatDuracion(row.duracion_paradas_min)}
                 </td>
               </tr>
             ))}

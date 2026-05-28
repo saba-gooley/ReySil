@@ -34,6 +34,7 @@ export type ShiftReportRow = {
   carga_peligrosa: boolean;
   paradas_count: number;
   paradas: ShiftReportStop[];
+  duracion_paradas_min: number | null;
 };
 
 function timeToMinutes(hhmm: string): number {
@@ -113,6 +114,9 @@ export async function listShiftReport(
       carga_peligrosa: row.carga_peligrosa ?? false,
       paradas_count: paradas.length,
       paradas,
+      duracion_paradas_min: paradas.some((p) => p.duracion_min != null)
+        ? paradas.reduce((acc, p) => acc + (p.duracion_min ?? 0), 0)
+        : null,
     };
   });
 
