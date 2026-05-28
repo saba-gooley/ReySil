@@ -180,18 +180,22 @@ export function ShiftView({ shift }: { shift: Shift }) {
       </div>
 
       {/* Paradas */}
-      {shift && (
-        <div className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
-          <p className="text-sm font-semibold text-neutral-900">
-            Paradas ({(shift.shift_stops ?? []).length})
-          </p>
+      <div className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
+        <p className="text-sm font-semibold text-neutral-900">
+          Paradas {shift ? `(${(shift.shift_stops ?? []).length})` : ""}
+        </p>
+        {shift ? (
           <ShiftStops
             shiftId={shift.id}
             fecha={shift.fecha}
             stops={shift.shift_stops ?? []}
           />
-        </div>
-      )}
+        ) : (
+          <p className="text-xs text-neutral-400">
+            Registrá tu primera novedad del turno para poder cargar paradas.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
