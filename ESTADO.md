@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-28 (sesion 18 — Reporte Control de Turno)
+> Ultima actualizacion: 2026-05-28 (sesion 18 — Reportes: Control de Turno + split Viajes x Chofer/Cliente)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 18: nuevo reporte Control de Turno (Reportes > Turnos) con filtros por fecha, chofer y llegada tardía; vista detalle; edición de horarios por operadores.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 18: nuevo reporte Control de Turno (Reportes > Turnos); split del reporte Viajes en Viajes x Chofer y Viajes x Cliente con filtros independientes. PR #33 mergeado.
 
 ---
 
@@ -40,7 +40,17 @@
 - [x] `components/operador/shift-report-filters.tsx` — filtros: rango de fechas, selector de chofer, input time "llegada después de". Actualiza URL con router.push
 - [x] `components/operador/shift-report-table.tsx` — tabla con columnas requeridas. Paradas muestra "—" (pendiente futura funcionalidad). Click en fila abre detalle. Horas siempre en timezone AR
 - [x] `components/operador/shift-detail-dialog.tsx` — modal con dos modos: vista (km_50, km_100, total km, pernoctado) y edición (inputs type="time" solo para hora). Botón "Editar" solo visible al abrir el dialog
-- [x] `components/operador/operador-nav.tsx` — "Reportes" convertido de link directo a dropdown con dos items: "Viajes" (`/operador/reportes`) y "Turnos" (`/operador/reportes/turnos`)
+- [x] `components/operador/operador-nav.tsx` — "Reportes" convertido de link directo a dropdown con tres items: "Viajes x Chofer", "Viajes x Cliente", "Turnos"
+
+🆕 **Feature — Split reporte Viajes en dos reportes independientes**:
+
+- [x] `app/operador/reportes/viajes-chofer/page.tsx` — página server para Viajes x Chofer
+- [x] `app/operador/reportes/viajes-cliente/page.tsx` — página server para Viajes x Cliente
+- [x] `components/operador/reporte-viajes-chofer-view.tsx` — mismos datos y filtros que el reporte original + selector de chofer (filtrado client-side instantáneo)
+- [x] `components/operador/reporte-viajes-cliente-view.tsx` — ídem con selector de cliente
+- La página original `/operador/reportes` se conserva sin cambios pero ya no aparece en el menú
+
+**PR #33 mergeado a main.**
 
 ---
 
@@ -344,7 +354,7 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable. PRs #30, #31 y #32 mergeados.
+**Status actual:** 10 módulos completos. Sistema estable. PR #33 mergeado (Reportes: Control de Turno + Viajes x Chofer/Cliente).
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.

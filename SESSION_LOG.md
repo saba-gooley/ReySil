@@ -6,16 +6,38 @@
 
 ---
 
-## Sesión 2026-05-28 — Reporte Control de Turno
+## Sesión 2026-05-28 — Reportes: Control de Turno + split Viajes x Chofer/Cliente
 
 ### Done
-- `lib/server/reports/shift-queries.ts` (NEW) — `listShiftReport`: query shift_logs + drivers JOIN, filtros fecha/chofer/llegada tardía (filtro hora en JS con timezone AR, sin truncamiento por medianoche)
-- `lib/server/reports/shift-actions.ts` (NEW) — `updateShiftTimeAction`: edita solo la hora de un campo timestamp conservando la fecha del turno; guarda con offset -03:00
-- `app/operador/reportes/turnos/page.tsx` (NEW) — página server, carga en paralelo
-- `components/operador/shift-report-filters.tsx` (NEW) — filtros URL-driven: rango fechas, chofer, hora de llegada tardía
-- `components/operador/shift-report-table.tsx` (NEW) — tabla con 8 columnas (Paradas = "—" pendiente)
-- `components/operador/shift-detail-dialog.tsx` (NEW) — modal vista + edición inline de horarios; solo input type="time" (no modifica fecha)
-- `components/operador/operador-nav.tsx` — "Reportes" convertido a dropdown con "Viajes" y "Turnos"
+- `lib/server/reports/shift-queries.ts` (NEW) — `listShiftReport`: query shift_logs + drivers JOIN, filtros fecha/chofer/llegada tardía. Filtro de hora aplicado en JS con timezone AR para manejar correctamente wrap-around de medianoche
+- `lib/server/reports/shift-actions.ts` (NEW) — `updateShiftTimeAction(shiftId, field, timeAR)`: reconstruye timestamp conservando fecha del turno, guarda con offset -03:00 para que PostgreSQL convierta a UTC
+- `app/operador/reportes/turnos/page.tsx` (NEW) — página server, carga datos en paralelo
+- `components/operador/shift-report-filters.tsx` (NEW) — filtros URL-driven: rango fechas, selector chofer, input time "llegada después de"
+- `components/operador/shift-report-table.tsx` (NEW) — tabla 8 columnas (Paradas = "—" pendiente futura funcionalidad)
+- `components/operador/shift-detail-dialog.tsx` (NEW) — modal dos modos: vista (km_50, km_100, total, pernoctado) y edición inline solo-hora con input type="time"
+- `app/operador/reportes/viajes-chofer/page.tsx` (NEW) — reporte Viajes x Chofer separado
+- `app/operador/reportes/viajes-cliente/page.tsx` (NEW) — reporte Viajes x Cliente separado
+- `components/operador/reporte-viajes-chofer-view.tsx` (NEW) — mismos datos/filtros originales + selector de chofer (filtrado client-side)
+- `components/operador/reporte-viajes-cliente-view.tsx` (NEW) — ídem con selector de cliente
+- `components/operador/operador-nav.tsx` — "Reportes" convertido a dropdown: "Viajes x Chofer", "Viajes x Cliente", "Turnos"
+- Fix build: eslint-disable para regla no configurada en proyecto (`@typescript-eslint/no-explicit-any`) — reemplazado por tipo local `RawRow` con cast `as unknown as`
+- PR #33 creado y mergeado a main
+
+### In progress
+- Nada
+
+### Next
+- Timezone en display: agregar `timeZone: "America/Argentina/Buenos_Aires"` en todos los `toLocaleTimeString`/`toLocaleDateString` de componentes cliente (baja prioridad, hacer junto con otros cambios en esos archivos)
+- Real-time updates: `asignado-view.tsx` y `app/chofer/turno/page.tsx` no auto-refrescan cuando cambia estado (ver Pendiente 1 en ESTADO.md)
+- Cambiar contraseña chofer: `changePasswordAction` existe pero sin UI en panel chofer
+
+### Decisions
+- Filtro "llegada después de [hora]" en Control de Turno: implementado en JS server-side (no SQL) para evitar problemas de wrap-around de medianoche con timezone AR. Correcto porque los volúmenes de shift_logs son bajos (1 fila por chofer por día)
+- Filtros por chofer/cliente en Viajes x Chofer/Cliente: client-side sobre datos ya cargados (sin re-query), ya que la data está agregada y los arrays son pequeños
+- Edición de horarios en Control de Turno: solo `input type="time"` expuesto; fecha del turno nunca modificable desde el operador
+
+### Blockers
+- None
 
 ---
 
