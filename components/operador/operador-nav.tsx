@@ -24,7 +24,8 @@ const DOC_ITEMS = [
 ] as const;
 
 const REPORTES_ITEMS = [
-  { href: "/operador/reportes", label: "Viajes" },
+  { href: "/operador/reportes/viajes-chofer", label: "Viajes x Chofer" },
+  { href: "/operador/reportes/viajes-cliente", label: "Viajes x Cliente" },
   { href: "/operador/reportes/turnos", label: "Turnos" },
 ] as const;
 
@@ -72,10 +73,7 @@ export function OperadorNav() {
     pathname.startsWith(item.href),
   );
 
-  const isReportesItemActive = (href: string) => {
-    if (href === "/operador/reportes") return pathname === "/operador/reportes";
-    return pathname.startsWith(href);
-  };
+  const isReportesItemActive = (href: string) => pathname.startsWith(href);
 
   const isMainItemActive = (href: string) =>
     href === "/operador" ? pathname === "/operador" : pathname.startsWith(href);
