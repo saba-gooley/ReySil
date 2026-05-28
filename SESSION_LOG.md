@@ -6,6 +6,19 @@
 
 ---
 
+## Sesión 2026-05-28 — Reporte Control de Turno
+
+### Done
+- `lib/server/reports/shift-queries.ts` (NEW) — `listShiftReport`: query shift_logs + drivers JOIN, filtros fecha/chofer/llegada tardía (filtro hora en JS con timezone AR, sin truncamiento por medianoche)
+- `lib/server/reports/shift-actions.ts` (NEW) — `updateShiftTimeAction`: edita solo la hora de un campo timestamp conservando la fecha del turno; guarda con offset -03:00
+- `app/operador/reportes/turnos/page.tsx` (NEW) — página server, carga en paralelo
+- `components/operador/shift-report-filters.tsx` (NEW) — filtros URL-driven: rango fechas, chofer, hora de llegada tardía
+- `components/operador/shift-report-table.tsx` (NEW) — tabla con 8 columnas (Paradas = "—" pendiente)
+- `components/operador/shift-detail-dialog.tsx` (NEW) — modal vista + edición inline de horarios; solo input type="time" (no modifica fecha)
+- `components/operador/operador-nav.tsx` — "Reportes" convertido a dropdown con "Viajes" y "Turnos"
+
+---
+
 ## Sesión 2026-05-23 — Fix disponibilidad camiones, campo Carga peligrosa, timezone Argentina
 
 ### Done

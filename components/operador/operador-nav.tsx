@@ -23,8 +23,13 @@ const DOC_ITEMS = [
   { href: "/operador/inspecciones", label: "Inspecciones" },
 ] as const;
 
+const REPORTES_ITEMS = [
+  { href: "/operador/reportes/viajes-chofer", label: "Viajes x Chofer" },
+  { href: "/operador/reportes/viajes-cliente", label: "Viajes x Cliente" },
+  { href: "/operador/reportes/turnos", label: "Turnos" },
+] as const;
 
-type DropdownId = "solicitudes" | "configuracion" | "documentacion";
+type DropdownId = "solicitudes" | "configuracion" | "documentacion" | "reportes";
 
 export function OperadorNav() {
   const pathname = usePathname();
@@ -64,6 +69,11 @@ export function OperadorNav() {
   const isDocumentationActive = DOC_ITEMS.some((item) =>
     pathname.startsWith(item.href),
   );
+  const isReportesActive = REPORTES_ITEMS.some((item) =>
+    pathname.startsWith(item.href),
+  );
+
+  const isReportesItemActive = (href: string) => pathname.startsWith(href);
 
   const isMainItemActive = (href: string) =>
     href === "/operador" ? pathname === "/operador" : pathname.startsWith(href);
@@ -118,16 +128,39 @@ export function OperadorNav() {
         )}
       </div>
 
-      {/* Disponibilidad, Toneladas, Reportes */}
+      {/* Disponibilidad, Toneladas */}
       {[
         { href: "/operador/disponibilidad", label: "Disponibilidad" },
         { href: "/operador/toneladas", label: "Toneladas" },
-        { href: "/operador/reportes", label: "Reportes" },
       ].map((item) => (
         <Link key={item.href} href={item.href} className={triggerClass(isMainItemActive(item.href))}>
           {item.label}
         </Link>
       ))}
+
+      {/* Reportes Dropdown */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => toggle("reportes")}
+          className={triggerClass(isReportesActive)}
+        >
+          Reportes
+        </button>
+        {openDropdown === "reportes" && (
+          <div className={dropdownClass}>
+            {REPORTES_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={itemClass(isReportesItemActive(item.href))}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Configuración Dropdown */}
       <div className="relative">
