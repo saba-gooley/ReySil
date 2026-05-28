@@ -45,8 +45,7 @@ export async function listShiftReport(
 ): Promise<ShiftReportRow[]> {
   const supabase = createAdminClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
+  let query = supabase
     .from("shift_logs")
     .select(
       `
@@ -68,8 +67,22 @@ export async function listShiftReport(
   const { data, error } = await query;
   if (error) throw error;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let rows: ShiftReportRow[] = (data ?? []).map((row: any) => ({
+  type RawRow = {
+    id: string;
+    driver_id: string;
+    fecha: string;
+    llegada_deposito: string | null;
+    salida_deposito: string | null;
+    vuelta_deposito: string | null;
+    fin_turno: string | null;
+    km_50: number | null;
+    km_100: number | null;
+    pernoctada: boolean | null;
+    carga_peligrosa: boolean | null;
+    drivers: { codigo: string; nombre: string; apellido: string } | null;
+  };
+
+  let rows: ShiftReportRow[] = ((data ?? []) as unknown as RawRow[]).map((row) => ({
     id: row.id,
     driver_id: row.driver_id,
     codigo: row.drivers?.codigo ?? "",
