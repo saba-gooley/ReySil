@@ -26,6 +26,11 @@ export function ReporteViajesChoferView({
   const router = useRouter();
   const [fromDate, setFromDate] = useState(from);
   const [toDate, setToDate] = useState(to);
+  const [selectedCodigo, setSelectedCodigo] = useState("");
+
+  const filtered = selectedCodigo
+    ? rows.filter((r) => r.codigo === selectedCodigo)
+    : rows;
 
   const inputClass =
     "rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red";
@@ -50,6 +55,21 @@ export function ReporteViajesChoferView({
             onChange={(e) => setToDate(e.target.value)}
             className={inputClass}
           />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">Chofer</label>
+          <select
+            value={selectedCodigo}
+            onChange={(e) => setSelectedCodigo(e.target.value)}
+            className={inputClass}
+          >
+            <option value="">Todos</option>
+            {rows.map((r) => (
+              <option key={r.codigo} value={r.codigo}>
+                {r.nombre} ({r.codigo})
+              </option>
+            ))}
+          </select>
         </div>
         <button
           type="button"
@@ -93,7 +113,7 @@ export function ReporteViajesChoferView({
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {rows.map((row) => (
+              {filtered.map((row) => (
                 <tr key={row.codigo}>
                   <td className="px-4 py-2">{row.nombre}</td>
                   <td className="px-4 py-2 text-neutral-500">{row.codigo}</td>
