@@ -115,6 +115,7 @@ export type ShiftStop = {
   hora: string;
   motivo: string;
   observaciones: string | null;
+  duracion_min: number | null;
 };
 
 /**
@@ -126,7 +127,7 @@ export async function getTodayShift(driverId: string) {
 
   const { data, error } = await supabase
     .from("shift_logs")
-    .select("*, shift_stops(id, hora, motivo, observaciones)")
+    .select("*, shift_stops(id, hora, motivo, observaciones, duracion_min)")
     .eq("driver_id", driverId)
     .eq("fecha", today)
     .maybeSingle();

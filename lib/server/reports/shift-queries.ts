@@ -14,6 +14,7 @@ export type ShiftReportStop = {
   hora: string;
   motivo: string;
   observaciones: string | null;
+  duracion_min: number | null;
 };
 
 export type ShiftReportRow = {
@@ -62,7 +63,7 @@ export async function listShiftReport(
       llegada_deposito, salida_deposito, vuelta_deposito, fin_turno,
       km_50, km_100, pernoctada, carga_peligrosa,
       drivers (codigo, nombre, apellido),
-      shift_stops (id, hora, motivo, observaciones)
+      shift_stops (id, hora, motivo, observaciones, duracion_min)
     `,
     )
     .gte("fecha", filters.fechaDesde)
@@ -90,7 +91,7 @@ export async function listShiftReport(
     pernoctada: boolean | null;
     carga_peligrosa: boolean | null;
     drivers: { codigo: string; nombre: string; apellido: string } | null;
-    shift_stops: { id: string; hora: string; motivo: string; observaciones: string | null }[] | null;
+    shift_stops: { id: string; hora: string; motivo: string; observaciones: string | null; duracion_min: number | null }[] | null;
   };
 
   let rows: ShiftReportRow[] = ((data ?? []) as unknown as RawRow[]).map((row) => {

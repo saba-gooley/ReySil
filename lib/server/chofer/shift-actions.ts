@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { todayAR } from "@/lib/utils/date";
-import { AddShiftStopSchema } from "@/lib/validators/shift-stop";
+import { AddShiftStopSchema, UpdateShiftStopSchema } from "@/lib/validators/shift-stop";
 
 export type ChoferActionState = {
   error?: string;
@@ -62,15 +62,14 @@ export async function registerShiftEvent(
 
 export async function addShiftStopAction(
   shiftId: string,
-  fecha: string, // YYYY-MM-DD (AR date of the shift)
-  rawData: { hora: string; motivo: string; observaciones?: string },
+  fecha: string,
+  rawData: { hora: string; motivo: string; observaciones?: string; duracion_min?: number | null },
 ): Promise<ChoferActionState> {
   try {
     const parsed = AddShiftStopSchema.safeParse(rawData);
     if (!parsed.success) return { error: parsed.error.errors[0].message };
 
     const supabase = createAdminClient();
-    // Reconstruct ISO timestamp with AR offset (-03:00)
     const isoWithOffset = `${fecha}T${parsed.data.hora}:00.000-03:00`;
 
     const { error } = await supabase.from("shift_stops").insert({
@@ -78,7 +77,40 @@ export async function addShiftStopAction(
       hora: isoWithOffset,
       motivo: parsed.data.motivo,
       observaciones: parsed.data.observaciones || null,
+      duracion_min: parsed.data.duracion_min ?? null,
     });
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function updateShiftStopAction(
+  stopId: string,
+  fecha: string,
+  rawData: { hora: string; motivo: string; observaciones?: string; duracion_min?: number | null },
+): Promise<ChoferActionState> {
+  try {
+    const parsed = UpdateShiftStopSchema.safeParse(rawData);
+    if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+    const supabase = createAdminClient();
+    const isoWithOffset = `${fecha}T${parsed.data.hora}:00.000-03:00`;
+
+    const { error } = await supabase
+      .from("shift_stops")
+      .update({
+        hora: isoWithOffset,
+        motivo: parsed.data.motivo,
+        observaciones: parsed.data.observaciones || null,
+        duracion_min: parsed.data.duracion_min ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", stopId);
 
     if (error) return { error: error.message };
     revalidatePath("/chofer/turno");
