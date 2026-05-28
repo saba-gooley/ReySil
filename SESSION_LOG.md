@@ -6,6 +6,37 @@
 
 ---
 
+## Sesión 2026-05-28 — Paradas de Turno
+
+### Done
+- `supabase/migrations/0014_shift_stops.sql` (NEW) — tabla shift_stops con RLS. **Pendiente aplicar en Supabase.**
+- `lib/validators/shift-stop.ts` (NEW) — MOTIVOS_PARADA enum + AddShiftStopSchema Zod
+- `lib/server/chofer/shift-actions.ts` — addShiftStopAction + deleteShiftStopAction
+- `lib/server/chofer/queries.ts` — getTodayShift incluye shift_stops; nuevo tipo ShiftStop
+- `components/chofer/shift-stops.tsx` (NEW) — lista + formulario add/delete paradas en turno
+- `components/chofer/shift-view.tsx` — sección "Paradas (N)" integrada al final
+- `lib/server/reports/shift-queries.ts` — ShiftReportRow + paradas_count + paradas[]
+- `components/operador/shift-report-table.tsx` — columna Paradas con conteo real
+- `components/operador/shift-detail-dialog.tsx` — lista paradas en modal detalle
+
+### In progress
+- Nada
+
+### Next
+- Aplicar migración 0014 en Supabase (manual)
+- Timezone en display (baja prioridad)
+- Real-time updates en asignado-view.tsx / chofer/turno
+
+### Decisions
+- Hora de parada guardada con offset -03:00 (mismo patrón que updateShiftTimeAction)
+- Campo observaciones solo se muestra/guarda cuando motivo = "Otros"
+- No se permite editar una parada ya registrada (solo agregar y eliminar)
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-05-28 — Reportes: Control de Turno + split Viajes x Chofer/Cliente
 
 ### Done

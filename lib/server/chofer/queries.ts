@@ -110,8 +110,16 @@ export async function listDriverTrips(driverId: string) {
   return normalizeChoferTrips(data);
 }
 
+export type ShiftStop = {
+  id: string;
+  hora: string;
+  motivo: string;
+  observaciones: string | null;
+  duracion_min: number | null;
+};
+
 /**
- * HU-CHO-002: Get or create shift log for today.
+ * HU-CHO-002: Get or create shift log for today, including stops.
  */
 export async function getTodayShift(driverId: string) {
   const supabase = createAdminClient();
@@ -119,7 +127,7 @@ export async function getTodayShift(driverId: string) {
 
   const { data, error } = await supabase
     .from("shift_logs")
-    .select("*")
+    .select("*, shift_stops(id, hora, motivo, observaciones, duracion_min)")
     .eq("driver_id", driverId)
     .eq("fecha", today)
     .maybeSingle();

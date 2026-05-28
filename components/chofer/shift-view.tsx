@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { registerShiftEvent, updateShiftData } from "@/lib/server/chofer/shift-actions";
+import { ShiftStops } from "./shift-stops";
+import type { ShiftStop } from "@/lib/server/chofer/queries";
 
 type Shift = {
   id: string;
@@ -15,6 +17,7 @@ type Shift = {
   km_100: number | null;
   pernoctada: boolean;
   carga_peligrosa: boolean;
+  shift_stops?: ShiftStop[];
 } | null;
 
 const SHIFT_EVENTS = [
@@ -174,6 +177,24 @@ export function ShiftView({ shift }: { shift: Shift }) {
         >
           {savingData ? "Guardando..." : "Guardar datos del turno"}
         </button>
+      </div>
+
+      {/* Paradas */}
+      <div className="mt-4 space-y-3 border-t border-neutral-200 pt-4">
+        <p className="text-sm font-semibold text-neutral-900">
+          Paradas {shift ? `(${(shift.shift_stops ?? []).length})` : ""}
+        </p>
+        {shift ? (
+          <ShiftStops
+            shiftId={shift.id}
+            fecha={shift.fecha}
+            stops={shift.shift_stops ?? []}
+          />
+        ) : (
+          <p className="text-xs text-neutral-400">
+            Registrá tu primera novedad del turno para poder cargar paradas.
+          </p>
+        )}
       </div>
     </div>
   );

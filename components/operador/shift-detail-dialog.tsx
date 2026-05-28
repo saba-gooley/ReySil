@@ -8,6 +8,13 @@ import { formatTimeAR, formatDateAR } from "./shift-report-table";
 
 const TZ = "America/Argentina/Buenos_Aires";
 
+function formatDuracion(min: number): string {
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
 const FIELDS = [
   { key: "llegada_deposito" as const, label: "Llegada al Depósito" },
   { key: "salida_deposito" as const, label: "Salida del Depósito" },
@@ -169,6 +176,40 @@ export function ShiftDetailDialog({ row, onClose, onUpdated }: Props) {
               </span>
             </div>
           </div>
+
+          {/* Paradas */}
+          {row.paradas.length > 0 && (
+            <div className="space-y-2 border-t border-neutral-100 pt-3">
+              <p className="text-sm font-medium text-neutral-700">
+                Paradas ({row.paradas.length})
+              </p>
+              <ul className="space-y-1">
+                {row.paradas.map((p) => (
+                  <li key={p.id} className="text-sm text-neutral-700">
+                    <span className="font-medium">
+                      {new Date(p.hora).toLocaleTimeString("es-AR", {
+                        timeZone: TZ,
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {" · "}
+                    {p.motivo}
+                    {p.duracion_min ? (
+                      <span className="text-neutral-500">
+                        {" · "}{formatDuracion(p.duracion_min)}
+                      </span>
+                    ) : null}
+                    {p.observaciones && (
+                      <span className="text-neutral-500">
+                        {" · "}{p.observaciones}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {editing && (
             <p className="text-xs text-neutral-400">

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { todayAR } from "@/lib/utils/date";
+import { AddShiftStopSchema, UpdateShiftStopSchema } from "@/lib/validators/shift-stop";
 
 export type ChoferActionState = {
   error?: string;
@@ -56,6 +57,86 @@ export async function registerShiftEvent(
   } catch (err) {
     if (err && typeof err === "object" && "digest" in err) throw err;
     return { error: `Error: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export async function addShiftStopAction(
+  shiftId: string,
+  fecha: string,
+  rawData: { hora: string; motivo: string; observaciones?: string; duracion_min?: number | null },
+): Promise<ChoferActionState> {
+  try {
+    const parsed = AddShiftStopSchema.safeParse(rawData);
+    if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+    const supabase = createAdminClient();
+    const isoWithOffset = `${fecha}T${parsed.data.hora}:00.000-03:00`;
+
+    const { error } = await supabase.from("shift_stops").insert({
+      shift_id: shiftId,
+      hora: isoWithOffset,
+      motivo: parsed.data.motivo,
+      observaciones: parsed.data.observaciones || null,
+      duracion_min: parsed.data.duracion_min ?? null,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function updateShiftStopAction(
+  stopId: string,
+  fecha: string,
+  rawData: { hora: string; motivo: string; observaciones?: string; duracion_min?: number | null },
+): Promise<ChoferActionState> {
+  try {
+    const parsed = UpdateShiftStopSchema.safeParse(rawData);
+    if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+    const supabase = createAdminClient();
+    const isoWithOffset = `${fecha}T${parsed.data.hora}:00.000-03:00`;
+
+    const { error } = await supabase
+      .from("shift_stops")
+      .update({
+        hora: isoWithOffset,
+        motivo: parsed.data.motivo,
+        observaciones: parsed.data.observaciones || null,
+        duracion_min: parsed.data.duracion_min ?? null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", stopId);
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function deleteShiftStopAction(
+  stopId: string,
+): Promise<ChoferActionState> {
+  try {
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("shift_stops")
+      .delete()
+      .eq("id", stopId);
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
   }
 }
 
