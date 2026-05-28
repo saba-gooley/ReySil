@@ -170,6 +170,35 @@ export function ShiftDetailDialog({ row, onClose, onUpdated }: Props) {
             </div>
           </div>
 
+          {/* Paradas */}
+          {row.paradas.length > 0 && (
+            <div className="space-y-2 border-t border-neutral-100 pt-3">
+              <p className="text-sm font-medium text-neutral-700">
+                Paradas ({row.paradas.length})
+              </p>
+              <ul className="space-y-1">
+                {row.paradas.map((p) => (
+                  <li key={p.id} className="text-sm text-neutral-700">
+                    <span className="font-medium">
+                      {new Date(p.hora).toLocaleTimeString("es-AR", {
+                        timeZone: TZ,
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    {" · "}
+                    {p.motivo}
+                    {p.observaciones && (
+                      <span className="text-neutral-500">
+                        {" · "}{p.observaciones}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {editing && (
             <p className="text-xs text-neutral-400">
               Solo se puede modificar la hora. El día no es editable.

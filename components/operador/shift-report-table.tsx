@@ -95,7 +95,9 @@ export function ShiftReportTable({ rows }: Props) {
                 <td className="px-4 py-3 text-neutral-700">
                   {formatTimeAR(row.fin_turno)}
                 </td>
-                <td className="px-4 py-3 text-neutral-400">—</td>
+                <td className="px-4 py-3 text-neutral-700">
+                  {row.paradas_count > 0 ? row.paradas_count : "—"}
+                </td>
               </tr>
             ))}
           </tbody>

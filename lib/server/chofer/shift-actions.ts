@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { todayAR } from "@/lib/utils/date";
+import { AddShiftStopSchema } from "@/lib/validators/shift-stop";
 
 export type ChoferActionState = {
   error?: string;
@@ -56,6 +57,54 @@ export async function registerShiftEvent(
   } catch (err) {
     if (err && typeof err === "object" && "digest" in err) throw err;
     return { error: `Error: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export async function addShiftStopAction(
+  shiftId: string,
+  fecha: string, // YYYY-MM-DD (AR date of the shift)
+  rawData: { hora: string; motivo: string; observaciones?: string },
+): Promise<ChoferActionState> {
+  try {
+    const parsed = AddShiftStopSchema.safeParse(rawData);
+    if (!parsed.success) return { error: parsed.error.errors[0].message };
+
+    const supabase = createAdminClient();
+    // Reconstruct ISO timestamp with AR offset (-03:00)
+    const isoWithOffset = `${fecha}T${parsed.data.hora}:00.000-03:00`;
+
+    const { error } = await supabase.from("shift_stops").insert({
+      shift_id: shiftId,
+      hora: isoWithOffset,
+      motivo: parsed.data.motivo,
+      observaciones: parsed.data.observaciones || null,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function deleteShiftStopAction(
+  stopId: string,
+): Promise<ChoferActionState> {
+  try {
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from("shift_stops")
+      .delete()
+      .eq("id", stopId);
+
+    if (error) return { error: error.message };
+    revalidatePath("/chofer/turno");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    return { error: err instanceof Error ? err.message : String(err) };
   }
 }
 

@@ -9,6 +9,13 @@ export type ShiftReportFilters = {
   llegadaDespuesDe?: string; // HH:MM in AR time
 };
 
+export type ShiftReportStop = {
+  id: string;
+  hora: string;
+  motivo: string;
+  observaciones: string | null;
+};
+
 export type ShiftReportRow = {
   id: string;
   driver_id: string;
@@ -24,6 +31,8 @@ export type ShiftReportRow = {
   km_100: number | null;
   pernoctada: boolean;
   carga_peligrosa: boolean;
+  paradas_count: number;
+  paradas: ShiftReportStop[];
 };
 
 function timeToMinutes(hhmm: string): number {
@@ -52,7 +61,8 @@ export async function listShiftReport(
       id, driver_id, fecha,
       llegada_deposito, salida_deposito, vuelta_deposito, fin_turno,
       km_50, km_100, pernoctada, carga_peligrosa,
-      drivers (codigo, nombre, apellido)
+      drivers (codigo, nombre, apellido),
+      shift_stops (id, hora, motivo, observaciones)
     `,
     )
     .gte("fecha", filters.fechaDesde)
@@ -80,24 +90,30 @@ export async function listShiftReport(
     pernoctada: boolean | null;
     carga_peligrosa: boolean | null;
     drivers: { codigo: string; nombre: string; apellido: string } | null;
+    shift_stops: { id: string; hora: string; motivo: string; observaciones: string | null }[] | null;
   };
 
-  let rows: ShiftReportRow[] = ((data ?? []) as unknown as RawRow[]).map((row) => ({
-    id: row.id,
-    driver_id: row.driver_id,
-    codigo: row.drivers?.codigo ?? "",
-    nombre: row.drivers?.nombre ?? "",
-    apellido: row.drivers?.apellido ?? "",
-    fecha: row.fecha,
-    llegada_deposito: row.llegada_deposito,
-    salida_deposito: row.salida_deposito,
-    vuelta_deposito: row.vuelta_deposito,
-    fin_turno: row.fin_turno,
-    km_50: row.km_50,
-    km_100: row.km_100,
-    pernoctada: row.pernoctada ?? false,
-    carga_peligrosa: row.carga_peligrosa ?? false,
-  }));
+  let rows: ShiftReportRow[] = ((data ?? []) as unknown as RawRow[]).map((row) => {
+    const paradas = row.shift_stops ?? [];
+    return {
+      id: row.id,
+      driver_id: row.driver_id,
+      codigo: row.drivers?.codigo ?? "",
+      nombre: row.drivers?.nombre ?? "",
+      apellido: row.drivers?.apellido ?? "",
+      fecha: row.fecha,
+      llegada_deposito: row.llegada_deposito,
+      salida_deposito: row.salida_deposito,
+      vuelta_deposito: row.vuelta_deposito,
+      fin_turno: row.fin_turno,
+      km_50: row.km_50,
+      km_100: row.km_100,
+      pernoctada: row.pernoctada ?? false,
+      carga_peligrosa: row.carga_peligrosa ?? false,
+      paradas_count: paradas.length,
+      paradas,
+    };
+  });
 
   // Filter by AR time: apply per-day after fetching (handles midnight wrap-around correctly)
   if (filters.llegadaDespuesDe) {

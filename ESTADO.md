@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-28 (sesion 18 — Reportes: Control de Turno + split Viajes x Chofer/Cliente)
+> Ultima actualizacion: 2026-05-28 (sesion 19 — Paradas de Turno)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 18: nuevo reporte Control de Turno (Reportes > Turnos); split del reporte Viajes en Viajes x Chofer y Viajes x Cliente con filtros independientes. PR #33 mergeado.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 19: Paradas de Turno en PWA chofer (nueva tabla shift_stops, CRUD en turno diario). Columna Paradas en reporte Control de Turno ahora muestra conteo real.
 
 ---
 
@@ -27,6 +27,22 @@
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-28 — Sesion 19)
+
+🆕 **Feature — Paradas de Turno**:
+
+- [x] `supabase/migrations/0014_shift_stops.sql` — tabla `shift_stops` (id, shift_id FK, hora TIMESTAMPTZ, motivo CHECK, observaciones). RLS: CHOFER ve/inserta/elimina las propias; OPERADOR/ADMIN leen todas. **Aplicar manualmente en Supabase.**
+- [x] `lib/validators/shift-stop.ts` — `MOTIVOS_PARADA` enum + `AddShiftStopSchema` Zod
+- [x] `lib/server/chofer/shift-actions.ts` — `addShiftStopAction` (construye ISO con offset -03:00) + `deleteShiftStopAction`
+- [x] `lib/server/chofer/queries.ts` — `getTodayShift` incluye `shift_stops(id, hora, motivo, observaciones)`; nuevo tipo `ShiftStop`
+- [x] `components/chofer/shift-stops.tsx` (NUEVO) — lista paradas con botón Eliminar + formulario inline: hora (default hora AR actual), motivo selector, observaciones condicional (solo "Otros")
+- [x] `components/chofer/shift-view.tsx` — nueva sección "Paradas (N)" al final del turno
+- [x] `lib/server/reports/shift-queries.ts` — `ShiftReportRow` incluye `paradas_count` y `paradas[]`; query extendida con `shift_stops`
+- [x] `components/operador/shift-report-table.tsx` — columna Paradas muestra conteo real (antes "—")
+- [x] `components/operador/shift-detail-dialog.tsx` — sección Paradas con hora AR + motivo + observaciones
 
 ---
 
