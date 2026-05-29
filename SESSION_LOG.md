@@ -6,6 +6,53 @@
 
 ---
 
+## Sesión 2026-05-29 — Duracion Paradas + Reporte Paradas + Salida Deposito Contenedor
+
+### Done
+- `supabase/migrations/0015_shift_stops_duracion.sql` (NEW) — columna `duracion_min` en shift_stops. **Pendiente aplicar en Supabase.**
+- `lib/validators/shift-stop.ts` — `duracion_min` + `UpdateShiftStopSchema`
+- `lib/server/chofer/shift-actions.ts` — `addShiftStopAction` acepta duracion; nuevo `updateShiftStopAction`
+- `lib/server/chofer/queries.ts` — tipo ShiftStop incluye duracion_min
+- `components/chofer/shift-stops.tsx` (REWRITE) — motivo en blanco, campo duracion, edición inline por parada
+- `components/chofer/shift-view.tsx` — fix: Paradas siempre visible (mensaje guía cuando shift null)
+- `lib/server/reports/shift-queries.ts` — duracion_paradas_min calculado en ShiftReportRow
+- `components/operador/shift-report-table.tsx` — columna "Dur. Paradas" con formatDuracion
+- `components/operador/shift-detail-dialog.tsx` — duración por parada en modal
+- `lib/server/reports/stops-queries.ts` (NEW) — listStopsReport con filtros fecha/chofer/motivo
+- `app/operador/reportes/paradas/page.tsx` (NEW) — página server force-dynamic
+- `components/operador/stops-report-filters.tsx` (NEW) — filtros reporte paradas
+- `components/operador/stops-report-table.tsx` (NEW) — toggle desglosado/agrupado, sort, groupRows
+- `components/operador/operador-nav.tsx` — "Paradas" en dropdown Reportes
+- `supabase/migrations/0016_salida_deposito_notifications.sql` (NEW) — `enviar_salida_deposito` en preferencias cliente y ReySil. **Pendiente aplicar en Supabase.**
+- `lib/validators/shift-assignment.ts` — enviar_salida_deposito en ambos schemas
+- `lib/server/notifications/client-preferences-queries.ts` — getClientMailsForSalidaDeposito + getReysilNotificationEmails acepta "salida_deposito"
+- `lib/server/notifications/client-preferences-actions.ts` — update actions incluyen enviar_salida_deposito
+- `lib/server/notifications/templates.ts` — SalidaDepositoEmailData + subject + HTML con datos contenedor
+- `lib/server/notifications/notify-salida-deposito.ts` (NEW) — notificación email salida depósito
+- `lib/server/chofer/trip-actions.ts` — trigger notifySalidaDeposito al registrar SALIDA_DEPOSITO
+- `components/chofer/trip-data-form.tsx` — REPARTO_EVENTS (2) y CONTENEDOR_EVENTS (4)
+- `components/operador/client-notification-preferences.tsx` — checkbox "Salida depósito"
+- `components/operador/reysil-notification-emails.tsx` — checkbox "Salida depósito"
+- PR #36 creado (pendiente merge)
+
+### In progress
+- Nada
+
+### Next
+- Aplicar migración 0015 en Supabase (shift_stops duracion_min)
+- Aplicar migración 0016 en Supabase (enviar_salida_deposito) — antes de deployar PR #36
+- Merge PR #36
+
+### Decisions
+- LLEGADA_DEPOSITO y SALIDA_DEPOSITO son valores libres en trip_events.tipo (sin CHECK constraint en BD, igual que los otros eventos)
+- Email de salida depósito incluye todos los campos de reserva del contenedor (orden, mercadería, despacho, carga, terminal, devuelve_en, libre_hasta)
+- Reporte Paradas: agrupado suma duracion ignorando nulls; desglosado muestra hora + motivo + duración
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-05-28 — Paradas de Turno
 
 ### Done

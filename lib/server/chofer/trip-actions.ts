@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { z } from "zod";
+import { notifySalidaDeposito } from "@/lib/server/notifications/notify-salida-deposito";
 
 export type ChoferActionState = {
   error?: string;
@@ -39,6 +40,11 @@ export async function registerTripEventAction(
       .update({ estado: "EN_CURSO" })
       .eq("id", tripId)
       .eq("estado", "ASIGNADO");
+
+    // Trigger email notification on departure from depot
+    if (eventType === "SALIDA_DEPOSITO") {
+      await notifySalidaDeposito(tripId, ocurridoAt);
+    }
 
     revalidatePath("/chofer");
     return { success: true };

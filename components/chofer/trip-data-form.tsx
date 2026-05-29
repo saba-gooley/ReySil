@@ -11,7 +11,14 @@ import {
 import { uploadRemitoAction } from "@/lib/server/chofer/remito-actions";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 
-const TRIP_EVENTS = [
+const REPARTO_EVENTS = [
+  { value: "LLEGADA_DESTINO_CLIENTE", label: "Llegada al Cliente" },
+  { value: "SALIDA_CLIENTE", label: "Salida del Cliente" },
+] as const;
+
+const CONTENEDOR_EVENTS = [
+  { value: "LLEGADA_DEPOSITO", label: "Llegada al Depósito" },
+  { value: "SALIDA_DEPOSITO", label: "Salida del Depósito" },
   { value: "LLEGADA_DESTINO_CLIENTE", label: "Llegada al Cliente" },
   { value: "SALIDA_CLIENTE", label: "Salida del Cliente" },
 ] as const;
@@ -24,6 +31,7 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
 
   const registeredEvents = new Set(trip.trip_events.map((e) => e.tipo));
   const hasRemito = trip.remitos.length > 0;
+  const tripEvents = trip.tipo === "CONTENEDOR" ? CONTENEDOR_EVENTS : REPARTO_EVENTS;
 
   function handleRemitoSubmit(formData: FormData) {
     formData.set("trip_id", trip.id);
@@ -50,7 +58,7 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         <h4 className="text-xs font-semibold text-neutral-400 uppercase">
           Registro del viaje
         </h4>
-        {TRIP_EVENTS.map((ev) => (
+        {tripEvents.map((ev) => (
           <EventTimeField
             key={ev.value}
             tripId={trip.id}

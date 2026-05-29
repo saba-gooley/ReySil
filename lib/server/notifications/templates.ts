@@ -132,6 +132,56 @@ export function remitoHtml(data: RemitoEmailData): string {
   return layout("Confirmacion de entrega — ReySil", body);
 }
 
+// ─── Salida del Depósito (Contenedor) ─────────────────────────────────
+
+export type SalidaDepositoEmailData = {
+  clientName: string;
+  fecha: string;
+  horaSalida: string;
+  lugarCarga: string | null;
+  destino: string | null;
+  orden?: string | null;
+  mercaderia?: string | null;
+  despacho?: string | null;
+  carga?: string | null;
+  terminal?: string | null;
+  devuelveEn?: string | null;
+  libreHasta?: string | null;
+};
+
+export function salidaDepositoSubject(data: SalidaDepositoEmailData): string {
+  return `ReySil — Salida del depósito ${data.destino ?? ""} — ${data.fecha}`;
+}
+
+export function salidaDepositoHtml(data: SalidaDepositoEmailData): string {
+  const body = `
+    <h2 style="margin:0 0 8px;color:${BRAND_RED_DARK};font-size:18px;">Salida del depósito</h2>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5;">
+      Hola <strong>${data.clientName}</strong>, te informamos que el camión salió del depósito
+      hacia el destino indicado.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:16px;">
+      <tbody>
+        ${dataRow("Fecha", data.fecha)}
+        ${dataRow("Hora de salida", data.horaSalida)}
+        ${data.lugarCarga ? dataRow("Lugar de carga", data.lugarCarga) : ""}
+        ${data.destino ? dataRow("Destino", data.destino) : ""}
+        ${data.orden ? dataRow("Orden", data.orden) : ""}
+        ${data.mercaderia ? dataRow("Mercadería", data.mercaderia) : ""}
+        ${data.despacho ? dataRow("Despacho", data.despacho) : ""}
+        ${data.carga ? dataRow("Carga", data.carga) : ""}
+        ${data.terminal ? dataRow("Terminal", data.terminal) : ""}
+        ${data.devuelveEn ? dataRow("Devuelve en", data.devuelveEn) : ""}
+        ${data.libreHasta ? dataRow("Libre hasta", data.libreHasta) : ""}
+      </tbody>
+    </table>
+    <p style="margin:0;color:#6b7280;font-size:13px;">
+      Si tenes alguna consulta, comunicate con nosotros.
+    </p>`;
+
+  return layout("Salida del depósito — ReySil", body);
+}
+
 // ─── HU-NOT-003: Solicitud created notification ──────────────────────
 
 export type SolicitudEmailData = {
