@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-28 (sesion 19 — Paradas de Turno)
+> Ultima actualizacion: 2026-05-29 (sesion 20 — Duracion Paradas + Reporte Paradas + Salida Deposito Contenedor)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 19: Paradas de Turno en PWA chofer (nueva tabla shift_stops, CRUD en turno diario). Columna Paradas en reporte Control de Turno ahora muestra conteo real.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 20: duracion_min en paradas (migration 0015), edición inline de paradas, Reporte de Paradas (desglosado/agrupado), Salida del Depósito para viajes Contenedor con email automático (migration 0016 — pendiente aplicar en Supabase). PR #36 listo para merge.
 
 ---
 
@@ -27,6 +27,43 @@
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo Completado en Esta Sesion (2026-05-29 — Sesion 20)
+
+🆕 **Feature — Duracion Paradas + edición inline**:
+
+- [x] `supabase/migrations/0015_shift_stops_duracion.sql` — columna `duracion_min INTEGER` en `shift_stops`. **Aplicar manualmente en Supabase.**
+- [x] `lib/validators/shift-stop.ts` — `duracion_min` en schema + `UpdateShiftStopSchema` (edición de parada existente)
+- [x] `lib/server/chofer/shift-actions.ts` — `addShiftStopAction` acepta `duracion_min`; nuevo `updateShiftStopAction`
+- [x] `lib/server/chofer/queries.ts` — tipo `ShiftStop` incluye `duracion_min`; select extendido
+- [x] `components/chofer/shift-stops.tsx` (REWRITE) — motivo en blanco por defecto, campo duracion, edición inline por parada (editingId, editHora, editMotivo, editObs, editDuracion)
+- [x] `components/chofer/shift-view.tsx` — fix visibilidad: sección Paradas siempre visible (mensaje guía cuando shift es null)
+- [x] `lib/server/reports/shift-queries.ts` — `ShiftReportStop` incluye `duracion_min`; `duracion_paradas_min` calculado en map
+- [x] `components/operador/shift-report-table.tsx` — columna "Dur. Paradas" con `formatDuracion(min)`
+- [x] `components/operador/shift-detail-dialog.tsx` — muestra duración por parada en modal
+
+🆕 **Feature — Reporte de Paradas**:
+
+- [x] `lib/server/reports/stops-queries.ts` (NUEVO) — `listStopsReport(filters)`: query shift_logs JOIN drivers JOIN shift_stops, flatten a rows, filtros (fechaDesde, fechaHasta, driverId, motivo) aplicados en JS
+- [x] `app/operador/reportes/paradas/page.tsx` (NUEVO) — página server, force-dynamic, filtros via searchParams
+- [x] `components/operador/stops-report-filters.tsx` (NUEVO) — filtros: desde, hasta, chofer, tipo parada
+- [x] `components/operador/stops-report-table.tsx` (NUEVO) — toggle desglosado/agrupado; sort por fecha/chofer/motivo; groupRows por driver+motivo suma duracion
+- [x] `components/operador/operador-nav.tsx` — "Paradas" agregado a dropdown Reportes
+
+🆕 **Feature — Llegada/Salida Depósito para viajes Contenedor + email notificación (PR #36)**:
+
+- [x] `supabase/migrations/0016_salida_deposito_notifications.sql` — `enviar_salida_deposito BOOLEAN DEFAULT FALSE` en `client_notification_preferences` y `reysil_notification_emails`. **Aplicar manualmente en Supabase antes de deployar.**
+- [x] `lib/validators/shift-assignment.ts` — `enviar_salida_deposito` en ambos schemas Zod
+- [x] `lib/server/notifications/client-preferences-queries.ts` — nuevo campo en tipos; `getClientMailsForSalidaDeposito(clientId)`; `getReysilNotificationEmails` acepta `"salida_deposito"`
+- [x] `lib/server/notifications/client-preferences-actions.ts` — ambos update actions incluyen `enviar_salida_deposito`
+- [x] `lib/server/notifications/templates.ts` — `SalidaDepositoEmailData` + `salidaDepositoSubject` + `salidaDepositoHtml` con todos los datos del contenedor
+- [x] `lib/server/notifications/notify-salida-deposito.ts` (NUEVO) — query trip con clients + containers + reservations, envía email, nunca lanza excepción
+- [x] `lib/server/chofer/trip-actions.ts` — importa `notifySalidaDeposito`; trigger al registrar `SALIDA_DEPOSITO`
+- [x] `components/chofer/trip-data-form.tsx` — split en `REPARTO_EVENTS` (2) y `CONTENEDOR_EVENTS` (4: Llegada Depósito, Salida Depósito, Llegada Cliente, Salida Cliente)
+- [x] `components/operador/client-notification-preferences.tsx` — nuevo checkbox "Enviar al salir del depósito (Contenedor)"
+- [x] `components/operador/reysil-notification-emails.tsx` — nuevo checkbox "Enviar copias al salir del depósito (Contenedor)"
 
 ---
 
@@ -370,7 +407,7 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable. PR #33 mergeado (Reportes: Control de Turno + Viajes x Chofer/Cliente).
+**Status actual:** 10 módulos completos. Sistema estable. PR #36 en revisión (Llegada/Salida Depósito Contenedor + email notificación).
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
