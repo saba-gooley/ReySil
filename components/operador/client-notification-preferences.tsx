@@ -119,7 +119,7 @@ function PreferenceRow({
     initialState,
   );
 
-  function handleUpdate(enviar_al_crear: boolean, enviar_al_asignar: boolean, enviar_al_remito: boolean) {
+  function handleUpdate(enviar_al_crear: boolean, enviar_al_asignar: boolean, enviar_al_remito: boolean, enviar_salida_dep: boolean) {
     const formData = new FormData();
     formData.set(
       "payload",
@@ -128,6 +128,7 @@ function PreferenceRow({
         enviar_al_crear_solicitud: enviar_al_crear,
         enviar_al_asignar_chofer: enviar_al_asignar,
         enviar_al_cargar_remito: enviar_al_remito,
+        enviar_salida_deposito: enviar_salida_dep,
       }),
     );
     updateAction(formData);
@@ -153,11 +154,12 @@ function PreferenceRow({
             {preference.email}
           </p>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {preference.enviar_al_crear_solicitud && "Solicitudes"}
-            {preference.enviar_al_crear_solicitud && (preference.enviar_al_asignar_chofer || preference.enviar_al_cargar_remito) && " • "}
-            {preference.enviar_al_asignar_chofer && "Asignaciones"}
-            {preference.enviar_al_asignar_chofer && preference.enviar_al_cargar_remito && " • "}
-            {preference.enviar_al_cargar_remito && "Remitos"}
+            {[
+              preference.enviar_al_crear_solicitud && "Solicitudes",
+              preference.enviar_al_asignar_chofer && "Asignaciones",
+              preference.enviar_al_cargar_remito && "Remitos",
+              preference.enviar_salida_deposito && "Salida depósito",
+            ].filter(Boolean).join(" • ") || "Sin notificaciones"}
           </p>
         </div>
         <span className="text-neutral-400">
@@ -173,11 +175,7 @@ function PreferenceRow({
                 type="checkbox"
                 checked={preference.enviar_al_crear_solicitud}
                 onChange={(e) =>
-                  handleUpdate(
-                    e.target.checked,
-                    preference.enviar_al_asignar_chofer,
-                    preference.enviar_al_cargar_remito,
-                  )
+                  handleUpdate(e.target.checked, preference.enviar_al_asignar_chofer, preference.enviar_al_cargar_remito, preference.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
@@ -191,7 +189,7 @@ function PreferenceRow({
                 type="checkbox"
                 checked={preference.enviar_al_asignar_chofer}
                 onChange={(e) =>
-                  handleUpdate(preference.enviar_al_crear_solicitud, e.target.checked, preference.enviar_al_cargar_remito)
+                  handleUpdate(preference.enviar_al_crear_solicitud, e.target.checked, preference.enviar_al_cargar_remito, preference.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
@@ -205,12 +203,26 @@ function PreferenceRow({
                 type="checkbox"
                 checked={preference.enviar_al_cargar_remito}
                 onChange={(e) =>
-                  handleUpdate(preference.enviar_al_crear_solicitud, preference.enviar_al_asignar_chofer, e.target.checked)
+                  handleUpdate(preference.enviar_al_crear_solicitud, preference.enviar_al_asignar_chofer, e.target.checked, preference.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
                 Enviar al cargar remito
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={preference.enviar_salida_deposito}
+                onChange={(e) =>
+                  handleUpdate(preference.enviar_al_crear_solicitud, preference.enviar_al_asignar_chofer, preference.enviar_al_cargar_remito, e.target.checked)
+                }
+                className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
+              />
+              <span className="text-sm text-neutral-700">
+                Enviar al salir del depósito (Contenedor)
               </span>
             </label>
           </div>

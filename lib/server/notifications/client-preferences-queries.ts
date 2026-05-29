@@ -7,6 +7,7 @@ export type ClientNotificationPreference = {
   enviar_al_crear_solicitud: boolean;
   enviar_al_asignar_chofer: boolean;
   enviar_al_cargar_remito: boolean;
+  enviar_salida_deposito: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -78,19 +79,33 @@ export type ReysilNotificationEmail = {
   enviar_solicitudes: boolean;
   enviar_asignaciones: boolean;
   enviar_remitos: boolean;
+  enviar_salida_deposito: boolean;
   created_at: string;
   updated_at: string;
 };
 
 /**
+ * Obtener todos los mails donde enviar al salir del depósito para un cliente
+ */
+export async function getClientMailsForSalidaDeposito(
+  clientId: string,
+): Promise<string[]> {
+  const prefs = await getClientNotificationPreferences(clientId);
+  return prefs
+    .filter((p) => p.enviar_salida_deposito)
+    .map((p) => p.email);
+}
+
+/**
  * Obtener mails internos de ReySil para notificaciones
  */
-export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones" | "remitos"): Promise<string[]> {
+export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones" | "remitos" | "salida_deposito"): Promise<string[]> {
   const supabase = createAdminClient();
 
   const column =
     type === "solicitudes" ? "enviar_solicitudes" :
     type === "asignaciones" ? "enviar_asignaciones" :
+    type === "salida_deposito" ? "enviar_salida_deposito" :
     "enviar_remitos";
 
   const { data, error } = await supabase

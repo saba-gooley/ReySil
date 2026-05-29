@@ -15,6 +15,7 @@ export type ReysilNotificationEmail = {
   enviar_solicitudes: boolean;
   enviar_asignaciones: boolean;
   enviar_remitos: boolean;
+  enviar_salida_deposito: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -128,7 +129,7 @@ function EmailRow({
     initialState,
   );
 
-  function handleUpdate(enviar_solicitudes: boolean, enviar_asignaciones: boolean, enviar_remitos: boolean) {
+  function handleUpdate(enviar_solicitudes: boolean, enviar_asignaciones: boolean, enviar_remitos: boolean, enviar_salida_deposito: boolean) {
     const formData = new FormData();
     formData.set(
       "payload",
@@ -137,6 +138,7 @@ function EmailRow({
         enviar_solicitudes,
         enviar_asignaciones,
         enviar_remitos,
+        enviar_salida_deposito,
       }),
     );
     updateAction(formData);
@@ -160,11 +162,12 @@ function EmailRow({
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-neutral-900">{emailRow.email}</p>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {emailRow.enviar_solicitudes && "Solicitudes"}
-            {emailRow.enviar_solicitudes && (emailRow.enviar_asignaciones || emailRow.enviar_remitos) && " • "}
-            {emailRow.enviar_asignaciones && "Asignaciones"}
-            {emailRow.enviar_asignaciones && emailRow.enviar_remitos && " • "}
-            {emailRow.enviar_remitos && "Remitos"}
+            {[
+              emailRow.enviar_solicitudes && "Solicitudes",
+              emailRow.enviar_asignaciones && "Asignaciones",
+              emailRow.enviar_remitos && "Remitos",
+              emailRow.enviar_salida_deposito && "Salida depósito",
+            ].filter(Boolean).join(" • ") || "Sin notificaciones"}
           </p>
         </div>
         <span className="text-neutral-400">
@@ -180,7 +183,7 @@ function EmailRow({
                 type="checkbox"
                 checked={emailRow.enviar_solicitudes}
                 onChange={(e) =>
-                  handleUpdate(e.target.checked, emailRow.enviar_asignaciones, emailRow.enviar_remitos)
+                  handleUpdate(e.target.checked, emailRow.enviar_asignaciones, emailRow.enviar_remitos, emailRow.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
@@ -194,7 +197,7 @@ function EmailRow({
                 type="checkbox"
                 checked={emailRow.enviar_asignaciones}
                 onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, e.target.checked, emailRow.enviar_remitos)
+                  handleUpdate(emailRow.enviar_solicitudes, e.target.checked, emailRow.enviar_remitos, emailRow.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
@@ -208,12 +211,26 @@ function EmailRow({
                 type="checkbox"
                 checked={emailRow.enviar_remitos}
                 onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, e.target.checked)
+                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, e.target.checked, emailRow.enviar_salida_deposito)
                 }
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
                 Enviar copias al cargar remito
+              </span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={emailRow.enviar_salida_deposito}
+                onChange={(e) =>
+                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, emailRow.enviar_remitos, e.target.checked)
+                }
+                className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
+              />
+              <span className="text-sm text-neutral-700">
+                Enviar copias al salir del depósito (Contenedor)
               </span>
             </label>
           </div>
