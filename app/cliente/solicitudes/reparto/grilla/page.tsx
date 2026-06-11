@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { listClientDeposits } from "@/lib/server/trips/queries";
+import { listActiveTruckTypes } from "@/lib/server/truck-types/queries";
 import { RepartoGrid } from "@/components/cliente/reparto-grid";
 import Link from "next/link";
 
@@ -7,7 +8,10 @@ export const metadata = { title: "Reparto — Vista Grilla — ReySil" };
 
 export default async function RepartoGrillaPage() {
   const user = await getCurrentUser();
-  const deposits = await listClientDeposits(user.profile.client_id!);
+  const [deposits, truckTypes] = await Promise.all([
+    listClientDeposits(user.profile.client_id!),
+    listActiveTruckTypes(),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -22,7 +26,7 @@ export default async function RepartoGrillaPage() {
           Cambiar a vista formulario
         </Link>
       </div>
-      <RepartoGrid deposits={deposits} />
+      <RepartoGrid deposits={deposits} truckTypes={truckTypes.map((t) => t.nombre)} />
     </div>
   );
 }

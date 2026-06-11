@@ -33,10 +33,8 @@ export const CreateRepartoSchema = z.object({
   codigo_postal: z.string().optional().default(""),
   zona_tarifa: z.string().optional().default(""),
   horario: z.string().optional().default(""),
-  tipo_camion: z
-    .enum(["", "CHASIS", "SEMI", "710", "PICK UP", "Balancín", "Doble Piso", "Otro"])
-    .optional()
-    .default(""),
+  // Configurable desde el ABM Tipos de Camion (req. 2.15) — las options vienen de truck_types
+  tipo_camion: z.string().max(50).optional().default(""),
   peon: z.enum(["", "SI", "NO"]).optional().default(""),
 });
 

@@ -12,7 +12,13 @@ type Deposit = { id: string; nombre: string; direccion: string | null; tipo: str
 
 const initialState: TripActionState = {};
 
-export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
+export function RepartoForm({
+  deposits,
+  truckTypes,
+}: {
+  deposits: Deposit[];
+  truckTypes: string[];
+}) {
   const [state, formAction] = useFormState(createRepartoAction, initialState);
   const router = useRouter();
 
@@ -194,13 +200,11 @@ export function RepartoForm({ deposits }: { deposits: Deposit[] }) {
               className={inputClass}
             >
               <option value="">Seleccionar...</option>
-              <option value="CHASIS">Chasis</option>
-              <option value="SEMI">Semi</option>
-              <option value="710">710</option>
-              <option value="PICK UP">Pick Up</option>
-              <option value="Balancín">Balancín</option>
-              <option value="Doble Piso">Doble Piso</option>
-              <option value="Otro">Otro</option>
+              {truckTypes.map((tt) => (
+                <option key={tt} value={tt}>
+                  {tt}
+                </option>
+              ))}
             </select>
           </div>
         </div>

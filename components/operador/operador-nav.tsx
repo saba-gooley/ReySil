@@ -15,6 +15,7 @@ const CONFIGURACION_ITEMS = [
   { href: "/operador/clientes", label: "Clientes" },
   { href: "/operador/choferes", label: "Choferes" },
   { href: "/operador/configuracion/camiones", label: "Camiones" },
+  { href: "/operador/configuracion/tipos-camion", label: "Tipos de Camión" },
   { href: "/operador/configuracion", label: "General" },
 ] as const;
 

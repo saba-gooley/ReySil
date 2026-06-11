@@ -60,9 +60,13 @@ function emptyRow(key: number): GridRow {
 
 const initialState: TripActionState = {};
 
-const TIPO_CAMION_OPTIONS = ["CHASIS", "SEMI", "710", "PICK UP", "Balancín", "Doble Piso", "Otro"];
-
-export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
+export function RepartoGrid({
+  deposits,
+  truckTypes,
+}: {
+  deposits: Deposit[];
+  truckTypes: string[];
+}) {
   const [state, formAction] = useFormState(createBulkRepartosAction, initialState);
   const router = useRouter();
   const [nextKey, setNextKey] = useState(2);
@@ -271,7 +275,7 @@ export function RepartoGrid({ deposits }: { deposits: Deposit[] }) {
                     className={inputClass}
                   >
                     <option value="">—</option>
-                    {TIPO_CAMION_OPTIONS.map((opt) => (
+                    {truckTypes.map((opt) => (
                       <option key={opt} value={opt}>
                         {opt}
                       </option>

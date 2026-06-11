@@ -10,7 +10,13 @@ type Deposit = { id: string; nombre: string; direccion: string | null; tipo: str
 
 const initialState: TripActionState = {};
 
-export function OperatorRepartoForm({ clients }: { clients: Client[] }) {
+export function OperatorRepartoForm({
+  clients,
+  truckTypes,
+}: {
+  clients: Client[];
+  truckTypes: string[];
+}) {
   const [state, formAction] = useFormState(createRepartoForClientAction, initialState);
   const router = useRouter();
 
@@ -165,13 +171,11 @@ export function OperatorRepartoForm({ clients }: { clients: Client[] }) {
             <label className="mb-1 block text-sm font-medium text-neutral-700">Tipo de camion</label>
             <select value={tipoCamion} onChange={(e) => setTipoCamion(e.target.value)} className={inputClass}>
               <option value="">Seleccionar...</option>
-              <option value="CHASIS">Chasis</option>
-              <option value="SEMI">Semi</option>
-              <option value="710">710</option>
-              <option value="PICK UP">Pick Up</option>
-              <option value="Balancín">Balancín</option>
-              <option value="Doble Piso">Doble Piso</option>
-              <option value="Otro">Otro</option>
+              {truckTypes.map((tt) => (
+                <option key={tt} value={tt}>
+                  {tt}
+                </option>
+              ))}
             </select>
           </div>
         </div>
