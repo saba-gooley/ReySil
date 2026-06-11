@@ -134,8 +134,6 @@ export async function registerTripDataAction(
 export async function finalizeTripAction(
   tripId: string,
   skipRemito: boolean,
-  kmData?: { kmType: "50" | "100"; kmValue: number; pernocto: boolean; observaciones: string },
-  skipKm = false,
 ): Promise<ChoferActionState> {
   try {
     const user = await getCurrentUser();
@@ -168,58 +166,15 @@ export async function finalizeTripAction(
       return { error: "Falta registrar la salida del cliente" };
     }
 
-    // Auto-save km data if provided
-    if (kmData && kmData.kmValue > 0) {
-      const { data: existingData } = await supabase
-        .from("trip_driver_data")
+    // Soft check — remito cargado (la validacion de km se hace al cierre del turno, req. 2.14)
+    if (!skipRemito) {
+      const { data: remitos } = await supabase
+        .from("remitos")
         .select("id")
         .eq("trip_id", tripId)
-        .maybeSingle();
+        .limit(1);
 
-      const payload = {
-        trip_id: tripId,
-        km_50_porc: kmData.kmType === "50" ? kmData.kmValue : null,
-        km_100_porc: kmData.kmType === "100" ? kmData.kmValue : null,
-        pernocto: kmData.pernocto,
-        observaciones: kmData.observaciones || null,
-        registrado_by: user.id,
-      };
-
-      if (existingData) {
-        await supabase.from("trip_driver_data").update(payload).eq("id", existingData.id);
-      } else {
-        await supabase.from("trip_driver_data").insert(payload);
-      }
-    }
-
-    // Soft checks — km and remito in parallel
-    const [driverDataRes, remitosRes] = await Promise.all([
-      !skipKm
-        ? supabase
-            .from("trip_driver_data")
-            .select("km_50_porc, km_100_porc")
-            .eq("trip_id", tripId)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-      !skipRemito
-        ? supabase
-            .from("remitos")
-            .select("id")
-            .eq("trip_id", tripId)
-            .limit(1)
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    if (!skipKm) {
-      const d = driverDataRes.data as { km_50_porc: number | null; km_100_porc: number | null } | null;
-      if (!d || (d.km_50_porc == null && d.km_100_porc == null)) {
-        return { error: "__NO_KM__" };
-      }
-    }
-
-    if (!skipRemito) {
-      const r = remitosRes.data as { id: string }[] | null;
-      if (!r || r.length === 0) {
+      if (!remitos || remitos.length === 0) {
         return { error: "__NO_REMITO__" };
       }
     }
