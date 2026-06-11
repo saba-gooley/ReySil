@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-12 (sesion 21 — aprobados reqs 2.13 Codigo Viaje Secuencial, 2.14 Validacion Km cierre turno, 2.15 ABM Tipos de Camion)
+> Ultima actualizacion: 2026-06-12 (sesion 21 — construidos reqs 2.13, 2.14 y 2.15 en PRs #37, #38 y #39; PR #39 verificado E2E)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. PR #36 mergeado. Sesión 21: aprobados via /nuevo-requerimiento los reqs 2.13 (Código de Viaje Secuencial — tipo A), 2.14 (Validación Km al cierre de turno — tipo D) y 2.15 (ABM Tipos de Camión — módulo 11 nuevo). Orden de construcción: 2.14 → 2.13 → 2.15, cada uno en rama feature + PR separado.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 21: aprobados y CONSTRUIDOS los 3 requerimientos nuevos, cada uno en su PR: **#37** (2.14 Validación Km al cierre de turno), **#38** (2.13 Código de Viaje Secuencial — requiere migración 0017), **#39** (2.15 ABM Tipos de Camión — módulo 11, requiere migración 0018). **Migración 0018 ya aplicada en Supabase; 0017 pendiente.** PR #39 verificado end-to-end con Playwright contra producción (solicitud de prueba creada y luego eliminada). Los 3 PRs esperan revisión/merge en orden #37 → #38 → #39.
 
 ---
 
@@ -25,7 +25,7 @@
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
-| 11 | ABM Tipos de Camion | ⬜ Pendiente | Req. 2.15 aprobado 2026-06-12. Tabla truck_types + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD |
+| 11 | ABM Tipos de Camion | 🔄 En progreso | Construido y verificado E2E (PR #39 pendiente de merge). Tabla truck_types (migracion 0018 YA aplicada) + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -33,14 +33,37 @@
 
 ## Trabajo en Esta Sesion (2026-06-12 — Sesion 21)
 
-📋 **Scope change — 3 requerimientos nuevos aprobados via /nuevo-requerimiento**:
+📋 **Scope change + construcción — 3 requerimientos aprobados via /nuevo-requerimiento y construidos en 3 PRs**:
 
-- [x] **2.13 — Código de Viaje Secuencial (tipo A)**: columna `trips.codigo` (`VJ-#####`, secuencia PostgreSQL + backfill histórico por created_at). Visible en app chofer, listados de solicitudes (primera columna), listado de remitos y filtros. Nombre de archivo de remito en Drive incorpora el código.
-- [x] **2.14 — Validación Km al cierre de turno (tipo D)**: soft-check de km se muda de finalizar viaje individual (`trip-actions.ts`) a finalizar turno (`registerShiftEvent("fin_turno")` valida `shift_logs.km_50/km_100` con advertencia confirmable).
-- [x] **2.15 — ABM Tipos de Camión (tipo B → Módulo 11)**: tabla `truck_types` con RLS (escritura solo ADMIN) + seed valores actuales, ABM en `/operador/configuracion/tipos-camion`, forms de Reparto (cliente, operador, grilla) cargan options desde BD.
-- [x] PLAN.md actualizado (módulo 11, tabla truck_types, convención de nombre de remito)
-- [x] `.claude/modules/tipos-camion.md` creado
-- Orden de construcción: 2.14 → 2.13 → 2.15 (ramas + PRs separados)
+🔨 **PR #37 — 2.14 Validación Km al cierre de turno** (rama `feature/validacion-km-cierre-turno`, sin migración):
+- [x] `lib/server/chofer/shift-actions.ts` — `registerShiftEvent("fin_turno")` valida `shift_logs.km_50/km_100`; devuelve `__NO_KM__`; nuevo param `skipKmCheck`
+- [x] `components/chofer/shift-view.tsx` — advertencia confirmable al registrar Fin del Turno (conserva la hora elegida)
+- [x] `lib/server/chofer/trip-actions.ts` — `finalizeTripAction` ya no valida km (params `kmData`/`skipKm` eliminados); queda solo soft-check de remito
+- [x] `components/chofer/trip-data-form.tsx` — eliminado diálogo de km al finalizar viaje
+- [x] Incluye commit de docs (PLAN.md, ESTADO.md, SESSION_LOG.md con el scope change)
+
+🔨 **PR #38 — 2.13 Código de Viaje Secuencial** (rama `feature/codigo-viaje-secuencial`, **migración 0017 PENDIENTE de aplicar**):
+- [x] `supabase/migrations/0017_trip_codigo_secuencial.sql` — `trips.codigo` + secuencia + `next_trip_codigo()` + backfill por created_at + NOT NULL/UNIQUE
+- [x] `codigo` agregado a `OperatorTripRow`, `TripRow`, `ChoferTripRow` y `listRemitos`
+- [x] `lib/server/chofer/remito-actions.ts` — archivo en Drive: `[Codigo]-[Cliente]-[Fecha].ext`
+- [x] Columna Código (primera, angosta `font-mono`) en `trip-table` (operador), `trip-list` (cliente) y `remitos-view`; código junto al tipo en card del chofer
+- [x] Búsqueda por código: token en filtro de `trip-table`, input nuevo en portal cliente, filtro server-side `ilike` en remitos
+
+🔨 **PR #39 — 2.15 ABM Tipos de Camión / Módulo 11** (rama `feature/abm-tipos-camion`, **migración 0018 YA aplicada**):
+- [x] `supabase/migrations/0018_truck_types.sql` — tabla + RLS (SELECT autenticados, INSERT/UPDATE solo ADMIN) + seed 7 valores
+- [x] `lib/validators/truck-type.ts`, `lib/server/truck-types/{queries,actions}.ts` (actions con `requireRole("ADMIN")`)
+- [x] `components/operador/truck-type-manager.tsx` + `app/operador/configuracion/tipos-camion/page.tsx` (operador ve solo lectura)
+- [x] Forms de Reparto (cliente, operador, grilla) reciben `truckTypes` desde sus páginas server; `lib/validators/trip.ts` — `tipo_camion` deja de ser enum
+- [x] Nav: "Tipos de Camión" en dropdown Configuración
+
+✅ **Verificación E2E del PR #39** (Playwright + dev server local contra Supabase producción):
+- Login operador → form Reparto: las 7 opciones de tipo de camión cargan desde `truck_types`
+- Solicitud creada para "Cliente de Prueba SA" con tipo "Doble Piso" → verificado en BD (`metadata.tipo_camion`) y en vista Pendientes
+- ABM como OPERADOR: solo lectura con aviso, sin botones de escritura ✓
+- Alta/baja dinámica de tipo vía BD → aparece/desaparece del form ✓
+- Viaje de prueba y tipo de prueba eliminados de producción al terminar
+
+📋 **Gestión**: PLAN.md actualizado (módulo 11, truck_types, codigo en trips, convención remito), `.claude/modules/tipos-camion.md` creado.
 
 ---
 
@@ -421,7 +444,14 @@
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos. Sistema estable. PR #36 en revisión (Llegada/Salida Depósito Contenedor + email notificación).
+**Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
+
+### Pendiente INMEDIATO — Merge de PRs de la sesión 21 (en orden)
+1. Revisar y mergear **PR #37** (Validación Km cierre turno — sin migración)
+2. Aplicar **migración 0017** (`supabase/migrations/0017_trip_codigo_secuencial.sql`, está en la rama `feature/codigo-viaje-secuencial`) en Supabase → mergear **PR #38**
+3. Mergear **PR #39** (migración 0018 ya aplicada) → marcar Módulo 11 como ✅ Completo
+- Al mergear #38 y #39 puede haber conflictos triviales en `ESTADO.md`/`SESSION_LOG.md` contra #37 (solo #37 toca esos archivos) — resolver conservando la versión de #37
+- Tras los merges: verificación visual de la columna Código en resoluciones chicas (advertencia del cliente sobre scroll lateral, tabla Finalizadas es la más cargada)
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
@@ -478,6 +508,8 @@
 ---
 
 ## Deuda Tecnica Anotada
+- **Notificaciones email sin timeout**: las actions hacen `await` del envío SMTP sin timeout. Si Ferozo no responde, el operador/cliente ve "Enviando..." indefinido con la solicitud YA creada — un reintento manual generaría duplicado. Detectado en la verificación E2E del PR #39 (local sin salida SMTP). Fix sugerido: `Promise.race` con timeout como ya tiene el upload a Drive (`remito-actions.ts`).
+- **Validación de tipo_camion contra BD**: tras PR #39 el schema Zod acepta cualquier string ≤50; el form solo ofrece tipos activos pero el server no verifica pertenencia. Decisión consciente para limitar scope.
 - **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP).
 - **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request. En producción con mucho tráfico, considerar cache en cookie.
 - **`listUsers()` en updateClientAction**: trae TODOS los usuarios. Con muchos usuarios, paginar o buscar por email.
