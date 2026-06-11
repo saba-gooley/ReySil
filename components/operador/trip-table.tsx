@@ -39,6 +39,7 @@ export function TripTable({
     const words = filterText.toLowerCase().trim().split(/\s+/);
     filtered = trips.filter((t) => {
       const tokens = [
+        t.codigo,
         t.clients.nombre,
         t.destino_descripcion,
         t.origen_descripcion,
@@ -97,7 +98,7 @@ export function TripTable({
       <div className="flex flex-wrap items-end gap-3">
         <input
           type="text"
-          placeholder="Filtrar por cliente, chofer o patente..."
+          placeholder="Filtrar por código, cliente, chofer o patente..."
           value={filterText}
           onChange={(e) => setFilterText(e.target.value)}
           className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
@@ -153,6 +154,7 @@ export function TripTable({
           >
             <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500">
               <tr>
+                <th className={headerCellClass}>{compactColumns ? "Cód." : "Código"}</th>
                 <th className={headerCellClass}>{compactColumns ? "Tip." : "Tipo"}</th>
                 <th className={headerCellClass}>Cliente</th>
                 <th className={headerCellClass}>{compactColumns ? "Fecha" : "Fecha solicitada"}</th>
@@ -223,6 +225,9 @@ function TripRow({
         className="cursor-pointer hover:bg-neutral-50"
         onClick={onToggle}
       >
+        <td className={`${bodyCellClass} whitespace-nowrap font-mono text-xs text-neutral-600`}>
+          {trip.codigo}
+        </td>
         <td className={bodyCellClass}>
           <span className="text-xs font-medium">{trip.tipo}</span>
           {booking && (
@@ -280,7 +285,7 @@ function TripRow({
         <tr>
           <td
             colSpan={
-              4 +
+              5 +
               (showAssignment ? 2 : 0) +
               1 +
               (actions ? 1 : 0) +
@@ -317,6 +322,7 @@ function TripDetail({
         <h4 className="text-xs font-semibold uppercase text-neutral-400">
           Viaje
         </h4>
+        <Detail label="Código" value={trip.codigo} />
         <Detail label="Tipo" value={trip.tipo} />
         <Detail label="Estado" value={trip.estado} />
         <Detail

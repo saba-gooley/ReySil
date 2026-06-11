@@ -34,7 +34,7 @@ export async function uploadRemitoAction(
     // Fetch trip + client name for file naming
     const { data: trip } = await supabase
       .from("trips")
-      .select("fecha_solicitada, clients!inner(nombre)")
+      .select("codigo, fecha_solicitada, clients!inner(nombre)")
       .eq("id", tripId)
       .single();
 
@@ -42,7 +42,9 @@ export async function uploadRemitoAction(
     const clientName = (Array.isArray(clientObj) ? clientObj[0] : clientObj)?.nombre ?? "Cliente";
     const fecha = trip?.fecha_solicitada ?? todayAR();
     const ext = file.name.split(".").pop() ?? "jpg";
-    const fileName = `${clientName}-${fecha}-${tripId.slice(0, 8)}.${ext}`;
+    // El codigo secuencial del viaje formaliza el nombre del archivo (req. 2.13)
+    const codigo = trip?.codigo ?? tripId.slice(0, 8);
+    const fileName = `${codigo}-${clientName}-${fecha}.${ext}`;
 
     // Upload to Google Drive
     const arrayBuffer = await file.arrayBuffer();

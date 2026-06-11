@@ -3,6 +3,7 @@ import { todayAR } from "@/lib/utils/date";
 
 export type ChoferTripRow = {
   id: string;
+  codigo: string;
   tipo: "REPARTO" | "CONTENEDOR";
   estado: string;
   fecha_solicitada: string | null;
@@ -48,7 +49,7 @@ export type ChoferTripRow = {
 };
 
 const CHOFER_TRIP_SELECT = `
-  id, tipo, estado, fecha_solicitada,
+  id, codigo, tipo, estado, fecha_solicitada,
   origen_descripcion, destino_descripcion, observaciones_cliente,
   clients(nombre),
   trip_assignments(patente, comentario_asignacion),

@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 export type TripRow = {
   id: string;
+  codigo: string;
   client_id: string;
   tipo: "REPARTO" | "CONTENEDOR";
   estado: string;
@@ -104,7 +105,7 @@ function normalizeTrips(rows: unknown[]): TripRow[] {
 }
 
 const TRIP_SELECT = `
-  id, client_id, tipo, estado, container_id,
+  id, codigo, client_id, tipo, estado, container_id,
   origen_deposit_id, destino_deposit_id,
   origen_descripcion, destino_descripcion,
   fecha_solicitada, observaciones_cliente, created_at,
