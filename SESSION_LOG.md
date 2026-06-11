@@ -6,6 +6,30 @@
 
 ---
 
+## Sesión 2026-06-12 — Scope change: reqs 2.13, 2.14, 2.15 aprobados
+
+### Done
+- /nuevo-requerimiento: aprobados 3 requerimientos del cliente:
+  - **2.13 Código de Viaje Secuencial** (tipo A) — `trips.codigo` VJ-##### con secuencia + backfill por created_at; visible en app chofer, listados (primera columna), remitos y filtros; nombre de archivo de remito incorpora el código
+  - **2.14 Validación Km al cierre de turno** (tipo D) — soft-check de km se muda de finalizar viaje a finalizar turno
+  - **2.15 ABM Tipos de Camión** (tipo B) — nuevo Módulo 11: tabla `truck_types`, ABM en Configuración (escritura solo ADMIN), forms Reparto cargan tipos desde BD
+- PLAN.md actualizado: módulo 11, tabla truck_types, codigo en trips, convención nombre remito
+- ESTADO.md actualizado con scope change
+- `.claude/modules/tipos-camion.md` creado desde template
+
+### Next
+- Construir en orden: 2.14 → 2.13 → 2.15 (cada uno rama feature + PR)
+
+### Decisions
+- Backfill de códigos históricos ordenado por created_at; secuencia continúa desde el último número
+- truck_types: baja lógica (is_active) — viajes históricos conservan tipos desactivados
+- Si la columna Código rompe el layout de alguna tabla, se acorta/quita la columna menos crítica de esa tabla (advertencia explícita del cliente sobre scroll lateral)
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-05-29 — Duracion Paradas + Reporte Paradas + Salida Deposito Contenedor
 
 ### Done

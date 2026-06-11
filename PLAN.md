@@ -2,7 +2,7 @@
 
 > Este archivo se genera UNA VEZ al inicio del proyecto.
 > Para modificarlo usar /nuevo-requerimiento.
-> Ultima actualizacion: 2026-04-09 (rev. 2 — simplificacion a Next.js + Supabase)
+> Ultima actualizacion: 2026-06-12 (rev. 3 — requerimientos 2.13/2.14/2.15: codigo de viaje secuencial, validacion km al cierre de turno, modulo 11 ABM Tipos de Camion)
 
 ---
 
@@ -106,7 +106,7 @@ public/
 | `drivers` | Choferes (codigo, DNI, nombre) |
 | `operators` | Operadores y administradores de ReySil |
 | `user_profiles` | Perfil extendido vinculado a `auth.users` de Supabase con `role` (CLIENTE, OPERADOR, CHOFER, ADMIN) y FK a `clients` o `drivers` segun corresponda |
-| `trips` | Viajes individuales (REPARTO o CONTENEDOR) con estado |
+| `trips` | Viajes individuales (REPARTO o CONTENEDOR) con estado y `codigo` secuencial unico (VJ-00001…) |
 | `trip_reparto_fields` | Campos especificos de viajes tipo Reparto |
 | `reservations` | Reservas de contenedores (padre de containers) |
 | `containers` | Contenedores individuales dentro de una reserva |
@@ -118,6 +118,7 @@ public/
 | `inspection_items` | Items individuales de cada inspeccion (cumple/no cumple) |
 | `shift_logs` | Registro de turno diario del chofer |
 | `trucks` | Camiones (marca, modelo, patente, estado activo/inactivo) |
+| `truck_types` | Tipos de camion configurables para el formulario de Reparto (nombre, activo). Escritura solo ADMIN |
 | `truck_daily_status` | Vista SQL que calcula el estado diario de cada camion (LIBRE/PREASIGNADO/ASIGNADO) cruzando trips + trip_assignments |
 
 Todas las tablas tienen Row Level Security activado. Las policies aseguran que cada rol solo ve/modifica los datos que le corresponden:
@@ -144,7 +145,7 @@ El rol del usuario vive en la tabla `user_profiles` (vinculada a `auth.users` po
 
 ### Almacenamiento de Archivos
 Google Drive con Service Account (solicitado explicitamente por el cliente). El upload se hace desde Server Actions o Route Handlers de Next.js. Estructura:
-- `ReySil/remitos/[NombreCliente]-[YYYY-MM-DD]-[seq].jpg`
+- `ReySil/remitos/[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD].jpg`
 - `ReySil/inspecciones/[Patente]-[YYYY-MM-DD].pdf`
 
 > Nota: NO se usa Supabase Storage. La unica fuente de archivos es Google Drive porque el cliente lo requirio explicitamente para tener acceso directo desde su cuenta.
@@ -180,9 +181,14 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 | 7 | Notificaciones | Email automatico al asignar chofer, email automatico al subir remito (SendGrid) | HU-NOT-001, HU-NOT-002 | 5 | Modulos 5, 6 | ✅ Completo |
 | 8 | Integraciones | Google Drive (upload remitos + PDF inspecciones), generacion PDF con @react-pdf/renderer | — | — | Modulo 7 | ✅ Completo |
 | 9 | Gestion de Camiones y Disponibilidad | ABM de camiones (marca, modelo, patente), tablero de disponibilidad diaria (tipo ajedrez), flujo mejorado de asignacion con selectlists de choferes/patentes indicando estado | — | 13 | Modulos 3, 5 | ✅ Completo |
-| 10 | Panel Admin — ABM Operadores | Panel exclusivo para rol ADMIN. ABM de operadores de ReySil: crear usuario en auth.users + user_profiles con rol OPERADOR, editar nombre, desactivar/reactivar. El admin tiene acceso a todo lo del operador mas esta gestion. | — | 5 | Modulo 2 | 🔄 En progreso |
+| 10 | Panel Admin — ABM Operadores | Panel exclusivo para rol ADMIN. ABM de operadores de ReySil: crear usuario en auth.users + user_profiles con rol OPERADOR, editar nombre, desactivar/reactivar. El admin tiene acceso a todo lo del operador mas esta gestion. | — | 5 | Modulo 2 | ✅ Completo |
+| 11 | ABM Tipos de Camion | Tipos de camion configurables (tabla `truck_types` + seed con valores actuales). ABM en Configuracion del back office, escritura solo ADMIN. El campo "Tipo de Camion" de los forms de Reparto deja de ser enum fijo y carga desde la BD (req. 2.15) | — | 5 | Modulos 3, 9 | ⬜ Pendiente |
 
-**Total: 25 historias + nuevas | 94 puntos + 18 puntos | Módulos 1-9 Completos, Módulo 10 En Progreso**
+**Total: 25 historias + nuevas | 94 puntos + 23 puntos | Módulos 1-10 Completos, Módulo 11 Pendiente**
+
+> Requerimientos transversales aprobados 2026-06-12 (no son modulos nuevos):
+> - **2.13 Codigo de Viaje Secuencial** (tipo A): columna `trips.codigo` con secuencia `VJ-#####`, backfill historico por `created_at`. Visible en app chofer, listados de solicitudes (primera columna), listado de remitos y filtros de busqueda. El nombre del archivo de remito en Drive incorpora el codigo.
+> - **2.14 Validacion de Km al cierre de turno** (tipo D): el soft-check de km cargados se muda de finalizar viaje a finalizar turno (los km viven en `shift_logs`).
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -231,7 +237,7 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 
 - Los viajes de Reparto se llaman `REPARTO` en el sistema (no "Mercaderia")
 - Los campos de formulario configurables por cliente se modelan como metadata, no como columnas fijas
-- Las fotos de remito se nombran con el patron `[NombreCliente]-[YYYY-MM-DD]-[seq].jpg`
+- Las fotos de remito se nombran con el patron `[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD].jpg` (req. 2.13 — el codigo secuencial formaliza el nombre del archivo)
 - Los PDFs de inspeccion se nombran `[Patente]-[YYYY-MM-DD].pdf`
 - El email del cliente se usa para asociar automaticamente las solicitudes — no se selecciona manualmente
 - Los depositos preestablecidos son gestionables por cliente desde el ABM

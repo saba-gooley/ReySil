@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-05-29 (sesion 20 — Duracion Paradas + Reporte Paradas + Salida Deposito Contenedor)
+> Ultima actualizacion: 2026-06-12 (sesion 21 — aprobados reqs 2.13 Codigo Viaje Secuencial, 2.14 Validacion Km cierre turno, 2.15 ABM Tipos de Camion)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 20: duracion_min en paradas (migration 0015), edición inline de paradas, Reporte de Paradas (desglosado/agrupado), Salida del Depósito para viajes Contenedor con email automático (migration 0016 — pendiente aplicar en Supabase). PR #36 listo para merge.
+✅ Proyecto funcional — 10 módulos completos. Sistema en producción. PR #36 mergeado. Sesión 21: aprobados via /nuevo-requerimiento los reqs 2.13 (Código de Viaje Secuencial — tipo A), 2.14 (Validación Km al cierre de turno — tipo D) y 2.15 (ABM Tipos de Camión — módulo 11 nuevo). Orden de construcción: 2.14 → 2.13 → 2.15, cada uno en rama feature + PR separado.
 
 ---
 
@@ -25,8 +25,22 @@
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
+| 11 | ABM Tipos de Camion | ⬜ Pendiente | Req. 2.15 aprobado 2026-06-12. Tabla truck_types + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo en Esta Sesion (2026-06-12 — Sesion 21)
+
+📋 **Scope change — 3 requerimientos nuevos aprobados via /nuevo-requerimiento**:
+
+- [x] **2.13 — Código de Viaje Secuencial (tipo A)**: columna `trips.codigo` (`VJ-#####`, secuencia PostgreSQL + backfill histórico por created_at). Visible en app chofer, listados de solicitudes (primera columna), listado de remitos y filtros. Nombre de archivo de remito en Drive incorpora el código.
+- [x] **2.14 — Validación Km al cierre de turno (tipo D)**: soft-check de km se muda de finalizar viaje individual (`trip-actions.ts`) a finalizar turno (`registerShiftEvent("fin_turno")` valida `shift_logs.km_50/km_100` con advertencia confirmable).
+- [x] **2.15 — ABM Tipos de Camión (tipo B → Módulo 11)**: tabla `truck_types` con RLS (escritura solo ADMIN) + seed valores actuales, ABM en `/operador/configuracion/tipos-camion`, forms de Reparto (cliente, operador, grilla) cargan options desde BD.
+- [x] PLAN.md actualizado (módulo 11, tabla truck_types, convención de nombre de remito)
+- [x] `.claude/modules/tipos-camion.md` creado
+- Orden de construcción: 2.14 → 2.13 → 2.15 (ramas + PRs separados)
 
 ---
 
