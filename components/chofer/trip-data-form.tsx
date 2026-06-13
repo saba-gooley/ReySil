@@ -305,7 +305,7 @@ function RemitoSubmitBtn() {
       disabled={pending}
       className="w-full rounded-md border-2 border-dashed border-neutral-300 px-4 py-3 text-sm font-medium text-neutral-600 hover:border-reysil-red hover:text-reysil-red disabled:opacity-50"
     >
-      {pending ? "Subiendo..." : "Subir foto de remito"}
+      {pending ? "Confirmando..." : "Confirmar Remitos"}
     </button>
   );
 }

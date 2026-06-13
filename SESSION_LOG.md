@@ -6,6 +6,31 @@
 
 ---
 
+## Sesión 2026-06-13 — Scope change: reqs 2.5, 2.6, 2.7, 2.8 aprobados via /nuevo-requerimiento
+
+### Done
+- /nuevo-requerimiento: aprobados 4 requerimientos:
+  - **2.5 Fecha de Entrega en Solicitudes Contenedor** (tipo A) — columna `fecha_entrega` en `reservations` (migración 0019), forms cliente+operador, visible en chofer
+  - **2.6 Cambio etiqueta botón remito** (tipo D) — "Subir foto del Remito" → "Confirmar Remitos" en trip-data-form.tsx
+  - **2.7 Múltiples Remitos por Viaje** (tipo A) — UI multi-remito en chofer, email manual (botón "Enviar Mail") reemplaza auto-email, `trips.remito_email_enviado_at` (migración 0020), botón en back office
+  - **2.8 Carga de Remitos por el Operador** (tipo A) — upload desde back office para viajes EN_CURSO/FINALIZADO, botón Enviar Mail, indicador + nuevo reporte en Reportes
+- Ajuste de naming de remitos: `[Codigo]-[Cliente]-[Fecha]-[rand4].ext` (sufijo aleatorio 4 chars, sin query adicional)
+- PLAN.md actualizado (tabla reservations + trips, convención remitos)
+
+### Next
+- Construir en orden: 2.6 → 2.5 → 2.7+2.8 (cada uno rama feature + PR)
+
+### Decisions
+- Sufijo del remito: aleatorio 4 chars (`Math.random().toString(36).slice(2,6)`) en lugar de count secuencial — cero latencia, prob. colisión despreciable
+- `remito_email_enviado_at TIMESTAMPTZ` en `trips` — fuente de verdad compartida entre 2.7 (chofer) y 2.8 (operador)
+- Email de remitos ya NO es automático al subir — solo al presionar "Enviar Mail" (cambio de comportamiento confirmado por el cliente)
+- 2.7 y 2.8 se construyen en el mismo PR por dependencia en `sendRemitoEmailAction` y migración 0020
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-12 — Reqs 2.13/2.14/2.15: aprobados, construidos (PRs #37/#38/#39) y PR #39 verificado E2E
 
 ### Done

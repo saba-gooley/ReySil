@@ -2,7 +2,7 @@
 
 > Este archivo se genera UNA VEZ al inicio del proyecto.
 > Para modificarlo usar /nuevo-requerimiento.
-> Ultima actualizacion: 2026-06-12 (rev. 3 — requerimientos 2.13/2.14/2.15: codigo de viaje secuencial, validacion km al cierre de turno, modulo 11 ABM Tipos de Camion)
+> Ultima actualizacion: 2026-06-13 (rev. 4 — requerimientos 2.5/2.6/2.7/2.8: fecha entrega contenedor, etiqueta remito, multiples remitos + email manual, upload remito por operador)
 
 ---
 
@@ -106,9 +106,9 @@ public/
 | `drivers` | Choferes (codigo, DNI, nombre) |
 | `operators` | Operadores y administradores de ReySil |
 | `user_profiles` | Perfil extendido vinculado a `auth.users` de Supabase con `role` (CLIENTE, OPERADOR, CHOFER, ADMIN) y FK a `clients` o `drivers` segun corresponda |
-| `trips` | Viajes individuales (REPARTO o CONTENEDOR) con estado y `codigo` secuencial unico (VJ-00001…) |
+| `trips` | Viajes individuales (REPARTO o CONTENEDOR) con estado, `codigo` secuencial (VJ-00001…) y `remito_email_enviado_at TIMESTAMPTZ` (req. 2.7/2.8 — indica si se envió el mail de remitos manualmente) |
 | `trip_reparto_fields` | Campos especificos de viajes tipo Reparto |
-| `reservations` | Reservas de contenedores (padre de containers) |
+| `reservations` | Reservas de contenedores (padre de containers). Incluye `fecha_entrega DATE` (req. 2.5) |
 | `containers` | Contenedores individuales dentro de una reserva |
 | `trip_assignments` | Asignacion de chofer y patente a un viaje |
 | `trip_events` | Hitos registrados por el chofer durante el viaje |
@@ -145,7 +145,7 @@ El rol del usuario vive en la tabla `user_profiles` (vinculada a `auth.users` po
 
 ### Almacenamiento de Archivos
 Google Drive con Service Account (solicitado explicitamente por el cliente). El upload se hace desde Server Actions o Route Handlers de Next.js. Estructura:
-- `ReySil/remitos/[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD].jpg`
+- `ReySil/remitos/[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD]-[rand4].jpg`
 - `ReySil/inspecciones/[Patente]-[YYYY-MM-DD].pdf`
 
 > Nota: NO se usa Supabase Storage. La unica fuente de archivos es Google Drive porque el cliente lo requirio explicitamente para tener acceso directo desde su cuenta.
@@ -237,7 +237,7 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 
 - Los viajes de Reparto se llaman `REPARTO` en el sistema (no "Mercaderia")
 - Los campos de formulario configurables por cliente se modelan como metadata, no como columnas fijas
-- Las fotos de remito se nombran con el patron `[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD].jpg` (req. 2.13 — el codigo secuencial formaliza el nombre del archivo)
+- Las fotos de remito se nombran con el patron `[CodigoViaje]-[NombreCliente]-[YYYY-MM-DD]-[rand4].jpg` donde `rand4` es un sufijo aleatorio de 4 caracteres alfanumericos (req. 2.13 + 2.7 — el sufijo diferencia multiples remitos del mismo viaje sin queries adicionales)
 - Los PDFs de inspeccion se nombran `[Patente]-[YYYY-MM-DD].pdf`
 - El email del cliente se usa para asociar automaticamente las solicitudes — no se selecciona manualmente
 - Los depositos preestablecidos son gestionables por cliente desde el ABM
