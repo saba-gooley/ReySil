@@ -26,6 +26,7 @@ export type ChoferTripRow = {
     numero: string | null;
     tipo: string | null;
     peso_carga_kg: number | null;
+    reservations: { fecha_entrega: string | null } | null;
   } | null;
   trip_events: {
     id: string;
@@ -54,7 +55,7 @@ const CHOFER_TRIP_SELECT = `
   clients(nombre),
   trip_assignments(patente, comentario_asignacion),
   trip_reparto_fields(ndv, peso_kg, toneladas, cantidad_bultos, metadata),
-  containers(numero, tipo, peso_carga_kg),
+  containers(numero, tipo, peso_carga_kg, reservations(fecha_entrega)),
   trip_events(id, tipo, ocurrido_at),
   trip_driver_data(id, km_inicial, km_50_porc, km_100_porc, km_final, pernocto, observaciones),
   remitos(id, drive_url, estado)
@@ -73,7 +74,11 @@ function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
       clients: unwrapOne(raw.clients) ?? { nombre: "" },
       trip_assignments: unwrapOne(raw.trip_assignments),
       trip_reparto_fields: unwrapOne(raw.trip_reparto_fields),
-      containers: unwrapOne(raw.containers),
+      containers: (() => {
+        const c = unwrapOne(raw.containers) as Record<string, unknown> | null;
+        if (!c) return null;
+        return { ...c, reservations: unwrapOne(c.reservations) ?? null };
+      })(),
       trip_driver_data: unwrapOne(raw.trip_driver_data),
       trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
       remitos: Array.isArray(raw.remitos) ? raw.remitos : [],

@@ -32,6 +32,7 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
   const [terminal, setTerminal] = useState("");
   const [devuelveEn, setDevuelveEn] = useState("");
   const [libreHasta, setLibreHasta] = useState("");
+  const [fechaEntrega, setFechaEntrega] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
   const [nextKey, setNextKey] = useState(2);
@@ -77,6 +78,7 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
       terminal,
       devuelve_en: devuelveEn,
       libre_hasta: libreHasta,
+      fecha_entrega: fechaEntrega,
       observaciones,
       // Keep backward compat with schema
       numero_booking: "",
@@ -249,6 +251,17 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
               type="date"
               value={libreHasta}
               onChange={(e) => setLibreHasta(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Fecha de entrega
+            </label>
+            <input
+              type="date"
+              value={fechaEntrega}
+              onChange={(e) => setFechaEntrega(e.target.value)}
               className={inputClass}
             />
           </div>
