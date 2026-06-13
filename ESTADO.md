@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-12 (sesion 21 — construidos reqs 2.13, 2.14 y 2.15 en PRs #37, #38 y #39; PR #39 verificado E2E)
+> Ultima actualizacion: 2026-06-13 (sesion 21 cont. — PRs #37, #39, #38 mergeados a main; 11 módulos completos)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — 10 módulos completos. Sistema en producción. Sesión 21: aprobados y CONSTRUIDOS los 3 requerimientos nuevos, cada uno en su PR: **#37** (2.14 Validación Km al cierre de turno), **#38** (2.13 Código de Viaje Secuencial — requiere migración 0017), **#39** (2.15 ABM Tipos de Camión — módulo 11, requiere migración 0018). **Migración 0018 ya aplicada en Supabase; 0017 pendiente.** PR #39 verificado end-to-end con Playwright contra producción (solicitud de prueba creada y luego eliminada). Los 3 PRs esperan revisión/merge en orden #37 → #38 → #39.
+✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. PRs #37, #39 y #38 mergeados a main (2026-06-13). Migraciones 0017 y 0018 aplicadas en Supabase. Los 3 requerimientos están en producción: código de viaje secuencial VJ-#####, validación de km al cierre de turno, y ABM Tipos de Camión configurable.
 
 ---
 
@@ -25,7 +25,7 @@
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
-| 11 | ABM Tipos de Camion | 🔄 En progreso | Construido y verificado E2E (PR #39 pendiente de merge). Tabla truck_types (migracion 0018 YA aplicada) + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD |
+| 11 | ABM Tipos de Camion | ✅ Completo | PR #39 mergeado. Tabla truck_types + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD. Migraciones 0017 y 0018 aplicadas. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -446,12 +446,8 @@
 
 **Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
 
-### Pendiente INMEDIATO — Merge de PRs de la sesión 21 (en orden)
-1. Revisar y mergear **PR #37** (Validación Km cierre turno — sin migración)
-2. Aplicar **migración 0017** (`supabase/migrations/0017_trip_codigo_secuencial.sql`, está en la rama `feature/codigo-viaje-secuencial`) en Supabase → mergear **PR #38**
-3. Mergear **PR #39** (migración 0018 ya aplicada) → marcar Módulo 11 como ✅ Completo
-- Al mergear #38 y #39 puede haber conflictos triviales en `ESTADO.md`/`SESSION_LOG.md` contra #37 (solo #37 toca esos archivos) — resolver conservando la versión de #37
-- Tras los merges: verificación visual de la columna Código en resoluciones chicas (advertencia del cliente sobre scroll lateral, tabla Finalizadas es la más cargada)
+### Siguiente — Requerimientos 2.5, 2.6, 2.7, 2.8 pendientes de análisis
+Pendiente de /nuevo-requerimiento: imagen recibida en sesión 21-cont con reqs 2.5 (Fecha de Entrega en Solicitudes Contenedor), 2.6 (cambio etiqueta botón remito en chofer), 2.7 (Múltiples Remitos por Viaje), 2.8 (Carga de Remitos por el Operador — texto parcial, confirmar alcance).
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
