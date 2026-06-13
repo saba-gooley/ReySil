@@ -29,6 +29,7 @@ const REPORTES_ITEMS = [
   { href: "/operador/reportes/viajes-cliente", label: "Viajes x Cliente" },
   { href: "/operador/reportes/turnos", label: "Turnos" },
   { href: "/operador/reportes/paradas", label: "Paradas" },
+  { href: "/operador/reportes/remitos", label: "Remitos" },
 ] as const;
 
 type DropdownId = "solicitudes" | "configuracion" | "documentacion" | "reportes";

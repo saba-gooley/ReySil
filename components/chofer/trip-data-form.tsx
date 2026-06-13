@@ -8,7 +8,7 @@ import {
   finalizeTripAction,
   type ChoferActionState,
 } from "@/lib/server/chofer/trip-actions";
-import { uploadRemitoAction } from "@/lib/server/chofer/remito-actions";
+import { uploadRemitoAction, sendRemitoEmailAction } from "@/lib/server/chofer/remito-actions";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 
 const REPARTO_EVENTS = [
@@ -28,18 +28,30 @@ const initialState: ChoferActionState = {};
 export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
   const router = useRouter();
   const [remitoState, remitoAction] = useFormState(uploadRemitoAction, initialState);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
 
   const registeredEvents = new Set(trip.trip_events.map((e) => e.tipo));
-  const hasRemito = trip.remitos.length > 0;
   const tripEvents = trip.tipo === "CONTENEDOR" ? CONTENEDOR_EVENTS : REPARTO_EVENTS;
+  const enCurso = trip.estado === "EN_CURSO";
 
   function handleRemitoSubmit(formData: FormData) {
     formData.set("trip_id", trip.id);
     remitoAction(formData);
   }
 
-  const inputClass =
-    "w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red";
+  async function handleEnviarMail() {
+    setEmailLoading(true);
+    setEmailError(null);
+    const result = await sendRemitoEmailAction(trip.id);
+    setEmailLoading(false);
+    if (result.error) {
+      setEmailError(result.error);
+    } else {
+      setEmailSent(true);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -53,7 +65,7 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         </div>
       )}
 
-      {/* Trip events: Llegada al cliente / Salida del cliente */}
+      {/* Trip events */}
       <div className="space-y-2">
         <h4 className="text-xs font-semibold text-neutral-400 uppercase">
           Registro del viaje
@@ -73,20 +85,41 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         ))}
       </div>
 
+      {/* Remitos: lista + upload */}
+      <div className="space-y-2">
+        <h4 className="text-xs font-semibold text-neutral-400 uppercase">
+          Remitos {trip.remitos.length > 0 ? `(${trip.remitos.length})` : ""}
+        </h4>
 
-      {/* Upload remito */}
-      <form action={handleRemitoSubmit} className="space-y-2">
-        {remitoState.error && (
-          <p className="text-xs text-red-600">{remitoState.error}</p>
+        {/* Lista de remitos subidos */}
+        {trip.remitos.length > 0 && (
+          <div className="rounded-md bg-green-50 border border-green-200 p-3 space-y-1">
+            <p className="text-xs font-medium text-green-700">
+              Remitos subidos correctamente
+            </p>
+            {trip.remitos.map((r, i) => (
+              <a
+                key={r.id}
+                href={r.drive_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xs text-reysil-red hover:underline"
+              >
+                Ver Remito {i + 1}
+              </a>
+            ))}
+          </div>
         )}
-        {remitoState.success && (
-          <p className="text-xs text-green-600">Remito subido</p>
-        )}
-        {!hasRemito ? (
-          <>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">
-              Foto del remito firmado
-            </label>
+
+        {/* Upload: siempre disponible mientras el viaje esté EN_CURSO */}
+        {enCurso && (
+          <form action={handleRemitoSubmit} className="space-y-2">
+            {remitoState.error && (
+              <p className="text-xs text-red-600">{remitoState.error}</p>
+            )}
+            {remitoState.success && (
+              <p className="text-xs text-green-600">Remito cargado</p>
+            )}
             <input
               type="file"
               name="remito_file"
@@ -95,25 +128,28 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
               className="w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
             />
             <RemitoSubmitBtn />
-          </>
-        ) : (
-          <div className="rounded-md bg-green-50 border border-green-200 p-3">
-            <p className="text-xs text-green-700">
-              Remito subido correctamente.
-            </p>
-            {trip.remitos[0]?.drive_url && (
-              <a
-                href={trip.remitos[0].drive_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-reysil-red hover:underline"
+          </form>
+        )}
+
+        {/* Enviar Mail */}
+        {trip.remitos.length > 0 && (
+          <div className="pt-1">
+            {emailError && <p className="text-xs text-red-600 mb-1">{emailError}</p>}
+            {emailSent ? (
+              <p className="text-xs font-medium text-green-700">Mail enviado correctamente</p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleEnviarMail}
+                disabled={emailLoading}
+                className="w-full rounded-md border border-reysil-red px-4 py-2 text-sm font-medium text-reysil-red hover:bg-reysil-red hover:text-white disabled:opacity-50 transition-colors"
               >
-                Ver remito
-              </a>
+                {emailLoading ? "Enviando..." : "Enviar Mail"}
+              </button>
             )}
           </div>
         )}
-      </form>
+      </div>
 
       {/* Finalizar viaje */}
       {trip.estado !== "FINALIZADO" && (

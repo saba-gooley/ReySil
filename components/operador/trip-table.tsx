@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
+import { TripRemitoActions } from "./trip-remito-actions";
 
 type Props = {
   trips: OperatorTripRow[];
@@ -460,27 +461,12 @@ function TripDetail({
 
       {showRemitos && (
         <div className="space-y-1 sm:col-span-3">
-          <h4 className="text-xs font-semibold uppercase text-neutral-400">
-            Remitos
-          </h4>
-          {trip.remitos.length > 0 ? (
-            <ul className="flex flex-wrap gap-2">
-              {trip.remitos.map((r) => (
-                <li key={r.id}>
-                  <a
-                    href={r.drive_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-green-600 hover:underline"
-                  >
-                    Ver remito
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-xs text-neutral-400">No hay remito cargado</p>
-          )}
+          <TripRemitoActions
+            tripId={trip.id}
+            estado={trip.estado}
+            remitos={trip.remitos}
+            remitoEmailEnviadoAt={trip.remito_email_enviado_at}
+          />
         </div>
       )}
     </div>
