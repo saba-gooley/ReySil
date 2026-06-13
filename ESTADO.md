@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-13 (sesion 21 cont. — PRs #37, #39, #38 mergeados a main; 11 módulos completos)
+> Ultima actualizacion: 2026-06-13 (sesion 22 — aprobados reqs 2.5/2.6/2.7/2.8; inicio construccion)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. PRs #37, #39 y #38 mergeados a main (2026-06-13). Migraciones 0017 y 0018 aplicadas en Supabase. Los 3 requerimientos están en producción: código de viaje secuencial VJ-#####, validación de km al cierre de turno, y ABM Tipos de Camión configurable.
+✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 22: aprobados via /nuevo-requerimiento los reqs 2.5 (Fecha Entrega Contenedor), 2.6 (etiqueta botón remito), 2.7 (Múltiples Remitos + email manual), 2.8 (Upload remito por operador + reporte). Orden de construcción: 2.6 → 2.5 → 2.7+2.8, ramas + PRs separados. Migraciones pendientes: 0019 (reservations.fecha_entrega) y 0020 (trips.remito_email_enviado_at).
 
 ---
 
