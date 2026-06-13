@@ -6,6 +6,49 @@
 
 ---
 
+## Sesión 2026-06-13 — Reqs 2.5/2.6/2.7/2.8 construidos, verificados E2E y mergeados (PRs #40/#41/#42)
+
+### Done
+- Mergeados PRs #37/#38/#39 (reqs 2.13/2.14/2.15 de sesión anterior)
+- Consulta del cliente: códigos VJ-#### no parecían secuenciales → explicado que son secuenciales por `created_at,id` pero timestamps idénticos hacen que se vean desordenados con ORDER BY solo por fecha. Migración 0017 confirmada correcta.
+- /nuevo-requerimiento: aprobados reqs 2.5/2.6/2.7/2.8 con ajuste de naming de remitos (sufijo rand4 en lugar de count secuencial para evitar query adicional)
+- **PR #40** (`feature/etiqueta-boton-remito`, mergeado) — 2.6: `RemitoSubmitBtn` label → "Confirmar Remitos" / "Confirmando..."
+- **PR #41** (`feature/fecha-entrega-contenedor`, mergeado) — 2.5: migración 0019 (`reservations.fecha_entrega DATE`), `CreateContenedorSchema`, actions (2 inserts), queries (3 selects + tipos), forms cliente+operador, display en trip-table/trip-list/chofer-trip-list
+- **PR #42** (`feature/multiples-remitos`, mergeado) — 2.7+2.8:
+  - migración 0020 (`trips.remito_email_enviado_at TIMESTAMPTZ`)
+  - `remito-actions.ts`: rand4 en filename; auto-email eliminado; `sendRemitoEmailAction` (envía N remitos + marca timestamp)
+  - `lib/server/remitos/operator-remito-actions.ts` (NUEVO): `uploadRemitoFromOperatorAction` con `requireRole(OPERADOR,ADMIN)`
+  - `lib/server/reports/remitos-report-queries.ts` (NUEVO): `listRemitosReport` con filtros
+  - `templates.ts`: `remitosMultipleSubject` + `remitosMultipleHtml`
+  - `trip-data-form.tsx`: UI multi-remito (lista todos, upload siempre EN_CURSO, "Enviar Mail")
+  - `trip-remito-actions.tsx` (NUEVO): upload operador + lista + "Enviar Mail" + timestamp
+  - `trip-table.tsx`: usa `TripRemitoActions`
+  - `app/operador/reportes/remitos/page.tsx` + `remitos-report-table.tsx` (NUEVO): reporte con filtros
+  - Nav: "Remitos" en dropdown Reportes
+- Verificación E2E de los 3 PRs con Playwright (dev local + Supabase producción):
+  - PR #40: botón "Confirmar Remitos" ✓
+  - PR #41: VJ-00198 creado con Fecha entrega 30/6/2026, visible en detalle ✓
+  - PR #42: VJ-00058 con 2 remitos, "Enviar Mail", timestamp en operador, reporte con ✓ ✓
+- Datos de prueba eliminados post-verificación (VJ-00198, 2 remitos VJ-00058, email timestamp reset)
+- Migraciones aplicadas en Supabase: 0017, 0018, 0019, 0020
+
+### In progress
+- Nada a medio hacer
+
+### Next
+- Aguardar próximas secciones del documento funcional del cliente para nuevos /nuevo-requerimiento
+
+### Decisions
+- Sufijo rand4 en nombre de remito Drive: `Math.random().toString(36).slice(2,6)` — sin query al subir, prob. colisión despreciable para N remitos del mismo viaje
+- Email de remitos ya NO es automático al subir — solo manual vía "Enviar Mail" (cambio de comportamiento confirmado por cliente)
+- `remito_email_enviado_at` como única fuente de verdad compartida entre chofer y operador
+- Upload a Google Drive desde dev local puede exceder timeout 25s (Vercel en producción no tiene este problema)
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-13 — Scope change: reqs 2.5, 2.6, 2.7, 2.8 aprobados via /nuevo-requerimiento
 
 ### Done

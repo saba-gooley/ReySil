@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-13 (sesion 22 — aprobados reqs 2.5/2.6/2.7/2.8; inicio construccion)
+> Ultima actualizacion: 2026-06-13 (sesion 22 — reqs 2.5/2.6/2.7/2.8 construidos y mergeados PRs #40/#41/#42; 4 migraciones aplicadas)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 22: aprobados via /nuevo-requerimiento los reqs 2.5 (Fecha Entrega Contenedor), 2.6 (etiqueta botón remito), 2.7 (Múltiples Remitos + email manual), 2.8 (Upload remito por operador + reporte). Orden de construcción: 2.6 → 2.5 → 2.7+2.8, ramas + PRs separados. Migraciones pendientes: 0019 (reservations.fecha_entrega) y 0020 (trips.remito_email_enviado_at).
+✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 22 completa: aprobados, construidos, verificados E2E y mergeados los reqs 2.5 (PR #41), 2.6 (PR #40) y 2.7+2.8 (PR #42). Todas las migraciones 0017-0020 aplicadas en Supabase. También en esta sesión: mergeados PRs #37/#38/#39 (reqs 2.13/2.14/2.15 de sesión 21) y resuelta consulta de cliente sobre secuencialidad de códigos VJ-#### (explicación de timestamps idénticos en backfill).
 
 ---
 
@@ -446,8 +446,11 @@
 
 **Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
 
-### Siguiente — Requerimientos 2.5, 2.6, 2.7, 2.8 pendientes de análisis
-Pendiente de /nuevo-requerimiento: imagen recibida en sesión 21-cont con reqs 2.5 (Fecha de Entrega en Solicitudes Contenedor), 2.6 (cambio etiqueta botón remito en chofer), 2.7 (Múltiples Remitos por Viaje), 2.8 (Carga de Remitos por el Operador — texto parcial, confirmar alcance).
+### Próximos requerimientos del cliente
+Pendiente de recibir próximas secciones del documento funcional del cliente (los reqs se presentan como 2.X). Los últimos aprobados y construidos fueron 2.5-2.8 (sesión 22). No hay bloqueantes activos.
+
+### Deuda técnica puntual de sesión 22
+- El upload de remitos a Google Drive desde servidor de desarrollo local puede exceder los 25s de timeout (Drive responde más lento sin la latencia optimizada de Vercel). En producción no se reproduce. Verificado por el hecho de que el `remito_email_enviado_at` se guardó correctamente durante la verificación E2E.
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
