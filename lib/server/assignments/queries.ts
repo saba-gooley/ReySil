@@ -13,6 +13,7 @@ export type OperatorTripRow = {
   fecha_solicitada: string | null;
   observaciones_cliente: string | null;
   created_at: string;
+  remito_email_enviado_at: string | null;
   clients: {
     nombre: string;
     codigo: string;
@@ -76,7 +77,7 @@ const OPERATOR_TRIP_SELECT = `
   id, codigo, client_id, tipo, estado, container_id,
   origen_deposit_id,
   origen_descripcion, destino_descripcion,
-  fecha_solicitada, observaciones_cliente, created_at,
+  fecha_solicitada, observaciones_cliente, created_at, remito_email_enviado_at,
   clients(nombre, codigo),
   trip_assignments(id, patente, patente_acoplado, driver_id, comentario_asignacion, drivers(id, nombre, apellido, codigo)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),

@@ -219,3 +219,64 @@ export function solicitudHtml(data: SolicitudEmailData): string {
 
   return layout(`Solicitud de ${data.tipoSolicitud} — ReySil`, body);
 }
+
+// =========================================================================
+// Múltiples Remitos por Viaje (req. 2.7/2.8)
+// =========================================================================
+
+export type RemitosMultipleEmailData = {
+  clientName: string;
+  driverName: string;
+  patente: string;
+  destino: string;
+  fecha: string;
+  codigo: string;
+  tipoSolicitud: string;
+  numeroContenedor?: string;
+  mercaderia?: string;
+  orden?: string;
+  remitos: { url: string; filename?: string }[];
+};
+
+export function remitosMultipleSubject(data: RemitosMultipleEmailData): string {
+  return `ReySil — Remitos de viaje ${data.codigo} — ${data.clientName}`;
+}
+
+export function remitosMultipleHtml(data: RemitosMultipleEmailData): string {
+  const remitosLinks = data.remitos
+    .map(
+      (r, i) =>
+        `<li style="margin:6px 0;">
+          <a href="${r.url}" target="_blank" style="color:${BRAND_RED};text-decoration:underline;font-size:14px;">
+            Remito ${i + 1}${r.filename ? ` — ${r.filename}` : ""}
+          </a>
+        </li>`,
+    )
+    .join("");
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:${BRAND_RED_DARK};font-size:18px;">Remitos del viaje ${data.codigo}</h2>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5;">
+      Estimado/a <strong>${data.clientName}</strong>, a continuación encontrará los remitos del viaje.
+    </p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:16px;">
+      <tbody>
+        ${dataRow("Código viaje", data.codigo)}
+        ${dataRow("Tipo", data.tipoSolicitud)}
+        ${dataRow("Destino", data.destino)}
+        ${dataRow("Fecha", data.fecha)}
+        ${dataRow("Chofer", data.driverName)}
+        ${dataRow("Patente", data.patente)}
+        ${data.numeroContenedor ? dataRow("Contenedor", data.numeroContenedor) : ""}
+        ${data.mercaderia ? dataRow("Mercadería", data.mercaderia) : ""}
+        ${data.orden ? dataRow("Orden", data.orden) : ""}
+      </tbody>
+    </table>
+    <p style="margin:0 0 8px;color:#374151;font-size:14px;font-weight:600;">Remitos adjuntos (${data.remitos.length}):</p>
+    <ul style="margin:0 0 16px;padding-left:20px;">
+      ${remitosLinks}
+    </ul>`;
+
+  return layout(`Remitos viaje ${data.codigo} — ReySil`, body);
+}
+
