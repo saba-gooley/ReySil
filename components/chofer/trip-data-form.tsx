@@ -135,19 +135,14 @@ function FinalizeSection({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showKmConfirm, setShowKmConfirm] = useState(false);
   const [showRemitoConfirm, setShowRemitoConfirm] = useState(false);
 
-  async function handleFinalize(skipRemito: boolean, skipKm: boolean) {
+  async function handleFinalize(skipRemito: boolean) {
     setLoading(true);
     setError(null);
-    const result = await finalizeTripAction(tripId, skipRemito, undefined, skipKm);
+    const result = await finalizeTripAction(tripId, skipRemito);
     setLoading(false);
 
-    if (result.error === "__NO_KM__") {
-      setShowKmConfirm(true);
-      return;
-    }
     if (result.error === "__NO_REMITO__") {
       setShowRemitoConfirm(true);
       return;
@@ -159,33 +154,6 @@ function FinalizeSection({
     onDone();
   }
 
-  if (showKmConfirm) {
-    return (
-      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
-        <p className="text-sm font-medium text-yellow-800">
-          No se registraron los km de este viaje. ¿Desea finalizar de todas formas?
-        </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => { setShowKmConfirm(false); handleFinalize(false, true); }}
-            disabled={loading}
-            className="flex-1 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
-          >
-            {loading ? "Finalizando..." : "Sí, finalizar sin km"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowKmConfirm(false)}
-            className="flex-1 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-          >
-            No, volver
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (showRemitoConfirm) {
     return (
       <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
@@ -195,7 +163,7 @@ function FinalizeSection({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => handleFinalize(true, true)}
+            onClick={() => handleFinalize(true)}
             disabled={loading}
             className="flex-1 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
           >
@@ -218,7 +186,7 @@ function FinalizeSection({
       {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
       <button
         type="button"
-        onClick={() => handleFinalize(false, false)}
+        onClick={() => handleFinalize(false)}
         disabled={loading}
         className="w-full rounded-md bg-green-600 px-4 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
       >

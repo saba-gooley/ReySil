@@ -6,6 +6,38 @@
 
 ---
 
+## Sesión 2026-06-12 — Reqs 2.13/2.14/2.15: aprobados, construidos (PRs #37/#38/#39) y PR #39 verificado E2E
+
+### Done
+- /nuevo-requerimiento: aprobados 3 requerimientos del cliente (2.13 Código Viaje Secuencial — tipo A; 2.14 Validación Km cierre turno — tipo D; 2.15 ABM Tipos de Camión — tipo B → Módulo 11)
+- PLAN.md actualizado (módulo 11, tabla truck_types, codigo en trips, convención nombre remito); `.claude/modules/tipos-camion.md` creado
+- **PR #37** (`feature/validacion-km-cierre-turno`) — 2.14: `registerShiftEvent("fin_turno")` valida `shift_logs.km_50/km_100` con `__NO_KM__` confirmable (shift-view.tsx); `finalizeTripAction` ya no valida km (trip-actions.ts, trip-data-form.tsx). Incluye commit de docs con el scope change.
+- **PR #38** (`feature/codigo-viaje-secuencial`) — 2.13: migración 0017 (`trips.codigo` + secuencia `next_trip_codigo()` + backfill por created_at), codigo en OperatorTripRow/TripRow/ChoferTripRow/listRemitos, archivo remito Drive `[Codigo]-[Cliente]-[Fecha].ext`, columna Código primera en trip-table/trip-list/remitos-view, código en card chofer, búsqueda por código (filtro trip-table + input portal cliente + ilike server-side en remitos)
+- **PR #39** (`feature/abm-tipos-camion`) — 2.15: migración 0018 (truck_types + RLS escritura solo ADMIN + seed 7 valores), `lib/server/truck-types/`, `truck-type-manager.tsx`, página `/operador/configuracion/tipos-camion`, forms Reparto (cliente/operador/grilla) cargan options desde BD, `tipo_camion` deja de ser enum Zod, nav Configuración
+- **Migración 0018 aplicada en Supabase por el usuario** (0017 pendiente)
+- **Verificación E2E PR #39** (/verify con Playwright, dev local contra Supabase producción, login operador@reysil.test): options del select cargan de truck_types ✓; solicitud para "Cliente de Prueba SA" guardada con `metadata.tipo_camion: "Doble Piso"` verificada en BD y en Pendientes ✓; ABM como OPERADOR solo lectura ✓; alta/baja dinámica de tipo se refleja en el form ✓. Viaje de prueba y tipo de prueba eliminados de producción al cerrar.
+
+### In progress
+- Nada a medio hacer — los 3 PRs están completos y pusheados, esperando revisión del usuario
+
+### Next
+1. Revisar y mergear PR #37 (sin migración)
+2. Aplicar migración 0017 en Supabase → mergear PR #38
+3. Mergear PR #39 → marcar Módulo 11 ✅ Completo en ESTADO.md y PLAN.md
+4. Verificación visual de la columna Código en resoluciones chicas (advertencia del cliente sobre scroll lateral)
+
+### Decisions
+- Backfill de códigos históricos ordenado por created_at; secuencia continúa desde el último número; `next_trip_codigo()` con `greatest(5, length)` para no truncar más allá de 99999
+- truck_types: baja lógica (is_active) — viajes históricos conservan tipos desactivados; valor guardado sigue siendo el nombre en `metadata.tipo_camion` (sin migrar datos)
+- `tipo_camion` en Zod pasa a string ≤50 sin validar pertenencia contra BD (el form solo ofrece activos) — decisión consciente, anotada como deuda
+- Si la columna Código rompe el layout de alguna tabla, se acorta/quita la columna menos crítica de esa tabla (advertencia explícita del cliente sobre scroll lateral)
+- Docs de gestión viajan en el PR #37; al mergear #38/#39 resolver conflictos de ESTADO/SESSION_LOG conservando la versión de #37
+
+### Blockers
+- None (hallazgo no bloqueante: actions de notificación hacen await SMTP sin timeout — anotado en Deuda Técnica)
+
+---
+
 ## Sesión 2026-05-29 — Duracion Paradas + Reporte Paradas + Salida Deposito Contenedor
 
 ### Done

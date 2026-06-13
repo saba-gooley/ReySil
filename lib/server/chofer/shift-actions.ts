@@ -20,6 +20,7 @@ type ShiftField =
 export async function registerShiftEvent(
   field: ShiftField,
   timestamp?: string,
+  skipKmCheck = false,
 ): Promise<ChoferActionState> {
   try {
     const user = await getCurrentUser();
@@ -32,10 +33,17 @@ export async function registerShiftEvent(
 
     const { data: existing } = await supabase
       .from("shift_logs")
-      .select("id")
+      .select("id, km_50, km_100")
       .eq("driver_id", driverId)
       .eq("fecha", today)
       .maybeSingle();
+
+    // Soft check al cierre del turno: los km son datos del turno (req. 2.14)
+    if (field === "fin_turno" && !skipKmCheck) {
+      if (!existing || (existing.km_50 == null && existing.km_100 == null)) {
+        return { error: "__NO_KM__" };
+      }
+    }
 
     if (existing) {
       const { error } = await supabase

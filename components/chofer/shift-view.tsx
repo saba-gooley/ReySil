@@ -215,33 +215,43 @@ function ShiftEventField({
 }) {
   const [time, setTime] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingKmTimestamp, setPendingKmTimestamp] = useState<string | null>(null);
 
-  async function handleRegister(useNow: boolean) {
+  async function submitEvent(timestamp: string, skipKmCheck: boolean) {
     setLoading(true);
     onError("");
 
     try {
-      const timestamp = useNow
-        ? new Date().toISOString()
-        : (() => {
-            const today = new Date().toISOString().split("T")[0];
-            return new Date(`${today}T${time}:00`).toISOString();
-          })();
-
       const result = await registerShiftEvent(
         field as "llegada_deposito" | "salida_deposito" | "vuelta_deposito" | "fin_turno",
         timestamp,
+        skipKmCheck,
       );
       setLoading(false);
+      if (result.error === "__NO_KM__") {
+        setPendingKmTimestamp(timestamp);
+        return;
+      }
       if (result.error) {
         onError(result.error);
       } else {
+        setPendingKmTimestamp(null);
         onDone();
       }
     } catch (err) {
       setLoading(false);
       onError(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  function handleRegister(useNow: boolean) {
+    const timestamp = useNow
+      ? new Date().toISOString()
+      : (() => {
+          const today = new Date().toISOString().split("T")[0];
+          return new Date(`${today}T${time}:00`).toISOString();
+        })();
+    submitEvent(timestamp, false);
   }
 
   if (value) {
@@ -254,6 +264,33 @@ function ShiftEventField({
             minute: "2-digit",
           })}
         </p>
+      </div>
+    );
+  }
+
+  if (pendingKmTimestamp) {
+    return (
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-4 space-y-3">
+        <p className="text-sm font-medium text-yellow-800">
+          No se registraron los km del turno. ¿Desea finalizar el turno de todas formas?
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => submitEvent(pendingKmTimestamp, true)}
+            disabled={loading}
+            className="flex-1 rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+          >
+            {loading ? "Finalizando..." : "Sí, finalizar sin km"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPendingKmTimestamp(null)}
+            className="flex-1 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+          >
+            No, volver
+          </button>
+        </div>
       </div>
     );
   }
