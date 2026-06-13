@@ -14,6 +14,7 @@ const ESTADO_LABELS: Record<string, { label: string; color: string }> = {
 
 export function TripList({ trips }: { trips: TripRow[] }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState("");
 
   if (trips.length === 0) {
     return (
@@ -23,40 +24,63 @@ export function TripList({ trips }: { trips: TripRow[] }) {
     );
   }
 
-  return (
-    <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500">
-          <tr>
-            <th className="px-4 py-3">Estado</th>
-            <th className="px-4 py-3">Tipo</th>
-            <th className="px-4 py-3">Fecha</th>
-            <th className="px-4 py-3">Origen</th>
-            <th className="px-4 py-3">Destino</th>
-            <th className="px-4 py-3">Chofer / Patente</th>
-            <th className="px-4 py-3 w-8"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-neutral-100">
-          {trips.map((trip) => {
-            const isExpanded = expandedId === trip.id;
-            const estado = ESTADO_LABELS[trip.estado] ?? {
-              label: trip.estado,
-              color: "bg-neutral-100 text-neutral-600",
-            };
+  let filtered = trips;
+  if (filterText.trim()) {
+    const words = filterText.toLowerCase().trim().split(/\s+/);
+    filtered = trips.filter((t) => {
+      const tokens = [t.codigo, t.origen_descripcion, t.destino_descripcion]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .split(/\s+/);
+      return words.every((w) => tokens.some((tok) => tok.startsWith(w)));
+    });
+  }
 
-            return (
-              <TripRowComponent
-                key={trip.id}
-                trip={trip}
-                estado={estado}
-                isExpanded={isExpanded}
-                onToggle={() => setExpandedId(isExpanded ? null : trip.id)}
-              />
-            );
-          })}
-        </tbody>
-      </table>
+  return (
+    <div className="space-y-3">
+      <input
+        type="text"
+        placeholder="Buscar por código, origen o destino..."
+        value={filterText}
+        onChange={(e) => setFilterText(e.target.value)}
+        className="w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+      />
+      <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500">
+            <tr>
+              <th className="px-4 py-3">Código</th>
+              <th className="px-4 py-3">Estado</th>
+              <th className="px-4 py-3">Tipo</th>
+              <th className="px-4 py-3">Fecha</th>
+              <th className="px-4 py-3">Origen</th>
+              <th className="px-4 py-3">Destino</th>
+              <th className="px-4 py-3">Chofer / Patente</th>
+              <th className="px-4 py-3 w-8"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-100">
+            {filtered.map((trip) => {
+              const isExpanded = expandedId === trip.id;
+              const estado = ESTADO_LABELS[trip.estado] ?? {
+                label: trip.estado,
+                color: "bg-neutral-100 text-neutral-600",
+              };
+
+              return (
+                <TripRowComponent
+                  key={trip.id}
+                  trip={trip}
+                  estado={estado}
+                  isExpanded={isExpanded}
+                  onToggle={() => setExpandedId(isExpanded ? null : trip.id)}
+                />
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -80,6 +104,9 @@ function TripRowComponent({
         className="cursor-pointer hover:bg-neutral-50"
         onClick={onToggle}
       >
+        <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-neutral-600">
+          {trip.codigo}
+        </td>
         <td className="px-4 py-3">
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${estado.color}`}
@@ -110,7 +137,7 @@ function TripRowComponent({
       </tr>
       {isExpanded && (
         <tr>
-          <td colSpan={7} className="bg-neutral-50 px-4 py-4">
+          <td colSpan={8} className="bg-neutral-50 px-4 py-4">
             <TripDetail trip={trip} />
           </td>
         </tr>
@@ -131,6 +158,7 @@ function TripDetail({ trip }: { trip: TripRow }) {
           Datos del viaje
         </h4>
         <dl className="space-y-1">
+          <Row label="Código" value={trip.codigo} />
           <Row label="Tipo" value={trip.tipo} />
           <Row label="Estado" value={ESTADO_LABELS[trip.estado]?.label ?? trip.estado} />
           <Row

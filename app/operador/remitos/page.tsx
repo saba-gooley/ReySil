@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function RemitosPage({
   searchParams,
 }: {
-  searchParams: { page?: string; from?: string; to?: string; clientId?: string };
+  searchParams: { page?: string; from?: string; to?: string; clientId?: string; codigo?: string };
 }) {
   const page = Number(searchParams.page) || 1;
   const [result, clients] = await Promise.all([
@@ -16,6 +16,7 @@ export default async function RemitosPage({
       from: searchParams.from,
       to: searchParams.to,
       clientId: searchParams.clientId,
+      codigo: searchParams.codigo,
     }),
     listClients(),
   ]);
@@ -32,6 +33,7 @@ export default async function RemitosPage({
         from={searchParams.from}
         to={searchParams.to}
         clientId={searchParams.clientId}
+        codigo={searchParams.codigo}
         clients={clients}
       />
     </div>

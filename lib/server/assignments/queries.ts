@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 export type OperatorTripRow = {
   id: string;
+  codigo: string;
   client_id: string;
   tipo: "REPARTO" | "CONTENEDOR";
   estado: string;
@@ -71,7 +72,7 @@ export type OperatorTripRow = {
 };
 
 const OPERATOR_TRIP_SELECT = `
-  id, client_id, tipo, estado, container_id,
+  id, codigo, client_id, tipo, estado, container_id,
   origen_deposit_id,
   origen_descripcion, destino_descripcion,
   fecha_solicitada, observaciones_cliente, created_at,
@@ -366,6 +367,7 @@ export async function listRemitos(options?: {
   from?: string;
   to?: string;
   clientId?: string;
+  codigo?: string;
   page?: number;
   pageSize?: number;
 }) {
@@ -379,7 +381,7 @@ export async function listRemitos(options?: {
     .select(
       `
       id, drive_url, estado, observaciones, uploaded_at, filename,
-      trips!inner(id, tipo, fecha_solicitada, destino_descripcion, client_id, clients(nombre, codigo))
+      trips!inner(id, codigo, tipo, fecha_solicitada, destino_descripcion, client_id, clients(nombre, codigo))
     `,
       { count: "exact" },
     )
@@ -394,6 +396,9 @@ export async function listRemitos(options?: {
   }
   if (options?.clientId) {
     query = query.eq("trips.client_id", options.clientId);
+  }
+  if (options?.codigo?.trim()) {
+    query = query.ilike("trips.codigo", `%${options.codigo.trim()}%`);
   }
 
   const { data, error, count } = await query;
@@ -414,6 +419,7 @@ export async function listRemitos(options?: {
       filename: r.filename as string | null,
       trip: {
         id: tripObj?.id as string,
+        codigo: tripObj?.codigo as string,
         tipo: tripObj?.tipo as string,
         fecha_solicitada: tripObj?.fecha_solicitada as string | null,
         destino_descripcion: tripObj?.destino_descripcion as string | null,

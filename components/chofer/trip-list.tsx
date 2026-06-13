@@ -138,6 +138,9 @@ function TripCard({
           <div className="flex items-center gap-2">
             <EstadoBadge estado={trip.estado} />
             <span className="text-sm font-medium">{trip.tipo}</span>
+            <span className="font-mono text-xs text-neutral-500">
+              {trip.codigo}
+            </span>
             {showDate && trip.fecha_solicitada && (
               <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs font-mono text-neutral-500">
                 {formatShortDate(trip.fecha_solicitada)}

@@ -12,6 +12,7 @@ type RemitoRow = {
   filename: string | null;
   trip: {
     id: string;
+    codigo: string;
     tipo: string;
     fecha_solicitada: string | null;
     destino_descripcion: string | null;
@@ -32,6 +33,7 @@ export function RemitosView({
   from,
   to,
   clientId,
+  codigo,
   clients,
 }: {
   remitos: RemitoRow[];
@@ -40,6 +42,7 @@ export function RemitosView({
   from?: string;
   to?: string;
   clientId?: string;
+  codigo?: string;
   clients: ClientRow[];
 }) {
   const router = useRouter();
@@ -47,6 +50,7 @@ export function RemitosView({
   const [fromDate, setFromDate] = useState(from ?? "");
   const [toDate, setToDate] = useState(to ?? "");
   const [selectedClient, setSelectedClient] = useState(clientId ?? "");
+  const [codigoFilter, setCodigoFilter] = useState(codigo ?? "");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const pageSize = 20;
@@ -57,6 +61,7 @@ export function RemitosView({
     if (fromDate) params.set("from", fromDate);
     if (toDate) params.set("to", toDate);
     if (selectedClient) params.set("clientId", selectedClient);
+    if (codigoFilter.trim()) params.set("codigo", codigoFilter.trim());
     router.push(`/operador/remitos?${params.toString()}`);
     router.refresh();
   }
@@ -107,6 +112,16 @@ export function RemitosView({
             ))}
           </select>
         </div>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-500">Código de viaje</label>
+          <input
+            type="text"
+            placeholder="VJ-00001"
+            value={codigoFilter}
+            onChange={(e) => setCodigoFilter(e.target.value)}
+            className={inputClass}
+          />
+        </div>
         <button
           type="button"
           onClick={applyFilters}
@@ -125,6 +140,7 @@ export function RemitosView({
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500">
               <tr>
+                <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Cliente</th>
                 <th className="px-4 py-3">Fecha subida</th>
                 <th className="px-4 py-3">Viaje</th>
@@ -137,6 +153,9 @@ export function RemitosView({
             <tbody className="divide-y divide-neutral-100">
               {remitos.map((r) => (
                 <tr key={r.id}>
+                  <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-neutral-600">
+                    {r.trip.codigo}
+                  </td>
                   <td className="px-4 py-3">{r.client?.nombre ?? "—"}</td>
                   <td className="px-4 py-3 text-xs text-neutral-500">
                     {new Date(r.uploaded_at).toLocaleString("es-AR")}
