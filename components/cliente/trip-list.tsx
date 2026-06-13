@@ -227,6 +227,14 @@ function TripDetail({ trip }: { trip: TripRow }) {
                       : null
                   }
                 />
+                <Row
+                  label="Fecha entrega"
+                  value={
+                    res.fecha_entrega
+                      ? new Date(res.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")
+                      : null
+                  }
+                />
                 <Row label="Booking" value={res.numero_booking} />
                 <Row label="Naviera" value={res.naviera} />
                 <Row label="Buque" value={res.buque} />

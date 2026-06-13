@@ -207,6 +207,14 @@ function TripCard({
                 Obs: {trip.observaciones_cliente}
               </p>
             )}
+            {trip.tipo === "CONTENEDOR" && trip.containers?.reservations?.fecha_entrega && (
+              <div className="flex gap-2 text-xs">
+                <span className="w-24 shrink-0 font-medium text-neutral-500">Fecha entrega:</span>
+                <span className="text-neutral-900">
+                  {new Date(trip.containers.reservations.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")}
+                </span>
+              </div>
+            )}
             {trip.trip_reparto_fields && (
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-neutral-500">
                 {trip.trip_reparto_fields.peso_kg && (

@@ -388,6 +388,14 @@ function TripDetail({
                 }
               />
               <Detail
+                label="Fecha entrega"
+                value={
+                  trip.containers.reservations.fecha_entrega
+                    ? new Date(trip.containers.reservations.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")
+                    : null
+                }
+              />
+              <Detail
                 label="Fecha arribo"
                 value={
                   trip.containers.reservations.fecha_arribo

@@ -58,6 +58,7 @@ export const CreateContenedorSchema = z.object({
   buque: z.string().optional().default(""),
   fecha_arribo: z.string().optional().default(""),
   fecha_carga: z.string().min(1, "Fecha de carga requerida"),
+  fecha_entrega: z.string().optional().default(""),
   orden: z.string().optional().default(""),
   mercaderia: z.string().optional().default(""),
   despacho: z.string().optional().default(""),
