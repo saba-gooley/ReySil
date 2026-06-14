@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { RemitosReportRow } from "@/lib/server/reports/remitos-report-queries";
+import { sendRemitoEmailAction } from "@/lib/server/chofer/remito-actions";
+
+type EmailState = { loading: boolean; sent: boolean; error: string | null };
 
 export function RemitosReportTable({
   rows,
@@ -16,6 +19,18 @@ export function RemitosReportTable({
   const [fechaDesde, setFechaDesde] = useState(filters.fechaDesde ?? "");
   const [fechaHasta, setFechaHasta] = useState(filters.fechaHasta ?? "");
   const [emailEnviado, setEmailEnviado] = useState(filters.emailEnviado ?? "");
+  const [emailStates, setEmailStates] = useState<Record<string, EmailState>>({});
+
+  async function handleEnviarMail(tripId: string) {
+    setEmailStates((s) => ({ ...s, [tripId]: { loading: true, sent: false, error: null } }));
+    const result = await sendRemitoEmailAction(tripId);
+    if (result.error) {
+      setEmailStates((s) => ({ ...s, [tripId]: { loading: false, sent: false, error: result.error! } }));
+    } else {
+      setEmailStates((s) => ({ ...s, [tripId]: { loading: false, sent: true, error: null } }));
+      router.refresh();
+    }
+  }
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -83,6 +98,7 @@ export function RemitosReportTable({
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Remitos</th>
                 <th className="px-4 py-3">Mail enviado</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -117,6 +133,27 @@ export function RemitosReportTable({
                     ) : (
                       <span className="text-neutral-400">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.remitos_count > 0 && (() => {
+                      const st = emailStates[r.trip_id];
+                      if (st?.sent) return <span className="text-xs text-green-700">Enviado</span>;
+                      if (st?.error) return <span className="text-xs text-red-600">{st.error}</span>;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleEnviarMail(r.trip_id)}
+                          disabled={st?.loading}
+                          className={`rounded px-2 py-1 text-xs font-medium disabled:opacity-50 ${
+                            r.email_enviado_at
+                              ? "border border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                              : "bg-reysil-red text-white hover:bg-reysil-red-dark"
+                          }`}
+                        >
+                          {st?.loading ? "Enviando..." : r.email_enviado_at ? "Reenviar Mail" : "Enviar Mail"}
+                        </button>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}

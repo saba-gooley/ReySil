@@ -18,7 +18,7 @@ function UploadBtn() {
       disabled={pending}
       className="rounded-md bg-neutral-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
     >
-      {pending ? "Subiendo..." : "Subir remito"}
+      {pending ? "Confirmando..." : "Confirmar Remitos"}
     </button>
   );
 }

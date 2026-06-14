@@ -145,7 +145,6 @@ export function RemitosView({
                 <th className="px-4 py-3">Fecha subida</th>
                 <th className="px-4 py-3">Viaje</th>
                 <th className="px-4 py-3">Destino</th>
-                <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Archivo</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -163,19 +162,6 @@ export function RemitosView({
                   <td className="px-4 py-3 text-xs">{r.trip.tipo}</td>
                   <td className="px-4 py-3 text-xs">
                     {r.trip.destino_descripcion ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        r.estado === "VALIDADO"
-                          ? "bg-green-100 text-green-700"
-                          : r.estado === "RECHAZADO"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {r.estado}
-                    </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-neutral-500">
                     {r.filename ?? "remito"}

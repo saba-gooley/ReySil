@@ -79,6 +79,7 @@ export function FinalizadasView({
         showAssignment
         showEvents
         showRemitos
+        compactColumns
       />
 
       {totalPages > 1 && (
