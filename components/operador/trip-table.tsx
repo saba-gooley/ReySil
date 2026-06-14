@@ -366,6 +366,14 @@ function TripDetail({
           <Detail label="Numero" value={trip.containers.numero} />
           <Detail label="Tipo" value={trip.containers.tipo} />
           <Detail label="Peso (kg)" value={trip.containers.peso_carga_kg?.toString()} />
+          <Detail
+            label="Fecha entrega"
+            value={
+              trip.containers.fecha_entrega
+                ? new Date(trip.containers.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")
+                : null
+            }
+          />
           {trip.containers.reservations && (
             <>
               <h4 className="text-xs font-semibold uppercase text-neutral-400 mt-2">

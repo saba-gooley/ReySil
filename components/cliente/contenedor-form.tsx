@@ -13,6 +13,7 @@ type ContainerEntry = {
   key: number;
   numero: string;
   peso_carga_kg: string;
+  fecha_entrega: string;
 };
 
 const initialState: TripActionState = {};
@@ -37,7 +38,7 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
 
   const [nextKey, setNextKey] = useState(2);
   const [containers, setContainers] = useState<ContainerEntry[]>([
-    { key: 1, numero: "", peso_carga_kg: "" },
+    { key: 1, numero: "", peso_carga_kg: "", fecha_entrega: "" },
   ]);
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
   function addContainer() {
     setContainers([
       ...containers,
-      { key: nextKey, numero: "", peso_carga_kg: "" },
+      { key: nextKey, numero: "", peso_carga_kg: "", fecha_entrega: fechaEntrega },
     ]);
     setNextKey(nextKey + 1);
   }
@@ -89,6 +90,7 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
         numero: c.numero,
         tipo: "",
         peso_carga_kg: c.peso_carga_kg ? Number(c.peso_carga_kg) : null,
+        fecha_entrega: c.fecha_entrega || "",
         observaciones: "",
       })),
     };
@@ -309,6 +311,19 @@ export function ContenedorForm({ deposits }: { deposits: Deposit[] }) {
                 }
                 min="0"
                 step="0.01"
+                className={inputClass}
+              />
+            </div>
+            <div className="w-40">
+              <label className="mb-1 block text-xs font-medium text-neutral-600">
+                Fecha de entrega
+              </label>
+              <input
+                type="date"
+                value={c.fecha_entrega}
+                onChange={(e) =>
+                  updateContainer(c.key, "fecha_entrega", e.target.value)
+                }
                 className={inputClass}
               />
             </div>

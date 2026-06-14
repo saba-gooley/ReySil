@@ -41,6 +41,7 @@ export type OperatorTripRow = {
     numero: string | null;
     tipo: string | null;
     peso_carga_kg: number | null;
+    fecha_entrega: string | null;
     reservation_id: string;
     reservations: {
       numero_booking: string | null;
@@ -81,7 +82,7 @@ const OPERATOR_TRIP_SELECT = `
   clients(nombre, codigo),
   trip_assignments(id, patente, patente_acoplado, driver_id, comentario_asignacion, drivers(id, nombre, apellido, codigo)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
-  containers(id, numero, tipo, peso_carga_kg, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
+  containers(id, numero, tipo, peso_carga_kg, fecha_entrega, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   trip_events(id, tipo, ocurrido_at, observaciones),
   remitos(id, drive_url, estado, uploaded_at)
 `;

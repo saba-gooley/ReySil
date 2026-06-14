@@ -48,6 +48,7 @@ const containerEntry = z.object({
   numero: z.string().optional().default(""),
   tipo: z.string().optional().default(""),
   peso_carga_kg: z.coerce.number().nonnegative().optional().nullable(),
+  fecha_entrega: z.string().optional().default(""),
   observaciones: z.string().optional().default(""),
 });
 

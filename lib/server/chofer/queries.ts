@@ -26,6 +26,7 @@ export type ChoferTripRow = {
     numero: string | null;
     tipo: string | null;
     peso_carga_kg: number | null;
+    fecha_entrega: string | null;
     reservations: { fecha_entrega: string | null } | null;
   } | null;
   trip_events: {
@@ -55,7 +56,7 @@ const CHOFER_TRIP_SELECT = `
   clients(nombre),
   trip_assignments(patente, comentario_asignacion),
   trip_reparto_fields(ndv, peso_kg, toneladas, cantidad_bultos, metadata),
-  containers(numero, tipo, peso_carga_kg, reservations(fecha_entrega)),
+  containers(numero, tipo, peso_carga_kg, fecha_entrega, reservations(fecha_entrega)),
   trip_events(id, tipo, ocurrido_at),
   trip_driver_data(id, km_inicial, km_50_porc, km_100_porc, km_final, pernocto, observaciones),
   remitos(id, drive_url, estado)
