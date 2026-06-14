@@ -320,6 +320,7 @@ export async function createContenedorAction(
         numero: c.numero || null,
         tipo: c.tipo || null,
         peso_carga_kg: c.peso_carga_kg ?? null,
+        fecha_entrega: c.fecha_entrega || null,
         observaciones: c.observaciones || null,
       })
       .select("id")
@@ -502,6 +503,7 @@ export async function createContenedorForClientAction(
         numero: c.numero || null,
         tipo: c.tipo || null,
         peso_carga_kg: c.peso_carga_kg ?? null,
+        fecha_entrega: c.fecha_entrega || null,
         observaciones: c.observaciones || null,
       })
       .select("id")

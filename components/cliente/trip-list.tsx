@@ -230,8 +230,8 @@ function TripDetail({ trip }: { trip: TripRow }) {
                 <Row
                   label="Fecha entrega"
                   value={
-                    res.fecha_entrega
-                      ? new Date(res.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")
+                    trip.containers?.fecha_entrega
+                      ? new Date(trip.containers.fecha_entrega + "T00:00:00").toLocaleDateString("es-AR")
                       : null
                   }
                 />

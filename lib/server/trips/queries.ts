@@ -38,6 +38,7 @@ export type TripRow = {
     numero: string | null;
     tipo: string | null;
     peso_carga_kg: number | null;
+    fecha_entrega: string | null;
     precintos: string[] | null;
     observaciones: string | null;
     reservations: {
@@ -113,7 +114,7 @@ const TRIP_SELECT = `
   trip_assignments(patente, drivers(nombre, apellido)),
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   trip_events(id, tipo, ocurrido_at, observaciones),
-  containers(numero, tipo, peso_carga_kg, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
+  containers(numero, tipo, peso_carga_kg, fecha_entrega, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   remitos(id, drive_url, estado)
 `;
 

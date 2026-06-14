@@ -7,7 +7,7 @@ import { createContenedorForClientAction, type TripActionState } from "@/lib/ser
 
 type Client = { id: string; nombre: string };
 type Deposit = { id: string; nombre: string; direccion: string | null; tipo: string };
-type ContainerEntry = { key: number; numero: string; peso_carga_kg: string };
+type ContainerEntry = { key: number; numero: string; peso_carga_kg: string; fecha_entrega: string };
 
 const initialState: TripActionState = {};
 
@@ -32,7 +32,7 @@ export function OperatorContenedorForm({ clients }: { clients: Client[] }) {
   const [fechaEntrega, setFechaEntrega] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [nextKey, setNextKey] = useState(2);
-  const [containers, setContainers] = useState<ContainerEntry[]>([{ key: 1, numero: "", peso_carga_kg: "" }]);
+  const [containers, setContainers] = useState<ContainerEntry[]>([{ key: 1, numero: "", peso_carga_kg: "", fecha_entrega: "" }]);
 
   useEffect(() => {
     if (state.success) router.push("/operador/pendientes");
@@ -49,7 +49,7 @@ export function OperatorContenedorForm({ clients }: { clients: Client[] }) {
   }, [clientId]);
 
   function addContainer() {
-    setContainers([...containers, { key: nextKey, numero: "", peso_carga_kg: "" }]);
+    setContainers([...containers, { key: nextKey, numero: "", peso_carga_kg: "", fecha_entrega: fechaEntrega }]);
     setNextKey(nextKey + 1);
   }
   function removeContainer(key: number) {
@@ -76,6 +76,7 @@ export function OperatorContenedorForm({ clients }: { clients: Client[] }) {
       containers: containers.map((c) => ({
         numero: c.numero, tipo: "",
         peso_carga_kg: c.peso_carga_kg ? Number(c.peso_carga_kg) : null,
+        fecha_entrega: c.fecha_entrega || "",
         observaciones: "",
       })),
     };
@@ -173,6 +174,10 @@ export function OperatorContenedorForm({ clients }: { clients: Client[] }) {
             <div className="w-32">
               <label className="mb-1 block text-xs font-medium text-neutral-600">Peso (Kg)</label>
               <input type="number" value={c.peso_carga_kg} onChange={(e) => updateContainer(c.key, "peso_carga_kg", e.target.value)} min="0" step="0.01" className={inputClass} />
+            </div>
+            <div className="w-40">
+              <label className="mb-1 block text-xs font-medium text-neutral-600">Fecha de entrega</label>
+              <input type="date" value={c.fecha_entrega} onChange={(e) => updateContainer(c.key, "fecha_entrega", e.target.value)} className={inputClass} />
             </div>
             {containers.length > 1 && (
               <button type="button" onClick={() => removeContainer(c.key)} className="mb-0.5 text-sm text-red-500 hover:underline">Quitar</button>
