@@ -215,10 +215,6 @@ function TripRow({
   bodyCellClass: string;
 }) {
   const assignment = trip.trip_assignments;
-  const booking =
-    trip.tipo === "CONTENEDOR" && trip.containers?.reservations
-      ? trip.containers.reservations.numero_booking
-      : null;
 
   return (
     <>
@@ -231,16 +227,6 @@ function TripRow({
         </td>
         <td className={bodyCellClass}>
           <span className="text-xs font-medium">{trip.tipo}</span>
-          {booking && (
-            <span className="ml-1 text-xs text-neutral-400">
-              (Bkg: {booking})
-            </span>
-          )}
-          {trip.containers?.numero && (
-            <span className="ml-1 text-xs text-neutral-400">
-              #{trip.containers.numero}
-            </span>
-          )}
         </td>
         <td className={`${bodyCellClass} text-sm`}>
           <span className="block truncate">{trip.clients.nombre}</span>

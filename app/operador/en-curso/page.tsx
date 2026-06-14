@@ -16,6 +16,7 @@ export default async function EnCursoPage() {
         showAssignment
         showEvents
         showRemitos
+        compactColumns
       />
     </div>
   );
