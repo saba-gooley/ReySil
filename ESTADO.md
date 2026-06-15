@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-15 (sesion 25 — verificación E2E PRs #45–#48, merge a main, fix #49 destinos chofer)
+> Ultima actualizacion: 2026-06-15 (sesion 26 — extensión req 2.12 + fix flujo multi-destino chofer, PRs #50 #51 mergeados)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 26: extensión req 2.12 completa — chofer registra hora llegada/salida por destino, operador reordena destinos (PR #50 mergeado). Migración 0023 aplicada. Req 2.12 ahora ✅ Completo.
+✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 26: extensión req 2.12 completa + fix flujo multi-destino chofer (PRs #50 #51 mergeados). Migración 0023 aplicada. Req 2.12 ✅ Completo.
 
 ---
 
@@ -29,7 +29,7 @@
 | 2.11 | Config emails portal cliente | ✅ Completo | PR #45 mergeado. Sección "Configuración" en nav cliente, preferencias de notificaciones. |
 | 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
 | 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
-| 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (EN_CURSO). Operador reordena destinos (solo PENDIENTE/PREASIGNADO/ASIGNADO). |
+| 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -37,17 +37,22 @@
 
 ## Trabajo en Esta Sesion (2026-06-15 — Sesion 26)
 
-✅ **Extensión req 2.12 — hitos por destino + reordenamiento (rama `feature/destinos-hitos-orden`)**
+✅ **Extensión req 2.12 — hitos por destino + reordenamiento (PR #50)**
 
 - `supabase/migrations/0023_trip_destinations_horas.sql` — ALTER TABLE agrega `hora_llegada TIMESTAMPTZ` y `hora_salida TIMESTAMPTZ` a `trip_destinations`
 - `lib/server/chofer/queries.ts` + `lib/server/assignments/queries.ts` — tipos y SELECTs actualizados con `hora_llegada, hora_salida`
-- `lib/server/chofer/trip-actions.ts` — nuevo `updateDestinationHoraAction(destinationId, tipo)`: valida trip EN_CURSO + asignado al chofer, graba timestamp servidor
-- `lib/server/trips/actions.ts` — nuevo `reorderDestinationsAction(tripId, orderedIds[])`: valida rol OPERADOR/ADMIN + estado PENDIENTE/PREASIGNADO/ASIGNADO, actualiza `orden` en paralelo
-- `components/operador/destination-order-editor.tsx` (NUEVO) — lista de destinos con ↑/↓, botón "Guardar orden", muestra hora_llegada/hora_salida registradas
-- `components/operador/trip-table.tsx` — importa `DestinationOrderEditor`; en `TripDetail`: destino simple en col-1, editor full-width antes de `TripDataEditor`
-- `components/chofer/trip-list.tsx` — `DestinationHoraRow` por cada destino: muestra "Registrar llegada" / "Registrar salida" (solo EN_CURSO) con optimistic update; muestra horas formateadas en AR cuando registradas
+- `lib/server/chofer/trip-actions.ts` — `updateDestinationHoraAction(destinationId, tipo)`: valida trip EN_CURSO + asignado al chofer
+- `lib/server/trips/actions.ts` — `reorderDestinationsAction(tripId, orderedIds[])`: valida rol OPERADOR/ADMIN + estado PENDIENTE/PREASIGNADO/ASIGNADO
+- `components/operador/destination-order-editor.tsx` (NUEVO) — ↑/↓ reorder, "Guardar orden", muestra horas registradas
+- `components/operador/trip-table.tsx` — integra DestinationOrderEditor
+- `components/chofer/trip-list.tsx` — DestinationHoraRow con botones de llegada/salida por destino
 
-✅ **PR #50 mergeado a main.**
+✅ **Fix flujo multi-destino chofer (PR #51)**
+
+- `components/chofer/trip-data-form.tsx` — oculta "Registro del viaje" (Llegada/Salida al Cliente) cuando hay múltiples destinos
+- `components/chofer/trip-list.tsx` — `DestinationHoraRow` reescrito con UX completa: input hora + "Ahora" + estado verde confirmado + "Editar". Prop `canRegister` (ASIGNADO o EN_CURSO)
+- `lib/server/chofer/trip-actions.ts` — `updateDestinationHoraAction`: acepta `hora?: string` (HH:MM), permite ASIGNADO, transiciona a EN_CURSO al registrar primera llegada
+- `lib/server/chofer/trip-actions.ts` — `finalizeTripAction`: bifurca validación — multi-dest exige hora_llegada + hora_salida en todos los destinos; single-dest mantiene lógica trip_events
 
 ---
 
