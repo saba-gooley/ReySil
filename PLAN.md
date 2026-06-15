@@ -2,7 +2,7 @@
 
 > Este archivo se genera UNA VEZ al inicio del proyecto.
 > Para modificarlo usar /nuevo-requerimiento.
-> Ultima actualizacion: 2026-06-13 (rev. 4 — requerimientos 2.5/2.6/2.7/2.8: fecha entrega contenedor, etiqueta remito, multiples remitos + email manual, upload remito por operador)
+> Ultima actualizacion: 2026-06-15 (rev. 5 — requerimientos 2.9/2.10/2.11/2.12: edicion datos viaje operador/chofer, config emails cliente, multiples destinos)
 
 ---
 
@@ -120,6 +120,7 @@ public/
 | `trucks` | Camiones (marca, modelo, patente, estado activo/inactivo) |
 | `truck_types` | Tipos de camion configurables para el formulario de Reparto (nombre, activo). Escritura solo ADMIN |
 | `truck_daily_status` | Vista SQL que calcula el estado diario de cada camion (LIBRE/PREASIGNADO/ASIGNADO) cruzando trips + trip_assignments |
+| `trip_destinations` | Destinos multiples por viaje (req. 2.12). id, trip_id FK CASCADE, destino TEXT, observaciones TEXT, orden SMALLINT. Si hay filas → el viaje tiene multiples destinos. `trips.destino_descripcion` mantiene el primer destino por compat. |
 
 Todas las tablas tienen Row Level Security activado. Las policies aseguran que cada rol solo ve/modifica los datos que le corresponden:
 - **CLIENTE**: solo sus propios viajes y reservas (filtrado por `client_id` derivado del user_profile)

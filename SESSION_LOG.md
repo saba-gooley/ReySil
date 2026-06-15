@@ -6,6 +6,29 @@
 
 ---
 
+## Sesión 2026-06-15 — Scope change: reqs 2.9/2.10/2.11/2.12 aprobados via /nuevo-requerimiento
+
+### Done
+- /nuevo-requerimiento: aprobados 4 requerimientos:
+  - **2.9 Edición datos de viaje por el Operador** (tipo A) — edita horas de eventos (`trip_events`), datos de turno (`shift_logs`), inspección vehicular (`inspection_items`); reemplaza PDF actual en Drive (mismo file_id, no crea _v2)
+  - **2.10 Edición datos de viaje por el Chofer** (tipo A) — chofer corrige horas de eventos ya registrados en viajes EN_CURSO; FINALIZADOS solo editables por operador
+  - **2.11 Config de emails portal cliente** (tipo A) — nueva sección "Configuración" en nav del cliente (`cliente-nav.tsx`), página `app/cliente/configuracion/notificaciones/page.tsx`; reutiliza actions ya existentes
+  - **2.12 Solicitudes con múltiples destinos** (tipo A + migración 0022) — nueva tabla `trip_destinations`; checkbox en forms de Reparto y Contenedor; `trips.destino_descripcion` se mantiene con primer destino para compat
+- PLAN.md actualizado (tabla trip_destinations, rev. 5)
+
+### Next
+- Construir en orden: 2.11 → 2.10 → 2.9 → 2.12 (cada uno rama feature + PR)
+
+### Decisions
+- PDF de inspección: reemplaza el archivo existente en Drive (PATCH al file_id guardado) en lugar de crear _v2
+- Nav cliente: agregar "Configuración" a `cliente-nav.tsx` existente
+- `trip_destinations`: si hay filas → múltiples destinos; `trips.destino_descripcion` conserva el primer destino para backward compat
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-15 — Correcciones UI post-entrega (PRs #43/#44) — migración 0021
 
 ### Done

@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-15 (sesion 23 — correcciones UI post-entrega PRs #43/#44; migraciones 0017-0021 todas aplicadas)
+> Ultima actualizacion: 2026-06-15 (sesion 24 — aprobados reqs 2.9/2.10/2.11/2.12 via /nuevo-requerimiento; inicio construccion)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 23: correcciones UI post-revisión del cliente mergeadas en PRs #43 (fixes UI remitos/columnas/compactColumns/botón Enviar Mail) y #44 (fecha entrega a nivel de container — migración 0021). Todas las migraciones 0017-0021 aplicadas en Supabase. Sin bloqueantes activos.
+✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 24: aprobados vía /nuevo-requerimiento reqs 2.9 (edición datos viaje por operador), 2.10 (edición datos viaje por chofer), 2.11 (config emails portal cliente), 2.12 (múltiples destinos por solicitud — migración 0022). Orden de construcción: 2.11 → 2.10 → 2.9 → 2.12.
 
 ---
 
