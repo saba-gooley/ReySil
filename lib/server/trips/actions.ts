@@ -13,6 +13,22 @@ export type TripActionState = {
   success?: boolean;
 };
 
+async function insertTripDestinations(
+  supabase: ReturnType<typeof createClient>,
+  tripId: string,
+  destinos: { destino: string; observaciones?: string }[],
+): Promise<void> {
+  if (destinos.length === 0) return;
+  await supabase.from("trip_destinations").insert(
+    destinos.map((d, i) => ({
+      trip_id: tripId,
+      destino: d.destino,
+      observaciones: d.observaciones || null,
+      orden: i,
+    })),
+  );
+}
+
 async function resolveOrigenDescripcion(
   supabase: ReturnType<typeof createClient>,
   clientId: string,
@@ -115,6 +131,11 @@ export async function createRepartoAction(
 
   if (fieldsError) {
     return { error: `Error al crear campos de reparto: ${fieldsError.message}` };
+  }
+
+  // Múltiples destinos (req. 2.12)
+  if (d.multiples_destinos && d.destinos && d.destinos.length > 0) {
+    await insertTripDestinations(supabase as ReturnType<typeof createClient>, trip.id, d.destinos);
   }
 
   // await so Vercel doesn't cancel before SMTP completes
@@ -242,6 +263,10 @@ export async function createBulkRepartosAction(
       return { error: `Fila ${i + 1}: ${fieldsError.message}` };
     }
 
+    if (d.multiples_destinos && d.destinos && d.destinos.length > 0) {
+      await insertTripDestinations(supabase as ReturnType<typeof createClient>, trip.id, d.destinos);
+    }
+
     created++;
   }
 
@@ -351,6 +376,10 @@ export async function createContenedorAction(
       return { error: `Viaje del contenedor ${i + 1}: ${tripError.message}` };
     }
 
+    if (d.multiples_destinos && d.destinos && d.destinos.length > 0) {
+      await insertTripDestinations(supabase as ReturnType<typeof createClient>, trip.id, d.destinos);
+    }
+
     // await so Vercel doesn't cancel before SMTP completes
     await notifyContenedorCreated(trip.id);
   }
@@ -432,6 +461,10 @@ export async function createRepartoForClientAction(
   });
 
   if (fieldsError) return { error: `Error al crear campos: ${fieldsError.message}` };
+
+  if (d.multiples_destinos && d.destinos && d.destinos.length > 0) {
+    await insertTripDestinations(supabase as ReturnType<typeof createClient>, trip.id, d.destinos);
+  }
 
   await notifyRepartoCreated(trip.id);
 
@@ -529,6 +562,10 @@ export async function createContenedorForClientAction(
       .single();
 
     if (tripError) return { error: `Viaje del contenedor ${i + 1}: ${tripError.message}` };
+
+    if (d.multiples_destinos && d.destinos && d.destinos.length > 0) {
+      await insertTripDestinations(supabase as ReturnType<typeof createClient>, trip.id, d.destinos);
+    }
 
     await notifyContenedorCreated(trip.id);
   }
