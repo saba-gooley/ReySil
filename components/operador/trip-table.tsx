@@ -241,7 +241,11 @@ function TripRow({
           <span className="block truncate">{trip.origen_descripcion || "—"}</span>
         </td>
         <td className={`${bodyCellClass} text-sm`}>
-          <span className="block truncate">{trip.destino_descripcion || "—"}</span>
+          <span className="block truncate">
+            {trip.trip_destinations.length > 0
+              ? `Múltiples (${trip.trip_destinations.length})`
+              : trip.destino_descripcion || "—"}
+          </span>
         </td>
         {showAssignment && (
           <td className={`${bodyCellClass} text-sm`}>
@@ -322,7 +326,22 @@ function TripDetail({
           }
         />
         <Detail label="Origen" value={trip.origen_descripcion} />
-        <Detail label="Destino" value={trip.destino_descripcion} />
+        {trip.trip_destinations.length > 0 ? (
+          <div>
+            <span className="text-xs text-neutral-500">Destinos:</span>
+            {trip.trip_destinations
+              .sort((a, b) => a.orden - b.orden)
+              .map((d, i) => (
+                <div key={d.id} className="flex gap-1 text-xs text-neutral-900">
+                  <span className="text-neutral-400">{i + 1}.</span>
+                  <span>{d.destino}</span>
+                  {d.observaciones && <span className="text-neutral-400">— {d.observaciones}</span>}
+                </div>
+              ))}
+          </div>
+        ) : (
+          <Detail label="Destino" value={trip.destino_descripcion} />
+        )}
         <Detail label="Observaciones" value={trip.observaciones_cliente} />
       </div>
 

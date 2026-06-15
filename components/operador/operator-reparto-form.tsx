@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createRepartoForClientAction, type TripActionState } from "@/lib/server/trips/actions";
+import { MultiplesDestinosSection, type DestinoEntry } from "@/components/ui/multiples-destinos";
 
 type Client = { id: string; nombre: string };
 type Deposit = { id: string; nombre: string; direccion: string | null; tipo: string };
@@ -41,6 +42,8 @@ export function OperatorRepartoForm({
   const [horario, setHorario] = useState("");
   const [tipoCamion, setTipoCamion] = useState("");
   const [peon, setPeon] = useState("");
+  const [multiplesDestinos, setMultiplesDestinos] = useState(false);
+  const [destinos, setDestinos] = useState<DestinoEntry[]>([{ key: 1, destino: "", observaciones: "" }]);
 
   useEffect(() => {
     if (state.success) {
@@ -83,6 +86,10 @@ export function OperatorRepartoForm({
       horario,
       tipo_camion: tipoCamion,
       peon: peon || "",
+      multiples_destinos: multiplesDestinos,
+      destinos: multiplesDestinos
+        ? destinos.map((d) => ({ destino: d.destino, observaciones: d.observaciones }))
+        : [],
     };
     formData.set("payload", JSON.stringify(payload));
     formAction(formData);
@@ -151,9 +158,25 @@ export function OperatorRepartoForm({
               <input type="text" value={origenDescripcion} onChange={(e) => setOrigenDescripcion(e.target.value)} placeholder="Direccion o lugar" className={inputClass} />
             </div>
           )}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">Destino</label>
-            <input type="text" value={destinoDescripcion} onChange={(e) => setDestinoDescripcion(e.target.value)} className={inputClass} />
+          {!multiplesDestinos && (
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Destino</label>
+              <input type="text" value={destinoDescripcion} onChange={(e) => setDestinoDescripcion(e.target.value)} className={inputClass} />
+            </div>
+          )}
+          <div className="sm:col-span-2">
+            <MultiplesDestinosSection
+              enabled={multiplesDestinos}
+              onToggle={(val) => {
+                setMultiplesDestinos(val);
+                if (val && destinoDescripcion) {
+                  setDestinos([{ key: 1, destino: destinoDescripcion, observaciones: "" }]);
+                }
+              }}
+              destinos={destinos}
+              onUpdate={setDestinos}
+              inputClass={inputClass}
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-neutral-700">Codigo postal</label>

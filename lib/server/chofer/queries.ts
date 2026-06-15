@@ -43,6 +43,12 @@ export type ChoferTripRow = {
     pernocto: boolean;
     observaciones: string | null;
   } | null;
+  trip_destinations: {
+    id: string;
+    destino: string;
+    observaciones: string | null;
+    orden: number;
+  }[];
   remitos: {
     id: string;
     drive_url: string;
@@ -59,6 +65,7 @@ const CHOFER_TRIP_SELECT = `
   containers(numero, tipo, peso_carga_kg, fecha_entrega, reservations(fecha_entrega)),
   trip_events(id, tipo, ocurrido_at),
   trip_driver_data(id, km_inicial, km_50_porc, km_100_porc, km_final, pernocto, observaciones),
+  trip_destinations(id, destino, observaciones, orden),
   remitos(id, drive_url, estado)
 `;
 
@@ -82,6 +89,7 @@ function normalizeChoferTrips(rows: unknown[]): ChoferTripRow[] {
       })(),
       trip_driver_data: unwrapOne(raw.trip_driver_data),
       trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
+      trip_destinations: Array.isArray(raw.trip_destinations) ? raw.trip_destinations : [],
       remitos: Array.isArray(raw.remitos) ? raw.remitos : [],
     } as ChoferTripRow;
   });

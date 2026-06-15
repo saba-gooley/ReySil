@@ -11,6 +11,11 @@ import { z } from "zod";
  * - NDV, PAL, CAT, Nro UN, cantidad_bultos, peso_kg, volumen_m3 → trip_reparto_fields
  * - Resto (fecha_entrega, codigo_postal, zona_tarifa, horario, tipo_camion, peon) → metadata JSONB
  */
+const destinoEntry = z.object({
+  destino: z.string().min(1, "El destino no puede estar vacío"),
+  observaciones: z.string().optional().default(""),
+});
+
 export const CreateRepartoSchema = z.object({
   // trips fields
   fecha_solicitada: z.string().min(1, "Fecha de carga requerida"),
@@ -18,6 +23,9 @@ export const CreateRepartoSchema = z.object({
   origen_descripcion: z.string().optional().default(""),
   destino_descripcion: z.string().optional().default(""),
   observaciones_cliente: z.string().optional().default(""),
+  // Múltiples destinos (req. 2.12)
+  multiples_destinos: z.boolean().optional().default(false),
+  destinos: z.array(destinoEntry).optional().default([]),
 
   // trip_reparto_fields
   ndv: z.string().optional().default(""),
@@ -72,7 +80,10 @@ export const CreateContenedorSchema = z.object({
   // trip routing
   origen_deposit_id: z.string().uuid().optional().nullable(),
   origen_descripcion: z.string().optional().default(""),
-  destino_descripcion: z.string().min(1, "Destino requerido"),
+  destino_descripcion: z.string().optional().default(""),
+  // Múltiples destinos (req. 2.12)
+  multiples_destinos: z.boolean().optional().default(false),
+  destinos: z.array(destinoEntry).optional().default([]),
 
   // containers
   containers: z
