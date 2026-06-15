@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/cliente/solicitudes", label: "Solicitudes" },
   { href: "/cliente/seguimiento", label: "Seguimiento" },
   { href: "/cliente/historial", label: "Historial" },
+  { href: "/cliente/configuracion", label: "Configuración" },
 ] as const;
 
 export function ClienteNav() {
