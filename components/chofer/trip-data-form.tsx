@@ -66,28 +66,30 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         </div>
       )}
 
-      {/* Trip events */}
-      <div className="space-y-2">
-        <h4 className="text-xs font-semibold text-neutral-400 uppercase">
-          Registro del viaje
-        </h4>
-        {tripEvents.map((ev) => {
-          const registered = trip.trip_events.find((e) => e.tipo === ev.value);
-          return (
-            <EventTimeField
-              key={ev.value}
-              tripId={trip.id}
-              eventId={registered?.id}
-              eventType={ev.value}
-              label={ev.label}
-              isRegistered={!!registered}
-              registeredTime={registered?.ocurrido_at}
-              enCurso={enCurso}
-              onDone={() => router.refresh()}
-            />
-          );
-        })}
-      </div>
+      {/* Trip events — hidden for multi-destination trips (horas go per-destination) */}
+      {trip.trip_destinations.length === 0 && (
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold text-neutral-400 uppercase">
+            Registro del viaje
+          </h4>
+          {tripEvents.map((ev) => {
+            const registered = trip.trip_events.find((e) => e.tipo === ev.value);
+            return (
+              <EventTimeField
+                key={ev.value}
+                tripId={trip.id}
+                eventId={registered?.id}
+                eventType={ev.value}
+                label={ev.label}
+                isRegistered={!!registered}
+                registeredTime={registered?.ocurrido_at}
+                enCurso={enCurso}
+                onDone={() => router.refresh()}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Remitos: lista + upload */}
       <div className="space-y-2">
