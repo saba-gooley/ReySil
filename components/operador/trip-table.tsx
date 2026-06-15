@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
 import { TripRemitoActions } from "./trip-remito-actions";
+import { TripDataEditor } from "./trip-data-editor";
 
 type Props = {
   trips: OperatorTripRow[];
@@ -482,6 +483,11 @@ function TripDetail({
           />
         </div>
       )}
+
+      {/* Edición de datos por el operador (req. 2.9) */}
+      <div className="sm:col-span-3">
+        <TripDataEditor trip={trip} />
+      </div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   registerTripEventAction,
+  updateTripEventAction,
   finalizeTripAction,
   type ChoferActionState,
 } from "@/lib/server/chofer/trip-actions";
@@ -70,19 +71,22 @@ export function TripDataForm({ trip }: { trip: ChoferTripRow }) {
         <h4 className="text-xs font-semibold text-neutral-400 uppercase">
           Registro del viaje
         </h4>
-        {tripEvents.map((ev) => (
-          <EventTimeField
-            key={ev.value}
-            tripId={trip.id}
-            eventType={ev.value}
-            label={ev.label}
-            isRegistered={registeredEvents.has(ev.value)}
-            registeredTime={
-              trip.trip_events.find((e) => e.tipo === ev.value)?.ocurrido_at
-            }
-            onDone={() => router.refresh()}
-          />
-        ))}
+        {tripEvents.map((ev) => {
+          const registered = trip.trip_events.find((e) => e.tipo === ev.value);
+          return (
+            <EventTimeField
+              key={ev.value}
+              tripId={trip.id}
+              eventId={registered?.id}
+              eventType={ev.value}
+              label={ev.label}
+              isRegistered={!!registered}
+              registeredTime={registered?.ocurrido_at}
+              enCurso={enCurso}
+              onDone={() => router.refresh()}
+            />
+          );
+        })}
       </div>
 
       {/* Remitos: lista + upload */}
@@ -234,22 +238,28 @@ function FinalizeSection({
 
 function EventTimeField({
   tripId,
+  eventId,
   eventType,
   label,
   isRegistered,
   registeredTime,
+  enCurso,
   onDone,
 }: {
   tripId: string;
+  eventId?: string;
   eventType: string;
   label: string;
   isRegistered: boolean;
   registeredTime?: string;
+  enCurso: boolean;
   onDone: () => void;
 }) {
   const [time, setTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editTime, setEditTime] = useState("");
 
   function setNow() {
     const now = new Date();
@@ -258,10 +268,19 @@ function EventTimeField({
     setTime(`${h}:${m}`);
   }
 
+  function startEdit() {
+    if (registeredTime) {
+      const d = new Date(registeredTime);
+      const h = d.getHours().toString().padStart(2, "0");
+      const m = d.getMinutes().toString().padStart(2, "0");
+      setEditTime(`${h}:${m}`);
+    }
+    setEditing(true);
+  }
+
   async function handleRegister(useTime: string) {
     setLoading(true);
     setError(null);
-
     let ocurrido_at: string;
     if (useTime) {
       const today = new Date().toISOString().split("T")[0];
@@ -269,17 +288,57 @@ function EventTimeField({
     } else {
       ocurrido_at = new Date().toISOString();
     }
-
     const result = await registerTripEventAction(tripId, eventType, ocurrido_at);
     setLoading(false);
-    if (result.error) {
-      setError(result.error);
-    } else {
-      onDone();
-    }
+    if (result.error) setError(result.error);
+    else onDone();
+  }
+
+  async function handleUpdate() {
+    if (!eventId || !editTime) return;
+    setLoading(true);
+    setError(null);
+    const today = new Date().toISOString().split("T")[0];
+    const ocurrido_at = new Date(`${today}T${editTime}:00`).toISOString();
+    const result = await updateTripEventAction(eventId, ocurrido_at);
+    setLoading(false);
+    if (result.error) setError(result.error);
+    else { setEditing(false); onDone(); }
   }
 
   if (isRegistered && registeredTime) {
+    if (editing && enCurso) {
+      return (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+          <p className="text-sm font-medium text-neutral-900">{label}</p>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              value={editTime}
+              onChange={(e) => setEditTime(e.target.value)}
+              className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+            />
+            <button
+              type="button"
+              onClick={handleUpdate}
+              disabled={loading || !editTime}
+              className="rounded-md bg-reysil-red px-3 py-2 text-xs font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
+            >
+              {loading ? "..." : "Guardar"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded-md border border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
         <div>
@@ -291,7 +350,18 @@ function EventTimeField({
             })}
           </p>
         </div>
-        <span className="text-xs text-green-600 font-medium">Registrado</span>
+        <div className="flex items-center gap-2">
+          {enCurso && eventId && (
+            <button
+              type="button"
+              onClick={startEdit}
+              className="text-xs text-neutral-500 hover:text-neutral-700 underline"
+            >
+              Editar
+            </button>
+          )}
+          <span className="text-xs text-green-600 font-medium">Registrado</span>
+        </div>
       </div>
     );
   }
