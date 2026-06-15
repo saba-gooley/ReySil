@@ -149,7 +149,9 @@ function TripCard({
           </div>
           <p className="text-xs text-neutral-500">{trip.clients.nombre}</p>
           <p className="text-xs text-neutral-700">
-            {trip.destino_descripcion || "Sin destino"}
+            {trip.trip_destinations.length > 0
+              ? `Múltiples destinos (${trip.trip_destinations.length})`
+              : (trip.destino_descripcion || "Sin destino")}
           </p>
           {trip.trip_assignments?.patente && (
             <p className="text-xs font-mono text-neutral-400">
@@ -183,14 +185,33 @@ function TripCard({
                 {trip.origen_descripcion || "—"}
               </span>
             </div>
-            <div className="flex gap-2 text-xs">
-              <span className="w-16 shrink-0 font-medium text-neutral-500">
-                Destino:
-              </span>
-              <span className="text-neutral-900">
-                {trip.destino_descripcion || "—"}
-              </span>
-            </div>
+            {trip.trip_destinations.length > 0 ? (
+              <div className="flex gap-2 text-xs">
+                <span className="w-16 shrink-0 font-medium text-neutral-500">Destinos:</span>
+                <div className="space-y-0.5">
+                  {trip.trip_destinations
+                    .sort((a, b) => a.orden - b.orden)
+                    .map((d, i) => (
+                      <div key={d.id} className="text-neutral-900">
+                        <span className="text-neutral-400">{i + 1}. </span>
+                        {d.destino}
+                        {d.observaciones && (
+                          <span className="text-neutral-400"> — {d.observaciones}</span>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2 text-xs">
+                <span className="w-16 shrink-0 font-medium text-neutral-500">
+                  Destino:
+                </span>
+                <span className="text-neutral-900">
+                  {trip.destino_descripcion || "—"}
+                </span>
+              </div>
+            )}
             {horario && (
               <div className="flex gap-2 text-xs">
                 <span className="w-16 shrink-0 font-medium text-neutral-500">
