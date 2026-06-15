@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-15 (sesion 24 — aprobados reqs 2.9/2.10/2.11/2.12 via /nuevo-requerimiento; inicio construccion)
+> Ultima actualizacion: 2026-06-15 (sesion 25 — verificación E2E PRs #45–#48, merge a main, fix #49 destinos chofer)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 24: aprobados vía /nuevo-requerimiento reqs 2.9 (edición datos viaje por operador), 2.10 (edición datos viaje por chofer), 2.11 (config emails portal cliente), 2.12 (múltiples destinos por solicitud — migración 0022). Orden de construcción: 2.11 → 2.10 → 2.9 → 2.12.
+✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 25: verificación Playwright PRs #47 (edición operador) y #48 (múltiples destinos); merge a main de PRs #45/#46/#47/#48; fix bug destino_descripcion null + vista chofer (PR #49 mergeado). Pendiente: req 2.12 extensión — hitos por destino (chofer registra llegada/salida por cada destino).
 
 ---
 
@@ -26,8 +26,55 @@
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
 | 11 | ABM Tipos de Camion | ✅ Completo | PR #39 mergeado. Tabla truck_types + ABM en Configuracion (escritura solo ADMIN) + forms Reparto cargan tipos desde BD. Migraciones 0017 y 0018 aplicadas. |
+| 2.11 | Config emails portal cliente | ✅ Completo | PR #45 mergeado. Sección "Configuración" en nav cliente, preferencias de notificaciones. |
+| 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
+| 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
+| 2.12 | Múltiples destinos por solicitud | 🔄 Parcial | PR #48 + #49 mergeados. Migración 0022 aplicada. Extensión construida (rama `feature/destinos-hitos-orden`): migración 0023 + chofer registra hora_llegada/hora_salida por destino + operador reordena destinos. Pendiente: aplicar migración 0023 y abrir PR. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo en Esta Sesion (2026-06-15 — Sesion 26)
+
+✅ **Extensión req 2.12 — hitos por destino + reordenamiento (rama `feature/destinos-hitos-orden`)**
+
+- `supabase/migrations/0023_trip_destinations_horas.sql` — ALTER TABLE agrega `hora_llegada TIMESTAMPTZ` y `hora_salida TIMESTAMPTZ` a `trip_destinations`
+- `lib/server/chofer/queries.ts` + `lib/server/assignments/queries.ts` — tipos y SELECTs actualizados con `hora_llegada, hora_salida`
+- `lib/server/chofer/trip-actions.ts` — nuevo `updateDestinationHoraAction(destinationId, tipo)`: valida trip EN_CURSO + asignado al chofer, graba timestamp servidor
+- `lib/server/trips/actions.ts` — nuevo `reorderDestinationsAction(tripId, orderedIds[])`: valida rol OPERADOR/ADMIN + estado PENDIENTE/PREASIGNADO/ASIGNADO, actualiza `orden` en paralelo
+- `components/operador/destination-order-editor.tsx` (NUEVO) — lista de destinos con ↑/↓, botón "Guardar orden", muestra hora_llegada/hora_salida registradas
+- `components/operador/trip-table.tsx` — importa `DestinationOrderEditor`; en `TripDetail`: destino simple en col-1, editor full-width antes de `TripDataEditor`
+- `components/chofer/trip-list.tsx` — `DestinationHoraRow` por cada destino: muestra "Registrar llegada" / "Registrar salida" (solo EN_CURSO) con optimistic update; muestra horas formateadas en AR cuando registradas
+
+⚠️ **Migración 0023 PENDIENTE de aplicar en Supabase producción.**
+
+---
+
+## Trabajo en Esta Sesion (2026-06-15 — Sesion 25)
+
+✅ **Verificación E2E y merge de PRs #45–#48 + fix #49**
+
+🔍 **Verificación Playwright** (dev local vs Supabase producción, credenciales `operador@reysil.test`):
+- PR #47 (edición operador): editor aparece en FINALIZADO (VJ-00159); hito editado 18:04→19:04; km/pernoctada/obs guardados; ausente en PENDIENTE ✓
+- PR #48 (múltiples destinos): VJ-00201 creado para CLI-PRUEBA con 2 destinos; columna muestra "Múltiples (2)"; detalle lista `1. Av. Corrientes … 2. Ruta 2 km …` ✓
+
+🔀 **Merges a main** (sin conflictos excepto #48 que conflictuó con #47 en `queries.ts`):
+- PR #45 (2.11 config emails) ✅
+- PR #46 (2.10 edición chofer) ✅
+- PR #47 (2.9 edición operador) ✅
+- PR #48 (2.12 múltiples destinos) ✅ — conflicto resuelto: `trip_destinations` + `trip_driver_data` en mismo bloque de `OperatorTripRow`
+
+🐛 **Fix PR #49** (mergeado en sesión):
+- `lib/server/trips/actions.ts` (5 create actions): `destino_descripcion` recibía null al crear con múltiples destinos → ahora usa `destinos[0].destino`
+- `components/chofer/trip-list.tsx`: card muestra "Múltiples destinos (N)"; detalle lista cada destino con orden y observaciones
+
+⚠️ **Gap identificado en req 2.12**: el funcional indica que el chofer debe registrar llegada/salida por cada destino individual. No implementado — requiere migración (`trip_destination_id` FK en `trip_events`) + UI chofer.
+
+**Datos de prueba en producción (NO BORRAR hasta que el usuario lo indique):**
+- VJ-00201: REPARTO CLI-PRUEBA, 2 destinos múltiples (PR #48 test)
+- VJ-00202: REPARTO CLI-PRUEBA, sin asignar (creado durante exploración PR #47)
+- VJ-00159: FINALIZADO Evonik, hito editado +1h y km=420/pernoctada/obs="Test edición PR #47"
 
 ---
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 import { TripDataForm } from "./trip-data-form";
+import { updateDestinationHoraAction } from "@/lib/server/chofer/trip-actions";
 
 function getTodayStr() {
   return new Date().toISOString().split("T")[0];
@@ -186,19 +187,18 @@ function TripCard({
               </span>
             </div>
             {trip.trip_destinations.length > 0 ? (
-              <div className="flex gap-2 text-xs">
-                <span className="w-16 shrink-0 font-medium text-neutral-500">Destinos:</span>
-                <div className="space-y-0.5">
+              <div className="space-y-1">
+                <span className="text-xs font-medium text-neutral-500">Destinos:</span>
+                <div className="space-y-2">
                   {trip.trip_destinations
                     .sort((a, b) => a.orden - b.orden)
                     .map((d, i) => (
-                      <div key={d.id} className="text-neutral-900">
-                        <span className="text-neutral-400">{i + 1}. </span>
-                        {d.destino}
-                        {d.observaciones && (
-                          <span className="text-neutral-400"> — {d.observaciones}</span>
-                        )}
-                      </div>
+                      <DestinationHoraRow
+                        key={d.id}
+                        index={i + 1}
+                        destination={d}
+                        isEnCurso={trip.estado === "EN_CURSO"}
+                      />
                     ))}
                 </div>
               </div>
@@ -299,6 +299,104 @@ function TripCard({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function formatHoraAR(iso: string) {
+  return new Date(iso).toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+}
+
+function DestinationHoraRow({
+  index,
+  destination,
+  isEnCurso,
+}: {
+  index: number;
+  destination: ChoferTripRow["trip_destinations"][number];
+  isEnCurso: boolean;
+}) {
+  const [llegadaPending, startLlegada] = useTransition();
+  const [salidaPending, startSalida] = useTransition();
+  const [horaLlegada, setHoraLlegada] = useState<string | null>(destination.hora_llegada);
+  const [horaSalida, setHoraSalida] = useState<string | null>(destination.hora_salida);
+  const [error, setError] = useState<string | null>(null);
+
+  function registrarLlegada() {
+    setError(null);
+    startLlegada(async () => {
+      const result = await updateDestinationHoraAction(destination.id, "llegada");
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setHoraLlegada(new Date().toISOString());
+      }
+    });
+  }
+
+  function registrarSalida() {
+    setError(null);
+    startSalida(async () => {
+      const result = await updateDestinationHoraAction(destination.id, "salida");
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setHoraSalida(new Date().toISOString());
+      }
+    });
+  }
+
+  return (
+    <div className="rounded border border-neutral-200 bg-white p-2.5 space-y-2">
+      <div className="flex items-start gap-1.5">
+        <span className="mt-0.5 text-xs font-medium text-neutral-400 shrink-0">{index}.</span>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-neutral-900">{destination.destino}</p>
+          {destination.observaciones && (
+            <p className="text-xs text-neutral-400">{destination.observaciones}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {horaLlegada ? (
+          <span className="text-xs font-medium text-green-700">
+            ✓ Llegada: {formatHoraAR(horaLlegada)}
+          </span>
+        ) : isEnCurso ? (
+          <button
+            type="button"
+            onClick={registrarLlegada}
+            disabled={llegadaPending}
+            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {llegadaPending ? "Registrando..." : "Registrar llegada"}
+          </button>
+        ) : null}
+
+        {horaLlegada && (
+          horaSalida ? (
+            <span className="text-xs text-neutral-500">
+              · Salida: {formatHoraAR(horaSalida)}
+            </span>
+          ) : isEnCurso ? (
+            <button
+              type="button"
+              onClick={registrarSalida}
+              disabled={salidaPending}
+              className="rounded bg-neutral-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+            >
+              {salidaPending ? "Registrando..." : "Registrar salida"}
+            </button>
+          ) : null
+        )}
+      </div>
+
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   );
 }

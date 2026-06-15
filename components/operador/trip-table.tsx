@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
 import { TripRemitoActions } from "./trip-remito-actions";
 import { TripDataEditor } from "./trip-data-editor";
+import { DestinationOrderEditor } from "./destination-order-editor";
 
 type Props = {
   trips: OperatorTripRow[];
@@ -326,20 +327,7 @@ function TripDetail({
           }
         />
         <Detail label="Origen" value={trip.origen_descripcion} />
-        {trip.trip_destinations.length > 0 ? (
-          <div>
-            <span className="text-xs text-neutral-500">Destinos:</span>
-            {trip.trip_destinations
-              .sort((a, b) => a.orden - b.orden)
-              .map((d, i) => (
-                <div key={d.id} className="flex gap-1 text-xs text-neutral-900">
-                  <span className="text-neutral-400">{i + 1}.</span>
-                  <span>{d.destino}</span>
-                  {d.observaciones && <span className="text-neutral-400">— {d.observaciones}</span>}
-                </div>
-              ))}
-          </div>
-        ) : (
+        {trip.trip_destinations.length === 0 && (
           <Detail label="Destino" value={trip.destino_descripcion} />
         )}
         <Detail label="Observaciones" value={trip.observaciones_cliente} />
@@ -480,6 +468,17 @@ function TripDetail({
             estado={trip.estado}
             remitos={trip.remitos}
             remitoEmailEnviadoAt={trip.remito_email_enviado_at}
+          />
+        </div>
+      )}
+
+      {/* Destinos múltiples con reordenamiento (req. 2.12) */}
+      {trip.trip_destinations.length > 0 && (
+        <div className="sm:col-span-3">
+          <DestinationOrderEditor
+            tripId={trip.id}
+            tripEstado={trip.estado}
+            destinations={trip.trip_destinations}
           />
         </div>
       )}

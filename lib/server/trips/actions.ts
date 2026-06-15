@@ -574,3 +574,51 @@ export async function createContenedorForClientAction(
   revalidatePath("/operador/solicitudes");
   return { success: true };
 }
+
+// =========================================================================
+// Req. 2.12 extensión — Reordenar destinos (solo PENDIENTE/PREASIGNADO/ASIGNADO)
+// =========================================================================
+
+const REORDER_ALLOWED_STATES = ["PENDIENTE", "PREASIGNADO", "ASIGNADO"];
+
+export async function reorderDestinationsAction(
+  tripId: string,
+  orderedIds: string[],
+): Promise<TripActionState> {
+  try {
+    const user = await getCurrentUser();
+    if (!["OPERADOR", "ADMIN"].includes(user.profile.role)) {
+      return { error: "Solo operadores pueden reordenar destinos" };
+    }
+
+    const supabase = createAdminClient();
+
+    const { data: trip } = await supabase
+      .from("trips")
+      .select("estado")
+      .eq("id", tripId)
+      .maybeSingle();
+
+    if (!trip) return { error: "Viaje no encontrado" };
+    if (!REORDER_ALLOWED_STATES.includes(trip.estado)) {
+      return { error: "No se puede reordenar destinos de un viaje en curso o finalizado" };
+    }
+
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        supabase
+          .from("trip_destinations")
+          .update({ orden: index })
+          .eq("id", id)
+          .eq("trip_id", tripId),
+      ),
+    );
+
+    revalidatePath("/operador");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[reorderDestinationsAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}

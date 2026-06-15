@@ -71,6 +71,8 @@ export type OperatorTripRow = {
     destino: string;
     observaciones: string | null;
     orden: number;
+    hora_llegada: string | null;
+    hora_salida: string | null;
   }[];
   trip_driver_data: {
     id: string;
@@ -97,7 +99,7 @@ const OPERATOR_TRIP_SELECT = `
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   containers(id, numero, tipo, peso_carga_kg, fecha_entrega, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   trip_events(id, tipo, ocurrido_at, observaciones),
-  trip_destinations(id, destino, observaciones, orden),
+  trip_destinations(id, destino, observaciones, orden, hora_llegada, hora_salida),
   trip_driver_data(id, km_50_porc, km_100_porc, pernocto, observaciones),
   remitos(id, drive_url, estado, uploaded_at)
 `;
