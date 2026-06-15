@@ -66,6 +66,13 @@ export type OperatorTripRow = {
     ocurrido_at: string;
     observaciones: string | null;
   }[];
+  trip_driver_data: {
+    id: string;
+    km_50_porc: number | null;
+    km_100_porc: number | null;
+    pernocto: boolean;
+    observaciones: string | null;
+  } | null;
   remitos: {
     id: string;
     drive_url: string;
@@ -84,6 +91,7 @@ const OPERATOR_TRIP_SELECT = `
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   containers(id, numero, tipo, peso_carga_kg, fecha_entrega, reservation_id, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
   trip_events(id, tipo, ocurrido_at, observaciones),
+  trip_driver_data(id, km_50_porc, km_100_porc, pernocto, observaciones),
   remitos(id, drive_url, estado, uploaded_at)
 `;
 
@@ -104,6 +112,7 @@ function normalizeOperatorTrips(rows: unknown[]): OperatorTripRow[] {
       trip_reparto_fields: unwrapOne(raw.trip_reparto_fields),
       containers: unwrapOne(raw.containers),
       trip_events: Array.isArray(raw.trip_events) ? raw.trip_events : [],
+      trip_driver_data: unwrapOne(raw.trip_driver_data),
       remitos: Array.isArray(raw.remitos) ? raw.remitos : [],
     } as OperatorTripRow;
   });
