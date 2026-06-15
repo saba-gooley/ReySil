@@ -6,6 +6,41 @@
 
 ---
 
+## Sesión 2026-06-15 — Correcciones UI post-entrega (PRs #43/#44) — migración 0021
+
+### Done
+- Diagnóstico de 7 correcciones solicitadas por el cliente post-revisión de PRs #40-42
+- **PR #43** (`feature/fixes-ui-remitos`, mergeado) — sin migración:
+  - `remitos-view.tsx`: columna "Estado" eliminada del panel de Remitos
+  - `trip-remito-actions.tsx`: `UploadBtn` → "Confirmar Remitos" / "Confirmando..." (consistente con chofer)
+  - `trip-table.tsx`: columna Tipo ya no muestra `#contenedor` ni `Bkg: booking` — solo "REPARTO" / "CONTENEDOR"
+  - `en-curso/page.tsx` + `finalizadas-view.tsx`: `compactColumns` agregado → sin scroll lateral (consistente con Pendientes y Asignado)
+  - `remitos-report-table.tsx`: nueva columna de acción — botón rojo "Enviar Mail" (no enviado) o secundario "Reenviar Mail" (ya enviado), con estado local por fila
+- **PR #44** (`feature/fecha-entrega-por-contenedor`, mergeado) — migración 0021 (`containers.fecha_entrega DATE`) aplicada en Supabase:
+  - `lib/validators/trip.ts`: `fecha_entrega` en `containerEntry`
+  - `lib/server/trips/actions.ts`: inserta `fecha_entrega` por container en ambas acciones Contenedor
+  - Queries (3 archivos): `fecha_entrega` en tipo y select de `containers`
+  - `contenedor-form.tsx` + `operator-contenedor-form.tsx`: campo Fecha de entrega por container, pre-rellenado desde el campo general al agregar nuevos
+  - `trip-table.tsx`: muestra `containers.fecha_entrega` en sección Contenedor; eliminada `reservations.fecha_entrega` redundante de sección Reserva
+  - `trip-list.tsx` cliente + `trip-list.tsx` chofer: muestran `containers.fecha_entrega`
+- Verificación E2E con Playwright ambos PRs (operador@reysil.test): todos los checks pasaron
+- Datos de prueba creados y eliminados: VJ-00199, VJ-00200
+
+### In progress
+- Nada a medio hacer
+
+### Next
+- Aguardar próximas secciones del documento funcional del cliente
+
+### Decisions
+- `reservations.fecha_entrega` permanece en BD como campo de soporte para pre-relleno del form (no se muestra en detalles). La fuente de verdad es `containers.fecha_entrega`
+- El primer container del form NO hereda la fecha general automáticamente (ya está en el form cuando se pone la fecha); solo los containers agregados posteriormente la heredan. Comportamiento esperado.
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-13 — Reqs 2.5/2.6/2.7/2.8 construidos, verificados E2E y mergeados (PRs #40/#41/#42)
 
 ### Done

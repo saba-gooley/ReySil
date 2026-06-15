@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-13 (sesion 22 — reqs 2.5/2.6/2.7/2.8 construidos y mergeados PRs #40/#41/#42; 4 migraciones aplicadas)
+> Ultima actualizacion: 2026-06-15 (sesion 23 — correcciones UI post-entrega PRs #43/#44; migraciones 0017-0021 todas aplicadas)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 22 completa: aprobados, construidos, verificados E2E y mergeados los reqs 2.5 (PR #41), 2.6 (PR #40) y 2.7+2.8 (PR #42). Todas las migraciones 0017-0020 aplicadas en Supabase. También en esta sesión: mergeados PRs #37/#38/#39 (reqs 2.13/2.14/2.15 de sesión 21) y resuelta consulta de cliente sobre secuencialidad de códigos VJ-#### (explicación de timestamps idénticos en backfill).
+✅ Proyecto funcional — **11 módulos completos**. Sistema en producción. Sesión 23: correcciones UI post-revisión del cliente mergeadas en PRs #43 (fixes UI remitos/columnas/compactColumns/botón Enviar Mail) y #44 (fecha entrega a nivel de container — migración 0021). Todas las migraciones 0017-0021 aplicadas en Supabase. Sin bloqueantes activos.
 
 ---
 
@@ -447,10 +447,11 @@
 **Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
 
 ### Próximos requerimientos del cliente
-Pendiente de recibir próximas secciones del documento funcional del cliente (los reqs se presentan como 2.X). Los últimos aprobados y construidos fueron 2.5-2.8 (sesión 22). No hay bloqueantes activos.
+Pendiente de recibir próximas secciones del documento funcional del cliente. Los últimos procesados fueron 2.5-2.8 (sesión 22) y sus correcciones post-entrega (sesión 23). No hay bloqueantes activos.
 
-### Deuda técnica puntual de sesión 22
-- El upload de remitos a Google Drive desde servidor de desarrollo local puede exceder los 25s de timeout (Drive responde más lento sin la latencia optimizada de Vercel). En producción no se reproduce. Verificado por el hecho de que el `remito_email_enviado_at` se guardó correctamente durante la verificación E2E.
+### Deuda técnica
+- Upload de remitos a Drive desde dev local puede exceder el timeout de 25s. En producción (Vercel) no se reproduce.
+- `reservations.fecha_entrega` (migración 0019) permanece en la BD como campo de soporte para el pre-relleno del form. No se muestra en ningún detalle — la fuente de verdad visual es `containers.fecha_entrega`.
 
 ### Pendiente 0 — Timezone en display (baja prioridad)
 **Descripción:** Los `toLocaleTimeString` / `toLocaleDateString` en componentes no especifican `timeZone` explícito. Si el browser no está en Argentina, muestra la hora local del usuario en lugar de la hora argentina.
