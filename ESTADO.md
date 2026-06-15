@@ -7,7 +7,7 @@
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 25: verificación Playwright PRs #47 (edición operador) y #48 (múltiples destinos); merge a main de PRs #45/#46/#47/#48; fix bug destino_descripcion null + vista chofer (PR #49 mergeado). Pendiente: req 2.12 extensión — hitos por destino (chofer registra llegada/salida por cada destino).
+✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 26: extensión req 2.12 completa — chofer registra hora llegada/salida por destino, operador reordena destinos (PR #50 mergeado). Migración 0023 aplicada. Req 2.12 ahora ✅ Completo.
 
 ---
 
@@ -29,7 +29,7 @@
 | 2.11 | Config emails portal cliente | ✅ Completo | PR #45 mergeado. Sección "Configuración" en nav cliente, preferencias de notificaciones. |
 | 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
 | 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
-| 2.12 | Múltiples destinos por solicitud | 🔄 Parcial | PR #48 + #49 mergeados. Migración 0022 aplicada. Extensión construida (rama `feature/destinos-hitos-orden`): migración 0023 + chofer registra hora_llegada/hora_salida por destino + operador reordena destinos. Pendiente: aplicar migración 0023 y abrir PR. |
+| 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (EN_CURSO). Operador reordena destinos (solo PENDIENTE/PREASIGNADO/ASIGNADO). |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -47,7 +47,7 @@
 - `components/operador/trip-table.tsx` — importa `DestinationOrderEditor`; en `TripDetail`: destino simple en col-1, editor full-width antes de `TripDataEditor`
 - `components/chofer/trip-list.tsx` — `DestinationHoraRow` por cada destino: muestra "Registrar llegada" / "Registrar salida" (solo EN_CURSO) con optimistic update; muestra horas formateadas en AR cuando registradas
 
-⚠️ **Migración 0023 PENDIENTE de aplicar en Supabase producción.**
+✅ **PR #50 mergeado a main.**
 
 ---
 
