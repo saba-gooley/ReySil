@@ -192,7 +192,7 @@ export async function finalizeTripAction(
     const supabase = createAdminClient();
 
     // Validate trip and events in parallel
-    const [{ data: assignment }, { data: events }] = await Promise.all([
+    const [{ data: assignment }, { data: events }, { data: destinations }] = await Promise.all([
       supabase
         .from("trip_assignments")
         .select("trip_id")
@@ -203,16 +203,29 @@ export async function finalizeTripAction(
         .from("trip_events")
         .select("tipo")
         .eq("trip_id", tripId),
+      supabase
+        .from("trip_destinations")
+        .select("id, hora_llegada, hora_salida")
+        .eq("trip_id", tripId),
     ]);
 
     if (!assignment) return { error: "Viaje no asignado a este chofer" };
 
-    const eventTypes = new Set((events ?? []).map((e) => e.tipo));
-    if (!eventTypes.has("LLEGADA_DESTINO_CLIENTE")) {
-      return { error: "Falta registrar la llegada al cliente" };
-    }
-    if (!eventTypes.has("SALIDA_CLIENTE")) {
-      return { error: "Falta registrar la salida del cliente" };
+    if (destinations && destinations.length > 0) {
+      if (!destinations.every((d) => d.hora_llegada)) {
+        return { error: "Falta registrar la llegada en todos los destinos" };
+      }
+      if (!destinations.every((d) => d.hora_salida)) {
+        return { error: "Falta registrar la salida en todos los destinos" };
+      }
+    } else {
+      const eventTypes = new Set((events ?? []).map((e) => e.tipo));
+      if (!eventTypes.has("LLEGADA_DESTINO_CLIENTE")) {
+        return { error: "Falta registrar la llegada al cliente" };
+      }
+      if (!eventTypes.has("SALIDA_CLIENTE")) {
+        return { error: "Falta registrar la salida del cliente" };
+      }
     }
 
     // Soft check — remito cargado (la validacion de km se hace al cierre del turno, req. 2.14)
@@ -256,6 +269,7 @@ export async function finalizeTripAction(
 export async function updateDestinationHoraAction(
   destinationId: string,
   tipo: "llegada" | "salida",
+  hora?: string, // HH:MM — if provided, timestamp built from today + this time; otherwise uses now
 ): Promise<ChoferActionState> {
   try {
     const user = await getCurrentUser();
@@ -264,7 +278,6 @@ export async function updateDestinationHoraAction(
 
     const supabase = createAdminClient();
 
-    // Verify destination belongs to a trip assigned to this driver and is EN_CURSO
     const { data: dest } = await supabase
       .from("trip_destinations")
       .select("id, trip_id, trips!inner(estado, trip_assignments!inner(driver_id))")
@@ -277,8 +290,9 @@ export async function updateDestinationHoraAction(
       ? ((dest as Record<string, unknown>).trips as Record<string, unknown>[])[0]
       : (dest as Record<string, unknown>).trips as Record<string, unknown>;
 
-    if (!trip || trip.estado !== "EN_CURSO") {
-      return { error: "Solo se pueden registrar horas en viajes en curso" };
+    const estado = trip?.estado as string;
+    if (estado !== "EN_CURSO" && estado !== "ASIGNADO") {
+      return { error: "Solo se pueden registrar horas en viajes asignados o en curso" };
     }
 
     const assignment = Array.isArray(trip.trip_assignments)
@@ -289,13 +303,31 @@ export async function updateDestinationHoraAction(
       return { error: "No autorizado para este viaje" };
     }
 
+    let timestamp: string;
+    if (hora) {
+      const today = new Date().toISOString().split("T")[0];
+      timestamp = new Date(`${today}T${hora}:00`).toISOString();
+    } else {
+      timestamp = new Date().toISOString();
+    }
+
     const field = tipo === "llegada" ? "hora_llegada" : "hora_salida";
     const { error } = await supabase
       .from("trip_destinations")
-      .update({ [field]: new Date().toISOString() })
+      .update({ [field]: timestamp })
       .eq("id", destinationId);
 
     if (error) return { error: error.message };
+
+    // Transition ASIGNADO → EN_CURSO when driver registers first hora_llegada
+    if (tipo === "llegada" && estado === "ASIGNADO") {
+      const tripId = (dest as Record<string, unknown>).trip_id as string;
+      await supabase
+        .from("trips")
+        .update({ estado: "EN_CURSO" })
+        .eq("id", tripId)
+        .eq("estado", "ASIGNADO");
+    }
 
     revalidatePath("/chofer");
     return { success: true };

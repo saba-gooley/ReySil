@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { ChoferTripRow } from "@/lib/server/chofer/queries";
 import { TripDataForm } from "./trip-data-form";
 import { updateDestinationHoraAction } from "@/lib/server/chofer/trip-actions";
@@ -197,7 +197,7 @@ function TripCard({
                         key={d.id}
                         index={i + 1}
                         destination={d}
-                        isEnCurso={trip.estado === "EN_CURSO"}
+                        canRegister={trip.estado === "ASIGNADO" || trip.estado === "EN_CURSO"}
                       />
                     ))}
                 </div>
@@ -314,41 +314,14 @@ function formatHoraAR(iso: string) {
 function DestinationHoraRow({
   index,
   destination,
-  isEnCurso,
+  canRegister,
 }: {
   index: number;
   destination: ChoferTripRow["trip_destinations"][number];
-  isEnCurso: boolean;
+  canRegister: boolean;
 }) {
-  const [llegadaPending, startLlegada] = useTransition();
-  const [salidaPending, startSalida] = useTransition();
   const [horaLlegada, setHoraLlegada] = useState<string | null>(destination.hora_llegada);
   const [horaSalida, setHoraSalida] = useState<string | null>(destination.hora_salida);
-  const [error, setError] = useState<string | null>(null);
-
-  function registrarLlegada() {
-    setError(null);
-    startLlegada(async () => {
-      const result = await updateDestinationHoraAction(destination.id, "llegada");
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setHoraLlegada(new Date().toISOString());
-      }
-    });
-  }
-
-  function registrarSalida() {
-    setError(null);
-    startSalida(async () => {
-      const result = await updateDestinationHoraAction(destination.id, "salida");
-      if (result.error) {
-        setError(result.error);
-      } else {
-        setHoraSalida(new Date().toISOString());
-      }
-    });
-  }
 
   return (
     <div className="rounded border border-neutral-200 bg-white p-2.5 space-y-2">
@@ -362,41 +335,178 @@ function DestinationHoraRow({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {horaLlegada ? (
-          <span className="text-xs font-medium text-green-700">
-            ✓ Llegada: {formatHoraAR(horaLlegada)}
-          </span>
-        ) : isEnCurso ? (
-          <button
-            type="button"
-            onClick={registrarLlegada}
-            disabled={llegadaPending}
-            className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {llegadaPending ? "Registrando..." : "Registrar llegada"}
-          </button>
-        ) : null}
+      <DestinationEventField
+        destinationId={destination.id}
+        tipo="llegada"
+        label="Llegada al destino"
+        registeredHora={horaLlegada}
+        canRegister={canRegister}
+        onDone={(iso) => setHoraLlegada(iso)}
+      />
 
-        {horaLlegada && (
-          horaSalida ? (
-            <span className="text-xs text-neutral-500">
-              · Salida: {formatHoraAR(horaSalida)}
-            </span>
-          ) : isEnCurso ? (
+      {(horaLlegada || horaSalida) && (
+        <DestinationEventField
+          destinationId={destination.id}
+          tipo="salida"
+          label="Salida del destino"
+          registeredHora={horaSalida}
+          canRegister={canRegister && !!horaLlegada}
+          onDone={(iso) => setHoraSalida(iso)}
+        />
+      )}
+    </div>
+  );
+}
+
+function DestinationEventField({
+  destinationId,
+  tipo,
+  label,
+  registeredHora,
+  canRegister,
+  onDone,
+}: {
+  destinationId: string;
+  tipo: "llegada" | "salida";
+  label: string;
+  registeredHora: string | null;
+  canRegister: boolean;
+  onDone: (iso: string) => void;
+}) {
+  const [time, setTime] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editTime, setEditTime] = useState("");
+
+  function setNow() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, "0");
+    const m = now.getMinutes().toString().padStart(2, "0");
+    setTime(`${h}:${m}`);
+  }
+
+  function startEdit() {
+    if (registeredHora) {
+      const d = new Date(registeredHora);
+      const h = d.getHours().toString().padStart(2, "0");
+      const m = d.getMinutes().toString().padStart(2, "0");
+      setEditTime(`${h}:${m}`);
+    }
+    setEditing(true);
+  }
+
+  async function handleRegister(useHora?: string) {
+    setLoading(true);
+    setError(null);
+    const result = await updateDestinationHoraAction(destinationId, tipo, useHora);
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      let iso: string;
+      if (useHora) {
+        const today = new Date().toISOString().split("T")[0];
+        iso = new Date(`${today}T${useHora}:00`).toISOString();
+      } else {
+        iso = new Date().toISOString();
+      }
+      onDone(iso);
+      setTime("");
+      setEditing(false);
+    }
+  }
+
+  if (registeredHora) {
+    if (editing && canRegister) {
+      return (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 space-y-2">
+          <p className="text-xs font-medium text-neutral-900">{label}</p>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              value={editTime}
+              onChange={(e) => setEditTime(e.target.value)}
+              className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+            />
             <button
               type="button"
-              onClick={registrarSalida}
-              disabled={salidaPending}
-              className="rounded bg-neutral-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-neutral-800 disabled:opacity-50"
+              onClick={() => handleRegister(editTime)}
+              disabled={loading || !editTime}
+              className="rounded-md bg-reysil-red px-3 py-2 text-xs font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
             >
-              {salidaPending ? "Registrando..." : "Registrar salida"}
+              {loading ? "..." : "Guardar"}
             </button>
-          ) : null
-        )}
-      </div>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded-md border border-neutral-300 px-3 py-2 text-xs font-medium text-neutral-700"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      );
+    }
 
+    return (
+      <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+        <div>
+          <p className="text-xs font-medium text-neutral-900">{label}</p>
+          <p className="text-xs text-green-600">{formatHoraAR(registeredHora)}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {canRegister && (
+            <button
+              type="button"
+              onClick={startEdit}
+              className="text-xs text-neutral-500 hover:text-neutral-700 underline"
+            >
+              Editar
+            </button>
+          )}
+          <span className="text-xs text-green-600 font-medium">Registrado</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!canRegister) return null;
+
+  return (
+    <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2.5 space-y-2">
+      <p className="text-xs font-medium text-neutral-900">{label}</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-reysil-red focus:outline-none focus:ring-1 focus:ring-reysil-red"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setNow();
+            handleRegister();
+          }}
+          disabled={loading}
+          className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50"
+        >
+          Ahora
+        </button>
+      </div>
+      {time && (
+        <button
+          type="button"
+          onClick={() => handleRegister(time)}
+          disabled={loading}
+          className="w-full rounded-md bg-reysil-red px-4 py-2 text-xs font-medium text-white hover:bg-reysil-red-dark disabled:opacity-50"
+        >
+          {loading ? "Guardando..." : `Registrar ${time}`}
+        </button>
+      )}
     </div>
   );
 }
