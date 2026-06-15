@@ -6,6 +6,59 @@
 
 ---
 
+## Sesión 2026-06-15 — Extensión req 2.12: hitos por destino + reordenamiento operador (rama feature/destinos-hitos-orden)
+
+### Done
+- Migración 0023: `ALTER TABLE trip_destinations ADD hora_llegada TIMESTAMPTZ, ADD hora_salida TIMESTAMPTZ`
+- Tipos actualizados: `ChoferTripRow.trip_destinations` y `OperatorTripRow.trip_destinations` incluyen `hora_llegada` y `hora_salida`; SELECTs ampliados
+- `updateDestinationHoraAction(destinationId, "llegada"|"salida")`: graba timestamp servidor; valida EN_CURSO + chofer asignado
+- `reorderDestinationsAction(tripId, orderedIds[])`: actualiza `orden` en paralelo; valida PENDIENTE/PREASIGNADO/ASIGNADO
+- `DestinationOrderEditor` (nuevo): lista ↑/↓ con "Guardar orden"; read-only para EN_CURSO/FINALIZADO; muestra horas registradas
+- `trip-table.tsx`: usa `DestinationOrderEditor` en `TripDetail` full-width; destino simple eliminado del col-1 cuando hay múltiples
+- `trip-list.tsx` (chofer): `DestinationHoraRow` por destino con botones "Registrar llegada"/"Registrar salida" (EN_CURSO), optimistic update, horas en AR
+
+### In progress
+- Ninguno
+
+### Next
+- Aplicar migración 0023 en Supabase producción
+- Abrir PR de `feature/destinos-hitos-orden`
+
+### Decisions
+- Horas se graban server-side (timestamp del servidor, no del cliente) — más seguro y simple para un checkpoint táctil
+- `reorderDestinationsAction` usa `Promise.all` con una query UPDATE por destino — correcto para <20 destinos por viaje
+- Destinos EN_CURSO/FINALIZADO son solo lectura en el editor (botones ↑/↓ ocultos)
+
+### Blockers
+- None
+
+---
+
+## Sesión 2026-06-15 — Verificación E2E PRs #47/#48, merge #45–#48, fix chofer múltiples destinos (PR #49)
+
+### Done
+- Verificación Playwright PR #47 (`feature/edicion-datos-operador`): `TripDataEditor` en VJ-00159 (FINALIZADO); edición hora hito (18:04→19:04) + km/pernoctada/obs guardados; editor ausente en PENDIENTE ✓
+- Verificación Playwright PR #48 (`feature/multiples-destinos`): VJ-00201 creado para CLI-PRUEBA con 2 destinos; "Múltiples (2)" en columna Destino; detalle expandido lista ambos destinos con observaciones ✓
+- Merge a main de los 4 PRs abiertos: #45 (2.11), #46 (2.10), #47 (2.9), #48 (2.12)
+- Conflicto #48 vs main resuelto en `lib/server/assignments/queries.ts`: incluye `trip_destinations` (2.12) y `trip_driver_data` (2.9) en `OperatorTripRow`, SELECT y normalize
+- Fix bug PR #49 mergeado: `destino_descripcion` null en create actions con múltiples destinos → ahora usa `destinos[0].destino`; `components/chofer/trip-list.tsx` muestra "Múltiples destinos (N)" en card y lista destinos en detalle expandido
+
+### In progress
+- Datos de prueba en producción pendientes de borrado: VJ-00201, VJ-00202 (PENDIENTE CLI-PRUEBA), VJ-00159 (editado: km=420, pernoctada, obs="Test edición PR #47")
+
+### Next
+- Borrar datos de prueba (VJ-00201, VJ-00202, revertir edición VJ-00159) cuando el usuario lo indique
+- Formalizar req 2.12 extensión via `/nuevo-requerimiento`: chofer registra llegada/salida por cada destino individual → requiere migración `trip_destination_id` FK en `trip_events` + UI chofer
+
+### Decisions
+- Conflicto queries.ts #47 vs #48: ambos campos coexisten en `OperatorTripRow` (no se eligió uno sobre el otro)
+- Fix destino_descripcion: backward compat — siempre se guarda el primer destino en `trips.destino_descripcion` aun cuando hay `trip_destinations`
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-15 — Scope change: reqs 2.9/2.10/2.11/2.12 aprobados via /nuevo-requerimiento
 
 ### Done

@@ -120,7 +120,7 @@ public/
 | `trucks` | Camiones (marca, modelo, patente, estado activo/inactivo) |
 | `truck_types` | Tipos de camion configurables para el formulario de Reparto (nombre, activo). Escritura solo ADMIN |
 | `truck_daily_status` | Vista SQL que calcula el estado diario de cada camion (LIBRE/PREASIGNADO/ASIGNADO) cruzando trips + trip_assignments |
-| `trip_destinations` | Destinos multiples por viaje (req. 2.12). id, trip_id FK CASCADE, destino TEXT, observaciones TEXT, orden SMALLINT. Si hay filas → el viaje tiene multiples destinos. `trips.destino_descripcion` mantiene el primer destino por compat. |
+| `trip_destinations` | Destinos multiples por viaje (req. 2.12). id, trip_id FK CASCADE, destino TEXT, observaciones TEXT, orden SMALLINT, hora_llegada TIMESTAMPTZ NULL, hora_salida TIMESTAMPTZ NULL. Si hay filas → el viaje tiene multiples destinos. `trips.destino_descripcion` mantiene el primer destino por compat. El chofer registra hora_llegada/hora_salida por cada destino (migración 0023). El operador puede reordenar mientras el viaje sea PENDIENTE/PREASIGNADO/ASIGNADO. |
 
 Todas las tablas tienen Row Level Security activado. Las policies aseguran que cada rol solo ve/modifica los datos que le corresponden:
 - **CLIENTE**: solo sus propios viajes y reservas (filtrado por `client_id` derivado del user_profile)

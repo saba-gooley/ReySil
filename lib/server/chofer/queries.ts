@@ -48,6 +48,8 @@ export type ChoferTripRow = {
     destino: string;
     observaciones: string | null;
     orden: number;
+    hora_llegada: string | null;
+    hora_salida: string | null;
   }[];
   remitos: {
     id: string;
@@ -65,7 +67,7 @@ const CHOFER_TRIP_SELECT = `
   containers(numero, tipo, peso_carga_kg, fecha_entrega, reservations(fecha_entrega)),
   trip_events(id, tipo, ocurrido_at),
   trip_driver_data(id, km_inicial, km_50_porc, km_100_porc, km_final, pernocto, observaciones),
-  trip_destinations(id, destino, observaciones, orden),
+  trip_destinations(id, destino, observaciones, orden, hora_llegada, hora_salida),
   remitos(id, drive_url, estado)
 `;
 

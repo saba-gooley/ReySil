@@ -248,3 +248,60 @@ export async function finalizeTripAction(
     return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
+
+// =========================================================================
+// Req. 2.12 extensión — Registrar hora de llegada/salida por destino
+// =========================================================================
+
+export async function updateDestinationHoraAction(
+  destinationId: string,
+  tipo: "llegada" | "salida",
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+    const supabase = createAdminClient();
+
+    // Verify destination belongs to a trip assigned to this driver and is EN_CURSO
+    const { data: dest } = await supabase
+      .from("trip_destinations")
+      .select("id, trip_id, trips!inner(estado, trip_assignments!inner(driver_id))")
+      .eq("id", destinationId)
+      .maybeSingle();
+
+    if (!dest) return { error: "Destino no encontrado" };
+
+    const trip = Array.isArray((dest as Record<string, unknown>).trips)
+      ? ((dest as Record<string, unknown>).trips as Record<string, unknown>[])[0]
+      : (dest as Record<string, unknown>).trips as Record<string, unknown>;
+
+    if (!trip || trip.estado !== "EN_CURSO") {
+      return { error: "Solo se pueden registrar horas en viajes en curso" };
+    }
+
+    const assignment = Array.isArray(trip.trip_assignments)
+      ? (trip.trip_assignments as Record<string, unknown>[])[0]
+      : trip.trip_assignments as Record<string, unknown>;
+
+    if ((assignment as { driver_id: string })?.driver_id !== driverId) {
+      return { error: "No autorizado para este viaje" };
+    }
+
+    const field = tipo === "llegada" ? "hora_llegada" : "hora_salida";
+    const { error } = await supabase
+      .from("trip_destinations")
+      .update({ [field]: new Date().toISOString() })
+      .eq("id", destinationId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/chofer");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[updateDestinationHoraAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
