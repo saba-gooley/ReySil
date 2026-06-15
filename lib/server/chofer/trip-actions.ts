@@ -55,6 +55,55 @@ export async function registerTripEventAction(
   }
 }
 
+/**
+ * Req. 2.10 — El chofer puede corregir la hora de un evento ya registrado
+ * en un viaje EN_CURSO.
+ */
+export async function updateTripEventAction(
+  eventId: string,
+  ocurridoAt: string,
+): Promise<ChoferActionState> {
+  try {
+    const user = await getCurrentUser();
+    const driverId = user.profile.driver_id;
+    if (!driverId) return { error: "Usuario no vinculado a un chofer" };
+
+    const supabase = createAdminClient();
+
+    // Verify the event belongs to a trip assigned to this driver and is EN_CURSO
+    const { data: ev } = await supabase
+      .from("trip_events")
+      .select("trip_id, trips!inner(estado, trip_assignments!inner(driver_id))")
+      .eq("id", eventId)
+      .maybeSingle();
+
+    if (!ev) return { error: "Evento no encontrado" };
+
+    const trip = Array.isArray(ev.trips) ? ev.trips[0] : ev.trips as { estado: string; trip_assignments: { driver_id: string }[] | { driver_id: string } };
+    if (!trip || trip.estado !== "EN_CURSO") {
+      return { error: "Solo se pueden editar eventos de viajes en curso" };
+    }
+    const assignment = Array.isArray(trip.trip_assignments) ? trip.trip_assignments[0] : trip.trip_assignments;
+    if ((assignment as { driver_id: string })?.driver_id !== driverId) {
+      return { error: "No autorizado para editar este evento" };
+    }
+
+    const { error } = await supabase
+      .from("trip_events")
+      .update({ ocurrido_at: ocurridoAt })
+      .eq("id", eventId);
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/chofer");
+    return { success: true };
+  } catch (err) {
+    if (err && typeof err === "object" && "digest" in err) throw err;
+    console.error("[updateTripEventAction] error:", err);
+    return { error: `Error inesperado: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
 // =========================================================================
 // HU-CHO-003: Trip driver data (km, pernocto, obs)
 // =========================================================================
