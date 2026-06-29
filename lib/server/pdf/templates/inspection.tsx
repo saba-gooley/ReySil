@@ -9,6 +9,10 @@ import {
 
 const BRAND_RED = "#DC2626";
 
+// Identificacion del documento controlado (encabezado superior derecho)
+const DOC_CODIGO = "F - P - 002 - 001";
+const DOC_VERSION = "1";
+
 const styles = StyleSheet.create({
   page: {
     padding: 40,
@@ -31,6 +35,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#6b7280",
     marginTop: 2,
+  },
+  docMeta: {
+    fontSize: 9,
+    color: "#111827",
+    marginBottom: 1,
   },
   infoRow: {
     flexDirection: "row",
@@ -148,9 +157,18 @@ export type InspectionPdfData = {
   patente: string;
   fecha: string;
   completadoAt: string;
+  /** Hora de emision (HH:mm) en timezone Argentina. */
+  horaEmision: string;
   observacionesGenerales: string | null;
   items: InspectionItem[];
 };
+
+/** Convierte fecha YYYY-MM-DD a dd/mm/aa. */
+function formatFechaEmision(fecha: string): string {
+  const [y, m, d] = fecha.split("-");
+  if (!y || !m || !d) return fecha;
+  return `${d}/${m}/${y.slice(2)}`;
+}
 
 export function InspectionPdf({ data }: { data: InspectionPdfData }) {
   const totalItems = data.items.length;
@@ -178,8 +196,12 @@ export function InspectionPdf({ data }: { data: InspectionPdfData }) {
             <Text style={styles.subtitle}>Inspeccion del camion</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.infoValue}>{data.fecha}</Text>
-            <Text style={styles.subtitle}>{data.completadoAt}</Text>
+            <Text style={styles.docMeta}>Codigo: {DOC_CODIGO}</Text>
+            <Text style={styles.docMeta}>Version : {DOC_VERSION}</Text>
+            <Text style={styles.docMeta}>
+              Fecha de Emision: {formatFechaEmision(data.fecha)}
+            </Text>
+            <Text style={styles.docMeta}>{data.horaEmision}</Text>
           </View>
         </View>
 

@@ -468,6 +468,13 @@ async function generateInspectionPdfAsync(
     completadoAt: inspection.completado_at
       ? new Date(inspection.completado_at).toLocaleString("es-AR")
       : new Date().toLocaleString("es-AR"),
+    horaEmision: new Date(
+      inspection.completado_at ?? Date.now(),
+    ).toLocaleTimeString("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
     observacionesGenerales: inspection.observaciones_generales,
     items,
   });
