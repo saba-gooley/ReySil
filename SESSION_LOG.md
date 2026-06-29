@@ -6,6 +6,32 @@
 
 ---
 
+## Sesión 2026-06-29 — Fix flujo multi-destino chofer: UX hora por destino + ocultar hitos genéricos (PR #51)
+
+### Done
+- `components/chofer/trip-data-form.tsx`: oculta bloque "Registro del viaje" (Llegada/Salida al Cliente) cuando `trip.trip_destinations.length > 0` — esos eventos no aplican en viajes multi-destino
+- `components/chofer/trip-list.tsx`: reescrito `DestinationHoraRow` con UX idéntica a `EventTimeField` — nuevo componente `DestinationEventField` con input de hora + "Ahora" + estado verde confirmado + "Editar" + modo edición. Prop cambia de `isEnCurso` a `canRegister` (ASIGNADO || EN_CURSO)
+- `lib/server/chofer/trip-actions.ts` — `updateDestinationHoraAction`: acepta `hora?: string` (HH:MM), permite estado ASIGNADO además de EN_CURSO; transiciona trip ASIGNADO → EN_CURSO al registrar primera `hora_llegada`
+- `lib/server/chofer/trip-actions.ts` — `finalizeTripAction`: bifurca validación — multi-dest exige `hora_llegada` + `hora_salida` en TODOS los destinos; single-dest mantiene lógica trip_events existente
+- PR #51 mergeado a main
+
+### In progress
+- Ninguno
+
+### Next
+- Recibir próximos requerimientos del cliente (funcional pendiente de secciones 2.5+ revisadas o nuevas)
+- Datos de prueba en producción (VJ-00201, VJ-00202, VJ-00159 editado) pendientes de borrado si el usuario lo indica
+
+### Decisions
+- Horas por destino se construyen como `new Date().toISOString().split("T")[0] + T + HH:MM:00` (mismo patrón que `EventTimeField`) para consistencia — sigue siendo UTC date pero es lo que el código existente usa
+- `DestinationEventField` como componente propio en `trip-list.tsx` (no reutiliza `EventTimeField` de `trip-data-form.tsx`) porque llama a una action diferente (`updateDestinationHoraAction` vs `registerTripEventAction`)
+- Salida de destino solo se muestra después de que llegada está registrada (UX secuencial)
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-15 — Extensión req 2.12: hitos por destino + reordenamiento operador (rama feature/destinos-hitos-orden)
 
 ### Done
