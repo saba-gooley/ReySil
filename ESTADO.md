@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-07-07 (sesion 28 — mail automático "Establecer contraseña" al alta de cliente)
+> Ultima actualizacion: 2026-07-16 (sesion 29 — diagnóstico entrega mails + bug recovery flow + desbloqueo DALTOSUR)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 28: al dar de alta un cliente (o agregar un nuevo email de acceso) el sistema envía automáticamente un mail con link para establecer contraseña (`generateLink` recovery + SMTP propio). Sin BD. En rama `feature/mail-establecer-contrasena-alta-cliente`.
+✅ Proyecto funcional — **11 módulos + mail automático de contraseña mergeado (PR #53)**. Sesión 29: diagnóstico reveló que Ferozo rechaza mails con links a `*.vercel.app` como spam (0/4 entrega; tfaster.com.ar: 4/4). Fix pendiente: configurar dominio `reysil.tfaster.com.ar`. También descubierto: flujo de recovery roto (hash implícito no se procesa). Workaround DALTOSUR: contraseñas temporales asignadas + verificadas.
 
 ---
 
@@ -21,7 +21,7 @@
 | 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
 | 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
-| 7 | Notificaciones | ✅ Completo | SMTP Ferozo (nodemailer): email al crear solicitud, asignar/reasignar chofer, cargar remito. Preferencias por cliente y ReySil. Await (no fire-and-forget). |
+| 7 | Notificaciones | ✅ Completo | SMTP Ferozo (nodemailer): email al crear solicitud, asignar/reasignar chofer, cargar remito, **establecer contraseña** (sesión 29). Preferencias por cliente y ReySil. Await (no fire-and-forget). ⚠️ Mails con links a `reysil.vercel.app` rechazados como spam por Ferozo → PENDIENTE dominio propio. |
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
@@ -32,6 +32,58 @@
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo en Esta Sesion (2026-07-16 — Sesion 29)
+
+✅ **Diagnóstico crítico: entrega de mails bloqueada por Ferozo + bug del recovery flow**
+
+**A. Diagnóstico Entrega Mails (raíz del problema ETILFARMA/cliente 84)**
+- Reproducción: cliente 84 dio de alta 3 mails, no llegaban. Investigación determinó que no era **vencimiento de links** (se generaban OK), sino **rechazo en SMTP**.
+- Raíz: Ferozo rechaza con `550 Contenido Calificado como SPAM` los mails cuyo cuerpo contiene links a `reysil.vercel.app` (subdominios `*.vercel.app` → señal phishing). Test diferencial:
+  - `tfaster.com.ar` links → 4/4 aceptados (determinístico)
+  - `reysil.vercel.app` links → 0/4 aceptados (determinístico)
+- Afecta: mail de "Establecer contraseña" (PR #53, mergeado), posiblemente otros con links.
+- No afecta: mails de asignación/remito sin links (siempre llegan).
+- Workaround pendiente: configurar dominio `reysil.tfaster.com.ar` (4 pasos Vercel/DNS/Supabase, lo hace el usuario; verifico después).
+
+**B. Descubierto: Bug Crítico del Recovery Flow (roto desde el inicio)**
+- Síntoma: al hacer clic en links de recovery, redirige a `/login` en vez de `/restablecer-contrasena` → nunca se puede fijar contraseña.
+- Causa: Supabase usa flujo implícito (tokens en hash `#access_token=…`); servidor no los ve. Route handler `/auth/callback` solo lee `?code=` (flujo PKCE). No hay cliente browser que procese el hash.
+- Impacto: bloquea tanto "¿Olvidaste tu contraseña?" como el mail automático de contraseña (ambos usan recovery link). **Nunca funcionó E2E.** El usuario probó los links del mail → error `otp_expired` al hacer clic.
+- Fix pendiente: procesar hash del lado del cliente (página client en `/restablecer-contrasena` con `createBrowserClient` + `detectSessionInUrl:true`). PR + testeo.
+
+**C. Desbloqueo Temporal DALTOSUR (workaround)**
+- Cliente 84 (`saba+daltosur@addtarget.com`, `facundo.torrillas@daltosur.com`) no podía usar los links rotos.
+- Workaround (con OK explícito del usuario): asignar contraseña temporal vía `admin.auth.admin.updateUserById`:
+  - `saba+daltosur@addtarget.com` → `RsSu7URp6sZa9` ✅ verificado
+  - `facundo.torrillas@daltosur.com` → `facudalto*100` ✅ verificado
+- Login en producción confirmado para ambas.
+
+**D. Documentación Añadida a Memoria**
+- `project_ferozo_spam_vercel_links.md` — diagnóstico Ferozo + spam
+- `project_pendiente_dominio_reysil_tfaster.md` — pasos config dominio
+- `project_pendiente_bug_recovery_flow.md` — análisis bug + fix recomendado
+- `feedback_test_email_address.md` — usar `saba+101@addtarget.com` para pruebas
+
+### In progress
+- Dominio `reysil.tfaster.com.ar` (config pendiente del usuario)
+- Bug recovery flow (código + deploy + testeo pendiente)
+
+### Next
+1. Usuario configura 4 pasos de dominio (Vercel/DNS/Supabase). Yo verifico con test real.
+2. Fix del recovery flow (procesar hash client-side). PR + testeo E2E.
+3. Validar punta a punta: alta cliente → mail llega → link funciona → fija contraseña.
+
+### Decisions
+- **Ferozo spam filter es una restricción real**, no un falso positivo. Datos empiricamente sólidos (4/4 vs 0/4). Requiere dominio propio para entrega confiable.
+- **Recovery flow roto desde el inicio**: no es culpa del merge del mail automático (PR #53), es un bug preexistente que nunca se testó E2E. Afecta a cualquiera que intente usar "¿Olvidaste tu contraseña?".
+- **Workaround DALTOSUR fue razonable**: los usuarios no tenían credencial usable de todas formas; la contraseña temporal los desbloquea ahora.
+
+### Blockers
+- Dominio `reysil.tfaster.com.ar` pendiente configuración del usuario
+- Bug recovery flow pendiente code fix
 
 ---
 
