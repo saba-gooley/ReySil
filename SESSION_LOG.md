@@ -6,6 +6,56 @@
 
 ---
 
+## Sesión 2026-07-07 — Mail automático "Establecer contraseña" al alta de cliente (req. tipo D)
+
+### Contexto
+- Cliente ETILFARMA COMPANY (cód. 168) reportó no haber recibido credenciales al alta. Investigación: `createClientAction` creaba el usuario en Supabase Auth con una contraseña random que se descartaba, **sin enviar ningún mail**. La contraseña no es recuperable (Supabase la guarda hasheada). Esto afectaba a todo cliente nuevo, no solo a ETILFARMA.
+
+### Done
+- `lib/server/notifications/notify-set-password.ts` (NUEVO): genera link de tipo `recovery` con `admin.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo } })` (`redirectTo = ${NEXT_PUBLIC_APP_URL}/auth/callback?type=recovery`, mismo callback que el flujo de recuperación existente) y lo envía por el SMTP propio (`sendEmail`). Nunca lanza excepción.
+- `lib/server/notifications/templates.ts`: nuevo `setPasswordSubject` + `setPasswordHtml(clientName, email, actionLink)` con branding ReySil (botón + link plano de fallback + nota de vigencia).
+- `lib/server/clients/actions.ts`: `notifySetPassword(email, nombre)` llamado en el loop de creación de usuarios de `createClientAction` y en el loop `toAdd` de `updateClientAction` (nuevo email de acceso a cliente existente).
+- Typecheck (`tsc --noEmit`) limpio.
+
+### In progress
+- Nada
+
+### Next
+- Verificación E2E y PR.
+
+### Decisions
+- **`generateLink` + SMTP propio** en vez del mail nativo de Supabase: mantiene branding y usa el mismo canal (Ferozo/nodemailer) que el resto de notificaciones. Link tipo `recovery` (el mismo que "establecer/recuperar contraseña").
+- **El mail se envía siempre**, independiente de `client_notification_preferences`: es un mail de acceso/credenciales, no una notificación de negocio.
+- Sin BD, sin migración, sin cambio de arquitectura. Fallback del usuario: "¿Olvidaste tu contraseña?" en `/login`.
+
+### Blockers
+- None
+
+---
+
+## Sesión 2026-06-29 — Encabezado controlado en PDF de inspección (PR #52)
+
+### Done
+- `lib/server/pdf/templates/inspection.tsx`: reemplazado el bloque fecha/hora del encabezado superior derecho por la identificación del documento controlado. Constantes `DOC_CODIGO = "F - P - 002 - 001"` y `DOC_VERSION = "1"`, nuevo estilo `docMeta`, helper `formatFechaEmision()` (YYYY-MM-DD → dd/mm/aa) y campo `horaEmision` en el tipo `InspectionPdfData`. El header ahora muestra: `Codigo: F - P - 002 - 001` / `Version : 1` / `Fecha de Emision: dd/mm/aa` / `HH:mm`
+- `lib/server/chofer/inspection-actions.ts` y `lib/server/chofer/actions.ts`: ambos call sites del generador de PDF calculan `horaEmision` (HH:mm) desde `completado_at` con `toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour, minute })`
+- Verificado con render de prueba (PDF generado con datos de ejemplo → convertido a PNG) antes de mergear
+- PR #52 creado y mergeado a `main`; rama `feature/inspeccion-codigo-version-pdf` eliminada (local y remota)
+
+### In progress
+- Nada
+
+### Next
+- Pendiente de recibir próximas secciones del documento funcional del cliente. Sin bloqueantes activos.
+
+### Decisions
+- `Codigo` y `Version` quedan como constantes fijas en el template (no parametrizados por tipo de documento). Decisión consciente: hoy son fijos; si a futuro varían por documento se parametrizan.
+- Cambio puramente de presentación: la fecha sale de `inspection.fecha` y la hora de `inspection.completado_at` (datos ya existentes). Sin migración, sin tocar el nombre del archivo en Drive.
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-06-29 — Fix flujo multi-destino chofer: UX hora por destino + ocultar hitos genéricos (PR #51)
 
 ### Done

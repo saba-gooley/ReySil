@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-06-15 (sesion 26 — extensión req 2.12 + fix flujo multi-destino chofer, PRs #50 #51 mergeados)
+> Ultima actualizacion: 2026-07-07 (sesion 28 — mail automático "Establecer contraseña" al alta de cliente)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 26: extensión req 2.12 completa + fix flujo multi-destino chofer (PRs #50 #51 mergeados). Migración 0023 aplicada. Req 2.12 ✅ Completo.
+✅ Proyecto funcional — **11 módulos completos + 4 reqs nuevos en producción**. Sesión 28: al dar de alta un cliente (o agregar un nuevo email de acceso) el sistema envía automáticamente un mail con link para establecer contraseña (`generateLink` recovery + SMTP propio). Sin BD. En rama `feature/mail-establecer-contrasena-alta-cliente`.
 
 ---
 
@@ -17,7 +17,7 @@
 |---|--------|--------|-------|
 | 1 | Setup e Infraestructura | ✅ Completo | Next.js 14.2.35, schema SQL 17 tablas, middleware Supabase, PWA manifest, deploy Vercel |
 | 2 | Autenticacion | ✅ Completo | Login, recuperar/restablecer contrasena, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole |
-| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav |
+| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav. **Alta de cliente y nuevo email de acceso envían mail "Establecer contraseña" (`notify-set-password.ts`, sesión 28)** |
 | 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
 | 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
@@ -32,6 +32,18 @@
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo en Esta Sesion (2026-06-29 — Sesion 27)
+
+✅ **Encabezado controlado en PDF de inspección (PR #52 mergeado)**
+
+Reemplazado el bloque fecha/hora del encabezado superior derecho del PDF de inspección por la identificación del documento controlado.
+
+- `lib/server/pdf/templates/inspection.tsx` — constantes `DOC_CODIGO = "F - P - 002 - 001"` y `DOC_VERSION = "1"`; estilo `docMeta`; helper `formatFechaEmision()` (YYYY-MM-DD → dd/mm/aa); campo `horaEmision` agregado al tipo `InspectionPdfData`. Header derecho ahora muestra: `Codigo: F - P - 002 - 001` / `Version : 1` / `Fecha de Emision: dd/mm/aa` / `HH:mm`
+- `lib/server/chofer/inspection-actions.ts` y `lib/server/chofer/actions.ts` — ambos call sites calculan `horaEmision` (HH:mm) desde `completado_at` con `timeZone: "America/Argentina/Buenos_Aires"`
+- Sin cambios en BD, RLS ni en el nombre del archivo de Drive (`[Patente]-[YYYY-MM-DD].pdf`). Verificado con render de prueba (PDF→PNG).
 
 ---
 

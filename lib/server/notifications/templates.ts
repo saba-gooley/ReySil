@@ -280,3 +280,45 @@ export function remitosMultipleHtml(data: RemitosMultipleEmailData): string {
   return layout(`Remitos viaje ${data.codigo} — ReySil`, body);
 }
 
+// =========================================================================
+// Establecer contraseña (alta de cliente / nuevo email de acceso)
+// =========================================================================
+
+export type SetPasswordEmailData = {
+  clientName: string;
+  email: string;
+  actionLink: string;
+};
+
+export function setPasswordSubject(_data: SetPasswordEmailData): string {
+  return "ReySil — Activá tu acceso al portal";
+}
+
+export function setPasswordHtml(data: SetPasswordEmailData): string {
+  const body = `
+    <h2 style="margin:0 0 8px;color:${BRAND_RED_DARK};font-size:18px;">Bienvenido/a al portal de ReySil</h2>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5;">
+      Hola <strong>${data.clientName}</strong>, se creó tu acceso al portal de Transportes ReySil
+      con el email <strong>${data.email}</strong>. Para empezar a usarlo, establecé tu contraseña
+      haciendo clic en el botón:
+    </p>
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${data.actionLink}" target="_blank" rel="noopener"
+         style="display:inline-block;background:${BRAND_RED};color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:600;">
+        Establecer contraseña
+      </a>
+    </p>
+    <p style="margin:0 0 8px;color:#6b7280;font-size:13px;line-height:1.5;">
+      Si el botón no funciona, copiá y pegá este enlace en tu navegador:
+    </p>
+    <p style="margin:0 0 16px;color:#374151;font-size:12px;word-break:break-all;">
+      ${data.actionLink}
+    </p>
+    <p style="margin:0;color:#6b7280;font-size:13px;line-height:1.5;">
+      Por seguridad, este enlace tiene una vigencia limitada. Si venció, podés generar uno nuevo
+      desde la opción <strong>"¿Olvidaste tu contraseña?"</strong> en la pantalla de ingreso.
+    </p>`;
+
+  return layout("Activá tu acceso — ReySil", body);
+}
+

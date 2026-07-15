@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/server";
 import { CreateClientSchema, UpdateClientSchema } from "@/lib/validators/client";
+import { notifySetPassword } from "@/lib/server/notifications/notify-set-password";
 
 export type ClientActionState = {
   error?: string;
@@ -134,6 +135,9 @@ export async function createClientAction(
         error: `Error al crear perfil para ${entry.email}: ${profileError.message}`,
       };
     }
+
+    // Enviar email con link para establecer contraseña (falla en silencio)
+    await notifySetPassword(entry.email, nombre);
   }
 
   revalidatePath("/operador/clientes");
@@ -289,6 +293,9 @@ export async function updateClientAction(
           error: `Error al crear perfil para ${entry.email}: ${profileError.message}`,
         };
       }
+
+      // Enviar email con link para establecer contraseña (falla en silencio)
+      await notifySetPassword(entry.email, nombre);
     }
   }
 
