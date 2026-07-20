@@ -215,24 +215,36 @@ export async function updateClientAction(
   );
   const toUpdate = emails.filter((e) => currentEmailSet.has(e.email));
 
-  // Remove old emails + ban their auth users
-  for (const old of toRemove) {
-    await admin.from("client_emails").delete().eq("id", old.id);
+  // Remove old emails + eliminar sus usuarios de auth.
+  //
+  // Se BORRA el usuario (no se banea, como en la baja logica de un cliente).
+  // Al quitar un email el vinculo desaparece por completo: un usuario baneado
+  // quedaria huerfano para siempre —sin forma de llegar a el desde la UI— y
+  // ademas mantendria el email ocupado en auth.users, impidiendo reutilizarlo
+  // en otro cliente (el alta valida contra client_emails, que ya no lo tiene,
+  // pero despues falla al crear el usuario).
+  if (toRemove.length > 0) {
+    // Una sola lectura para todo el loop. `perPage` explicito: el default es
+    // 50 y deja usuarios fuera del resultado silenciosamente.
+    const { data: authUsers } = await admin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    const authIdByEmail = new Map(
+      (authUsers?.users ?? [])
+        .filter((u) => u.email)
+        .map((u) => [u.email as string, u.id]),
+    );
 
-    // Find and ban the auth user
-    const { data: profile } = await admin
-      .from("user_profiles")
-      .select("id")
-      .eq("client_id", id)
-      .maybeSingle();
+    for (const old of toRemove) {
+      await admin.from("client_emails").delete().eq("id", old.id);
 
-    // Look up auth user by email to ban
-    const { data: authUsers } = await admin.auth.admin.listUsers();
-    const authUser = authUsers?.users.find((u) => u.email === old.email);
-    if (authUser) {
-      await admin.auth.admin.updateUserById(authUser.id, {
-        ban_duration: "876600h",
-      });
+      const authId = authIdByEmail.get(old.email);
+      if (authId) {
+        // El perfil primero (es el hijo de auth.users por FK)
+        await admin.from("user_profiles").delete().eq("id", authId);
+        await admin.auth.admin.deleteUser(authId);
+      }
     }
   }
 
