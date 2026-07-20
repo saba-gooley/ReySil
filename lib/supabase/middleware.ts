@@ -7,15 +7,23 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 const PUBLIC_PATHS = [
   "/login",
   "/recuperar-contrasena",
+];
+
+// Rutas que son accesibles SIEMPRE (con o sin sesion).
+//
+// - /restablecer-contrasena: el usuario llega con una sesion temporal de
+//   recovery y debe poder usarla para fijar la nueva password sin que el
+//   middleware lo redirija a su home.
+// - /auth/callback y /auth/confirm: son callbacks de auth y SIEMPRE deben
+//   ejecutar su handler para procesar el token/code. Si fueran PUBLIC_PATHS,
+//   un usuario con sesion activa (ej. el operador que acaba de dar un alta,
+//   o alguien ya logueado que abre el link) seria redirigido a su home antes
+//   de que el handler corra, y el link de recovery no haria nada.
+const NEUTRAL_PATHS = [
+  "/restablecer-contrasena",
   "/auth/callback",
   "/auth/confirm",
 ];
-
-// Rutas que son accesibles SIEMPRE (con o sin sesion). Usado para
-// /restablecer-contrasena: el usuario llega con una sesion temporal
-// creada por el callback de Supabase y debe poder usarla para fijar
-// la nueva password sin que el middleware lo redirija a su home.
-const NEUTRAL_PATHS = ["/restablecer-contrasena"];
 
 // Prefijos protegidos por rol. Si un usuario autenticado intenta acceder a un
 // prefijo que no le corresponde, lo redirigimos a su home.
