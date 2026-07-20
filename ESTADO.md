@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-07-16 (sesion 29 — diagnóstico entrega mails + bug recovery flow + desbloqueo DALTOSUR)
+> Ultima actualizacion: 2026-07-20 (sesion 30 — flujo establecer/recuperar contraseña funcionando E2E)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos + mail automático de contraseña mergeado (PR #53)**. Sesión 29: diagnóstico reveló que Ferozo rechaza mails con links a `*.vercel.app` como spam (0/4 entrega; tfaster.com.ar: 4/4). Fix pendiente: configurar dominio `reysil.tfaster.com.ar`. También descubierto: flujo de recovery roto (hash implícito no se procesa). Workaround DALTOSUR: contraseñas temporales asignadas + verificadas.
+✅ Proyecto funcional — **11 módulos + flujo de contraseña cerrado y verificado**. Sesión 30: el mail de "establecer contraseña" al alta de cliente **funciona punta a punta** (PRs #54, #55, #56 mergeados). Se resolvió con `token_hash` + `verifyOtp` server-side (`/auth/confirm`), que funciona cross-device, y pasando el envío a Supabase (SMTP propio `transportesreysil@gmail.com`) en vez de Ferozo. La config de dominio propio dejó de ser necesaria. Además se corrigieron 2 bugs en el ABM de clientes al quitar emails de acceso.
 
 ---
 
@@ -16,12 +16,12 @@
 | # | Modulo | Estado | Notas |
 |---|--------|--------|-------|
 | 1 | Setup e Infraestructura | ✅ Completo | Next.js 14.2.35, schema SQL 17 tablas, middleware Supabase, PWA manifest, deploy Vercel |
-| 2 | Autenticacion | ✅ Completo | Login, recuperar/restablecer contrasena, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole |
-| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav. **Alta de cliente y nuevo email de acceso envían mail "Establecer contraseña" (`notify-set-password.ts`, sesión 28)** |
+| 2 | Autenticacion | ✅ Completo | Login, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole. **Recuperar/establecer contraseña via `token_hash` + `verifyOtp` en `/auth/confirm` — funciona cross-device (sesión 30)** |
+| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav. **Alta de cliente y nuevo email de acceso envían mail "Establecer contraseña" via Supabase (`notify-set-password.ts`). Al quitar un email se borra el usuario de auth (sesión 30)** |
 | 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
 | 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
-| 7 | Notificaciones | ✅ Completo | SMTP Ferozo (nodemailer): email al crear solicitud, asignar/reasignar chofer, cargar remito, **establecer contraseña** (sesión 29). Preferencias por cliente y ReySil. Await (no fire-and-forget). ⚠️ Mails con links a `reysil.vercel.app` rechazados como spam por Ferozo → PENDIENTE dominio propio. |
+| 7 | Notificaciones | ✅ Completo | **Dos canales:** (a) mails de negocio (solicitud, asignación, remito) por SMTP Ferozo/nodemailer desde `administracion@tfaster.com.ar`; (b) mails de auth (establecer/recuperar contraseña) los envía **Supabase** por su SMTP (`transportesreysil@gmail.com`). Preferencias por cliente y ReySil. Await (no fire-and-forget). ⚠️ Ferozo rechaza como spam los mails con links a `*.vercel.app` — por eso los de auth NO pasan por Ferozo. |
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
@@ -32,6 +32,50 @@
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Trabajo en Esta Sesion (2026-07-20 — Sesion 30)
+
+✅ **Flujo de establecer/recuperar contraseña funcionando E2E + 2 bugs del ABM de clientes**
+
+**A. Corrección del diagnóstico de la sesión 29**
+- El flujo de "¿Olvidaste tu contraseña?" **NO estaba roto** (afirmación errónea de la sesión anterior). Funcionaba: usa `resetPasswordForEmail` (PKCE, `?code=`) y el callback lo procesaba bien.
+- Lo que fallaba era **solo el mail de alta**, que usaba `admin.generateLink` → produce link de flujo implícito (`#access_token=`, hash) que el servidor no puede leer.
+- Causa real del "no anda en otro dispositivo": PKCE necesita un *code verifier* guardado en el navegador que pidió el link. El cliente que abre el mail de alta está en otro equipo → nunca lo tiene.
+
+**B. Fix del flujo (PR #54)**
+- `app/auth/confirm/route.ts` (NUEVO) — valida `token_hash` con `verifyOtp` **server-side**, crea sesión en cookies, redirige a `/restablecer-contrasena`. No depende de nada guardado en el navegador → funciona cross-device.
+- `lib/supabase/middleware.ts` — `/auth/confirm` agregado a rutas accesibles.
+- `lib/server/notifications/notify-set-password.ts` — pasa de `generateLink` + SMTP propio a `resetPasswordForEmail`: **Supabase envía el mail** por su propio SMTP (entrega confiable).
+- **Config en Supabase (dashboard):** plantilla "Reset Password" → link `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`.
+
+**C. Fix del bug con sesión activa (PR #55)**
+- Reportado al probar el alta real: el link abría la app en el inicio sin pedir nada.
+- Causa: `/auth/confirm` y `/auth/callback` estaban en `PUBLIC_PATHS`, que aplica "si hay sesión → redirigir al home". El operador que acababa de dar el alta tenía sesión → el middleware lo desviaba **antes** de que el handler procesara el token.
+- Fix: mover ambos a `NEUTRAL_PATHS` (los callbacks de auth deben ejecutar su handler siempre).
+- Detectado porque las pruebas con curl iban sin cookies y no cubrían el caso "ya logueado".
+
+**D. Dos bugs en `updateClientAction` al quitar emails de acceso (PR #56)**
+- **Bug 1:** se *baneaba* el usuario de auth en vez de borrarlo → usuario huérfano permanente + email seguía ocupado en `auth.users`, impidiendo reutilizarlo en otro cliente (fallaba con error confuso).
+- **Bug 2 (seguridad):** `listUsers()` sin parámetros usa `perPage=50` por default. Con **66 usuarios** en la base, 16 quedaban fuera y para ellos **el baneo nunca se ejecutaba**: seguían pudiendo entrar al portal tras quitarles el acceso. Falla silenciosa.
+- Fix: borrar `user_profiles` + auth user (en ese orden por FK); `listUsers()` con `perPage` explícito y **una sola llamada fuera del loop** (antes: una lectura completa por cada email removido); eliminada una query muerta.
+- La baja lógica con ban de `toggleClientAction` NO se tocó — ahí el ban es correcto (reversible).
+
+**E. Configuración de correo (dashboard, hecha por el usuario)**
+- Supabase SMTP pasó de `campaigns@addtarget.com` a **`transportesreysil@gmail.com`** (cuenta propia, ya no la personal del dev).
+- Aprendizajes: Gmail SMTP solo permite enviar desde la cuenta autenticada o un alias verificado en "Enviar como" — si no, reescribe el remitente y pisa el display name. Y la contraseña de aplicación va **sin espacios** (con espacios: `Error sending recovery email` 500).
+
+**F. Limpieza de datos**
+- Borrados los clientes de prueba `CLI-PRUEBA-SG01` y `CLI-PRUEBA-SG03` (nombre; sus códigos eran `00000000000002` y `00000000000003`) con sus 9 usuarios de auth, perfiles y emails. Sin viajes ni reservas asociadas. Base: 18 → 16 clientes.
+- **NO se tocaron** `CLI-PRUEBA` ("Cliente de Prueba SA") ni `00000001` ("cleinte de prueba luki").
+
+### Verificación
+- `verifyOtp` con `token_hash` crea sesión sin PKCE verifier (cross-device) ✅
+- `/auth/confirm` en producción: token válido → `/restablecer-contrasena` + cookie de sesión; inválido → `/recuperar-contrasena?error=link_invalido` ✅
+- Con sesión activa (el caso que fallaba): reproducido contra el código viejo y validado con el fix ✅
+- E2E real del usuario: alta de cliente → llega el mail → link → fija contraseña ✅
+- Fix de emails: tras quitar el email el usuario ya no existe en auth y el email se puede reutilizar ✅
 
 ---
 
@@ -560,10 +604,16 @@ Reemplazado el bloque fecha/hora del encabezado superior derecho del PDF de insp
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
+**Status actual:** Todos los módulos completos. Flujo de contraseña cerrado y verificado E2E en producción. Sin PRs abiertos ni bloqueantes.
+
+### Mejoras pendientes de correo (ninguna urgente — el sistema funciona)
+1. **Proveedor transaccional de email.** Supabase advierte que `smtp.gmail.com` no es transaccional ("designed for sending personal rather than transactional email messages"). Límite ~500 mails/día. Migrar a Resend/SendGrid/Brevo con dominio de ReySil autenticado (SPF/DKIM) daría remitente corporativo real, sin límites y sin que Gmail pise el display name.
+2. **Unificar remitentes.** Hoy el cliente ve dos: `transportesreysil@gmail.com` (auth) y `administracion@tfaster.com.ar` (negocio). Cosmético.
+3. **Dominio propio `reysil.tfaster.com.ar`** — dejó de ser bloqueante (los mails de auth ya no pasan por Ferozo). Queda como mejora de marca. Pasos completos en `SESSION_LOG.md` sesión 29.
+4. **Vigencia del link de recovery** (~1h). Si el onboarding lo necesita, subir en Supabase → Auth → Email → OTP Expiration.
 
 ### Próximos requerimientos del cliente
-Pendiente de recibir próximas secciones del documento funcional del cliente. Los últimos procesados fueron 2.5-2.8 (sesión 22) y sus correcciones post-entrega (sesión 23). No hay bloqueantes activos.
+Pendiente de recibir próximas secciones del documento funcional del cliente. Los últimos procesados fueron 2.5-2.8 (sesión 22) y sus correcciones post-entrega (sesión 23).
 
 ### Deuda técnica
 - Upload de remitos a Drive desde dev local puede exceder el timeout de 25s. En producción (Vercel) no se reproduce.
@@ -628,7 +678,10 @@ Pendiente de recibir próximas secciones del documento funcional del cliente. Lo
 - **Validación de tipo_camion contra BD**: tras PR #39 el schema Zod acepta cualquier string ≤50; el form solo ofrece tipos activos pero el server no verifica pertenencia. Decisión consciente para limitar scope.
 - **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP).
 - **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request. En producción con mucho tráfico, considerar cache en cookie.
-- **`listUsers()` en updateClientAction**: trae TODOS los usuarios. Con muchos usuarios, paginar o buscar por email.
+- ~~**`listUsers()` en updateClientAction**~~: RESUELTO sesión 30 (PR #56) — se sacó del loop y lleva `perPage` explícito. El default de 50 hacía que con 66 usuarios el baneo nunca se ejecutara para 16 de ellos.
+- **Código muerto en `templates.ts`**: `setPasswordSubject` / `setPasswordHtml` / `SetPasswordEmailData` quedaron sin uso tras la sesión 30 (el mail de contraseña lo manda Supabase con su propia plantilla). Borrar cuando se toque ese archivo.
+- **Gmail SMTP no es transaccional**: Supabase lo advierte explícitamente. Límite ~500 mails/día y el display name puede ser pisado por Gmail. Migrar a un proveedor transaccional cuando crezca el volumen.
+- **Dos remitentes distintos**: los mails de auth salen de `transportesreysil@gmail.com` y los de negocio de `administracion@tfaster.com.ar`. El cliente ve dos identidades.
 - **PDF de inspección fire-and-forget**: si falla upload a Drive, no hay retry.
 - **Remito upload sin validación de tamaño**: considerar validar max ~10MB server-side.
 - **Service Worker para PWA offline**: manifest.json configurado pero sin service worker real.

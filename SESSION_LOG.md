@@ -6,6 +6,37 @@
 
 ---
 
+## Sesión 2026-07-20 — Flujo de contraseña funcionando E2E + 2 bugs del ABM de clientes
+
+### Done
+- **Corrección de diagnóstico:** el flujo "¿Olvidaste tu contraseña?" NO estaba roto (la sesión 29 lo afirmó por error). Fallaba **solo el mail de alta**, que usaba `admin.generateLink` → link de flujo implícito (`#access_token=`) ilegible para el servidor. El problema de fondo: PKCE necesita un *code verifier* del navegador que pidió el link, y el cliente abre el mail en otro dispositivo.
+- **PR #54 — fix cross-device:** `app/auth/confirm/route.ts` (NUEVO) valida `token_hash` con `verifyOtp` server-side y crea la sesión en cookies; `/auth/confirm` sumado al middleware; `notify-set-password.ts` pasa a `resetPasswordForEmail` para que **Supabase** envíe el mail por su SMTP. Config en dashboard: plantilla "Reset Password" → `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`.
+- **PR #55 — fix con sesión activa:** el link abría la app en el inicio si el operador estaba logueado. `/auth/confirm` y `/auth/callback` estaban en `PUBLIC_PATHS` ("si hay sesión → home"), así que el middleware desviaba antes de que el handler corriera. Movidos a `NEUTRAL_PATHS`.
+- **PR #56 — 2 bugs en `updateClientAction` al quitar emails:** (1) se *baneaba* el usuario de auth en vez de borrarlo → huérfano permanente y email bloqueado para reutilizar; (2) **seguridad:** `listUsers()` sin params usa `perPage=50`, y con 66 usuarios 16 quedaban fuera → el baneo nunca se ejecutaba y seguían pudiendo entrar. Fix: borrar `user_profiles` + auth user, `listUsers()` con `perPage` explícito y una sola llamada fuera del loop, query muerta eliminada.
+- **Config de correo (usuario, dashboard):** Supabase SMTP pasó a `transportesreysil@gmail.com`. Aprendizajes: Gmail SMTP solo envía desde la cuenta autenticada o un alias verificado en "Enviar como" (si no, reescribe remitente y pisa el display name); la contraseña de aplicación va **sin espacios**.
+- **Limpieza:** borrados los clientes de prueba `CLI-PRUEBA-SG01` y `CLI-PRUEBA-SG03` con sus 9 usuarios de auth, perfiles y emails (sin viajes asociados). Base 18 → 16 clientes. No se tocaron `CLI-PRUEBA` ni `00000001`.
+
+### In progress
+- Nada.
+
+### Next
+1. Migrar a proveedor transaccional (Resend/SendGrid/Brevo) con dominio ReySil — Gmail SMTP no es transaccional y limita a ~500/día.
+2. Unificar remitentes (hoy el cliente ve `transportesreysil@gmail.com` y `administracion@tfaster.com.ar`).
+3. Limpiar código muerto en `templates.ts` (`setPassword*`).
+4. Opcional: dominio `reysil.tfaster.com.ar` (ya no bloqueante); subir OTP Expiration si el onboarding lo requiere.
+
+### Decisions
+- **`token_hash` + `verifyOtp` server-side en vez de PKCE** para los links de contraseña: es el patrón SSR recomendado por Supabase y el único que funciona cross-device, que es el caso real (el cliente abre el mail en su dispositivo, no el operador que dio el alta).
+- **Los mails de auth los envía Supabase, no la app:** evita el filtro de spam de Ferozo sobre links a `*.vercel.app`. Como efecto, **la config de dominio propio dejó de ser necesaria** — se ahorró todo ese trabajo.
+- **Los callbacks de auth van en `NEUTRAL_PATHS`, nunca en `PUBLIC_PATHS`:** su handler debe ejecutarse siempre; es él quien decide el destino según el resultado del token.
+- **Al quitar un email de acceso se BORRA el usuario de auth** (no se banea): el vínculo desaparece por completo. El ban sigue siendo correcto en `toggleClientAction`, donde es reversible.
+- **Lección de verificación:** el bug del PR #55 pasó porque las pruebas con curl iban sin cookies y nunca cubrieron "usuario ya logueado". Para bugs de middleware/sesión hay que reproducir primero contra el código viejo y recién después validar el fix.
+
+### Blockers
+- None
+
+---
+
 ## Sesión 2026-07-16 — Diagnóstico crítico: entrega mails bloqueada + bug recovery + desbloqueo DALTOSUR
 
 ### Done
