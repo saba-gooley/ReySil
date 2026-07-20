@@ -1,28 +1,24 @@
-import { createAdminClient } from "@/lib/supabase/server";
-import { sendEmail } from "./send-email";
-import {
-  setPasswordSubject,
-  setPasswordHtml,
-  type SetPasswordEmailData,
-} from "./templates";
+import { createServerClient } from "@supabase/ssr";
 
 /**
- * Envía al cliente un email con el link para establecer su contraseña.
+ * Dispara el email de "establecer contrasena" al dar de alta un cliente y al
+ * agregar un nuevo email de acceso a un cliente existente.
  *
- * Se dispara al dar de alta un cliente y al agregar un nuevo email de acceso
- * a un cliente existente. Genera un link de tipo "recovery" con Service Role
- * (`generateLink`) y lo envía por el SMTP propio (nodemailer) para mantener el
- * branding, en lugar del email nativo de Supabase.
+ * Usa `resetPasswordForEmail` para que **Supabase** envie el email por su
+ * propio SMTP (que entrega de forma confiable), en lugar de generar el link
+ * a mano y mandarlo por el SMTP de la app (Ferozo lo filtraba como spam por
+ * los links a *.vercel.app). El link del email usa `token_hash` y lo procesa
+ * `/auth/confirm` del lado del servidor, asi funciona en cualquier dispositivo.
  *
- * Es un email de acceso/credenciales: se envía SIEMPRE, independiente de las
- * preferencias de notificación del cliente.
+ * Es un email de acceso/credenciales: se envia SIEMPRE, independiente de las
+ * preferencias de notificacion del cliente.
  *
- * Nunca lanza excepción — falla en silencio (log) para no bloquear el alta.
- * Fallback del usuario: la opción "¿Olvidaste tu contraseña?" en /login.
+ * Nunca lanza excepcion — falla en silencio (log) para no bloquear el alta.
+ * Fallback del usuario: la opcion "Olvidaste tu contrasena" en /login.
  */
 export async function notifySetPassword(
   email: string,
-  clientName: string,
+  _clientName: string,
 ): Promise<void> {
   try {
     const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
@@ -34,35 +30,29 @@ export async function notifySetPassword(
       return;
     }
 
-    const redirectTo = `${origin}/auth/callback?type=recovery`;
+    // Cliente anon sin cookies: solo dispara el email de recovery de Supabase.
+    // No toca la sesion del operador que esta dando el alta.
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => [],
+          setAll: () => {},
+        },
+      },
+    );
 
-    const admin = createAdminClient();
-
-    const { data, error } = await admin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: { redirectTo },
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${origin}/restablecer-contrasena`,
     });
 
-    if (error || !data?.properties?.action_link) {
+    if (error) {
       console.error(
-        "[notify-set-password] generateLink error:",
-        error?.message,
+        "[notify-set-password] resetPasswordForEmail error:",
+        error.message,
       );
-      return;
     }
-
-    const payload: SetPasswordEmailData = {
-      clientName,
-      email,
-      actionLink: data.properties.action_link,
-    };
-
-    await sendEmail({
-      to: [email],
-      subject: setPasswordSubject(payload),
-      html: setPasswordHtml(payload),
-    });
   } catch (err) {
     console.error("[notify-set-password] Unexpected error:", err);
   }

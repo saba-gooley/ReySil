@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   "/login",
   "/recuperar-contrasena",
   "/auth/callback",
+  "/auth/confirm",
 ];
 
 // Rutas que son accesibles SIEMPRE (con o sin sesion). Usado para

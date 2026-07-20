@@ -6,6 +6,36 @@
 
 ---
 
+## Sesión 2026-07-16 — Diagnóstico crítico: entrega mails bloqueada + bug recovery + desbloqueo DALTOSUR
+
+### Done
+- **Diagnóstico entrega mails:** Ferozo rechaza determinísticamente mails con links a `reysil.vercel.app` (spam score). Test empirical: `tfaster.com.ar` 4/4 ✅, `reysil.vercel.app` 0/4 ❌. Raíz: subdominios `*.vercel.app` → señal phishing.
+- **Descubierto bug recovery flow:** flujo establecer/recuperar contraseña está **roto desde el inicio**. Supabase manda tokens en hash `#access_token`; servidor no puede leerlo → redirige a login. Afecta tanto "¿Olvidaste tu contraseña?" como mail automático de contraseña. Nunca funcionó E2E.
+- **Desbloqueo temporal DALTOSUR:** contraseñas temporales asignadas + verificadas con login real en producción (usuario autorizó):
+  - `saba+daltosur@addtarget.com` → `RsSu7URp6sZa9`
+  - `facundo.torrillas@daltosur.com` → `facudalto*100`
+- **Memoria actualizada:** 5 documentos de análisis + pasos pendientes. Recordatorios para retomar sesión.
+
+### In progress
+- Pendiente: usuario configura dominio `reysil.tfaster.com.ar` (4 pasos Vercel/DNS/Supabase); yo verifico.
+- Pendiente: fix código recovery flow (procesar hash client-side); PR + testeo E2E.
+
+### Next (orden)
+1. Usuario configura `reysil.tfaster.com.ar` → verifico con mail test.
+2. Implementar fix recovery flow (página client en `/restablecer-contrasena`).
+3. Validación punta a punta: alta cliente → mail llega → link funciona → contraseña fijada.
+
+### Decisions
+- Ferozo spam filter es restricción real, no falso positivo. Empirical: 4/4 vs 0/4.
+- Recovery flow roto preexistente, no culpa del merge de PR #53. Nunca se testó E2E.
+- Workaround DALTOSUR (contraseña temporal) razonable: sin credencial usable de todas formas.
+
+### Blockers
+- Dominio pendiente del usuario
+- Recovery flow code pending
+
+---
+
 ## Sesión 2026-07-07 — Mail automático "Establecer contraseña" al alta de cliente (req. tipo D)
 
 ### Contexto
