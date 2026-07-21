@@ -135,18 +135,25 @@ export function OperatorRepartoForm({
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{state.error}</div>
       )}
 
-      {/* Selector de cliente — en edicion el viaje no cambia de dueno */}
-      <fieldset className="space-y-4 rounded-lg border-2 border-reysil-red bg-reysil-red-light p-5">
-        <legend className="px-2 text-sm font-semibold text-reysil-red">
+      {/* Cliente. En el alta va destacado en rojo porque elegirlo es la accion
+          principal; en edicion es un dato fijo mas, y el rojo se leia como un
+          error. */}
+      <fieldset
+        className={
+          isEdit
+            ? "space-y-4 rounded-lg border border-neutral-200 bg-white p-5"
+            : "space-y-4 rounded-lg border-2 border-reysil-red bg-reysil-red-light p-5"
+        }
+      >
+        <legend
+          className={`px-2 text-sm font-semibold ${isEdit ? "text-neutral-700" : "text-reysil-red"}`}
+        >
           Cliente
         </legend>
         {isEdit ? (
-          <div className="text-sm text-neutral-700">
-            <span className="font-medium">
+          <div className="text-sm">
+            <span className="font-medium text-neutral-900">
               {clients.find((c) => c.id === clientId)?.nombre ?? "—"}
-            </span>
-            <span className="ml-2 text-xs text-neutral-500">
-              (el cliente de una solicitud no se puede cambiar)
             </span>
           </div>
         ) : (
