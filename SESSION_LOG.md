@@ -6,6 +6,41 @@
 
 ---
 
+## Sesión 2026-07-21 — Req 2.16: edición de solicitudes de Reparto + infraestructura de testing
+
+### Scope change
+- **Req 2.16 aprobado vía `/nuevo-requerimiento`** (tipo A): editar viajes en PENDIENTE/PREASIGNADO/ASIGNADO; bloqueado en EN_CURSO/FINALIZADO.
+- **Alcance acotado por el usuario a REPARTO.** La edición de CONTENEDOR quedó diferida: se hace a nivel *reserva* (1 reserva → N contenedores → N viajes), con las decisiones ya cerradas y guardadas en memoria para retomarla sin re-analizar.
+- Editan operador, admin y **el cliente**. Mail a ReySil solo cuando edita el cliente.
+
+### Done
+- **Migración 0024** (PENDIENTE de aplicar en producción): policies UPDATE para CLIENTE en `trips`, `trip_reparto_fields` y `trip_destinations`, todas con el gate de estado dentro de la policy. Trigger `trips_guard_cliente_update` que impide al cliente cambiar `estado`/`client_id`. Columna `enviar_ediciones`.
+- **Server:** `editable.ts`, `destinations.ts`, `edit-actions.ts`, `getRepartoForEdit`, `UpdateRepartoSchema`, `notify-trip-edited.ts`. La action relee el estado al guardar, para cubrir la carrera con el chofer arrancando el viaje.
+- **UI:** endpoint `/api/trips/[id]/edit-data`, dos diálogos de edición, y los formularios de Reparto (operador y cliente) parametrizados con `mode` + `initialValues` — el modo alta queda idéntico.
+- **Infraestructura de testing, que no existía:** Vitest + Supabase local en Docker + `supabase/seed.sql` con datos falsos. Sección `## Testing` agregada a CLAUDE.md.
+
+### Verificación
+- 28 tests unitarios + 15 de RLS contra la BD real + 14 checks E2E con Playwright. `type-check`, `lint` y `build` en verde.
+- Las 24 migraciones aplican **limpias desde cero** — nunca se había probado.
+
+### Decisions
+- **El gate de estado vive duplicado a propósito** (policy RLS + Server Action), y hay un test que verifica que las dos listas de estados no se desincronicen. Se abre escritura para el rol CLIENTE por primera vez; no alcanzaba con validar en la aplicación.
+- **Los grants de `anon`/`authenticated` van en el seed, no en una migración.** En producción ya existen; meterlos en una migración sería tocar permisos de la base real sin necesidad.
+- **Reescribir los destinos al editar en vez de preservarlos por `id`.** Un viaje en estado editable nunca tiene horas cargadas, así que la lógica compleja no se justificaba.
+
+### Learnings
+- **Me equivoqué en el análisis inicial** al afirmar que un viaje ASIGNADO multi-destino podía tener horas registradas. El usuario lo cuestionó y verificarlo mostró que no: la salida no se renderiza sin llegada previa, y la llegada dispara `ASIGNADO → EN_CURSO`. La guarda quedó como aserción de invariante.
+- **Riesgo latente NO corregido:** `assignTripAction` escribe `estado: "ASIGNADO"` sin guarda del estado actual. Hoy inalcanzable desde la UI, pero a un cambio de distancia de devolver un EN_CURSO a ASIGNADO.
+- Entorno local: `vector` (analytics) rompe `supabase start` en Mac; GoTrue no tolera `NULL` en las columnas de token de `auth.users`.
+- Los `<label>` de los formularios no están asociados a sus `<input>` en toda la app. Preexistente, no tocado.
+
+### Next
+1. Aplicar la **migración 0024** en Supabase de producción antes de deployar.
+2. Configurar en el ABM qué mails de ReySil reciben el aviso de edición (`enviar_ediciones` arranca en `false` para todos).
+3. Retomar la edición de CONTENEDOR a nivel reserva, incluyendo agregar/quitar contenedores.
+
+---
+
 ## Sesión 2026-07-20 — Flujo de contraseña funcionando E2E + 2 bugs del ABM de clientes
 
 ### Done

@@ -7,51 +7,79 @@ import {
   createRepartoAction,
   type TripActionState,
 } from "@/lib/server/trips/actions";
-import { MultiplesDestinosSection, type DestinoEntry } from "@/components/ui/multiples-destinos";
+import { updateRepartoAction } from "@/lib/server/trips/edit-actions";
+import { MultiplesDestinosSection } from "@/components/ui/multiples-destinos";
+import {
+  emptyRepartoValues,
+  type DestinoEntry,
+  type RepartoInitialValues,
+} from "@/lib/utils/reparto-form";
 
 type Deposit = { id: string; nombre: string; direccion: string | null; tipo: string };
 
 const initialState: TripActionState = {};
 
+/**
+ * Formulario de Reparto del portal cliente. Sirve para el alta y, desde el
+ * req 2.16, tambien para que el cliente edite su propia solicitud mientras
+ * esta en PENDIENTE, PREASIGNADO o ASIGNADO.
+ */
 export function RepartoForm({
   deposits,
   truckTypes,
+  mode = "create",
+  initialValues,
+  onDone,
 }: {
   deposits: Deposit[];
   truckTypes: string[];
+  mode?: "create" | "edit";
+  initialValues?: RepartoInitialValues;
+  onDone?: () => void;
 }) {
-  const [state, formAction] = useFormState(createRepartoAction, initialState);
+  const isEdit = mode === "edit";
+  const init = initialValues ?? emptyRepartoValues();
+
+  const [state, formAction] = useFormState(
+    isEdit ? updateRepartoAction : createRepartoAction,
+    initialState,
+  );
   const router = useRouter();
 
-  const [fechaSolicitada, setFechaSolicitada] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState("");
-  const [origenDepositId, setOrigenDepositId] = useState<string>("");
-  const [origenDescripcion, setOrigenDescripcion] = useState("");
-  const [destinoDescripcion, setDestinoDescripcion] = useState("");
-  const [observaciones, setObservaciones] = useState("");
-  const [ndv, setNdv] = useState("");
-  const [pal, setPal] = useState("");
-  const [cat, setCat] = useState("");
-  const [nroUn, setNroUn] = useState("");
-  const [cantidadBultos, setCantidadBultos] = useState("");
-  const [pesoKg, setPesoKg] = useState("");
-  const [toneladas, setToneladas] = useState("");
-  const [codigoPostal, setCodigoPostal] = useState("");
-  const [zonaTarifa, setZonaTarifa] = useState("");
-  const [horario, setHorario] = useState("");
-  const [tipoCamion, setTipoCamion] = useState("");
-  const [peon, setPeon] = useState("");
-  const [multiplesDestinos, setMultiplesDestinos] = useState(false);
-  const [destinos, setDestinos] = useState<DestinoEntry[]>([{ key: 1, destino: "", observaciones: "" }]);
+  const [fechaSolicitada, setFechaSolicitada] = useState(init.fechaSolicitada);
+  const [fechaEntrega, setFechaEntrega] = useState(init.fechaEntrega);
+  const [origenDepositId, setOrigenDepositId] = useState<string>(init.origenDepositId);
+  const [origenDescripcion, setOrigenDescripcion] = useState(init.origenDescripcion);
+  const [destinoDescripcion, setDestinoDescripcion] = useState(init.destinoDescripcion);
+  const [observaciones, setObservaciones] = useState(init.observaciones);
+  const [ndv, setNdv] = useState(init.ndv);
+  const [pal, setPal] = useState(init.pal);
+  const [cat, setCat] = useState(init.cat);
+  const [nroUn, setNroUn] = useState(init.nroUn);
+  const [cantidadBultos, setCantidadBultos] = useState(init.cantidadBultos);
+  const [pesoKg, setPesoKg] = useState(init.pesoKg);
+  const [toneladas, setToneladas] = useState(init.toneladas);
+  const [codigoPostal, setCodigoPostal] = useState(init.codigoPostal);
+  const [zonaTarifa, setZonaTarifa] = useState(init.zonaTarifa);
+  const [horario, setHorario] = useState(init.horario);
+  const [tipoCamion, setTipoCamion] = useState(init.tipoCamion);
+  const [peon, setPeon] = useState(init.peon);
+  const [multiplesDestinos, setMultiplesDestinos] = useState(init.multiplesDestinos);
+  const [destinos, setDestinos] = useState<DestinoEntry[]>(init.destinos);
 
   useEffect(() => {
-    if (state.success) {
+    if (!state.success) return;
+    if (isEdit) {
+      onDone?.();
+      router.refresh();
+    } else {
       router.push("/cliente/seguimiento");
     }
-  }, [state.success, router]);
+  }, [state.success, isEdit, onDone, router]);
 
   function handleSubmit(formData: FormData) {
     const payload = {
+      ...(isEdit ? { trip_id: init.tripId } : {}),
       fecha_solicitada: fechaSolicitada,
       fecha_entrega: fechaEntrega,
       origen_deposit_id: origenDepositId === "otro" || !origenDepositId ? null : origenDepositId,
@@ -356,18 +384,18 @@ export function RepartoForm({
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => router.push("/cliente/solicitudes")}
+          onClick={() => (isEdit ? onDone?.() : router.push("/cliente/solicitudes"))}
           className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-100"
         >
           Cancelar
         </button>
-        <SubmitButton />
+        <SubmitButton isEdit={isEdit} />
       </div>
     </form>
   );
 }
 
-function SubmitButton() {
+function SubmitButton({ isEdit }: { isEdit: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -375,7 +403,7 @@ function SubmitButton() {
       disabled={pending}
       className="rounded-md bg-reysil-red px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-reysil-red-dark disabled:opacity-50"
     >
-      {pending ? "Enviando..." : "Solicitar viaje"}
+      {pending ? "Guardando..." : isEdit ? "Guardar cambios" : "Solicitar viaje"}
     </button>
   );
 }

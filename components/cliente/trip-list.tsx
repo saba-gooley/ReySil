@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import type { TripRow } from "@/lib/server/trips/queries";
+import { isTripEditable } from "@/lib/server/trips/editable";
+import { ClientTripEditDialog } from "./trip-edit-dialog";
 
 const ESTADO_LABELS: Record<string, { label: string; color: string }> = {
   PENDIENTE: { label: "Pendiente", color: "bg-yellow-100 text-yellow-700" },
@@ -97,6 +100,7 @@ function TripRowComponent({
   onToggle: () => void;
 }) {
   const assignment = trip.trip_assignments;
+  const router = useRouter();
 
   return (
     <>
@@ -131,8 +135,19 @@ function TripRowComponent({
             ? `${assignment.drivers.nombre} ${assignment.drivers.apellido} — ${assignment.patente}`
             : "—"}
         </td>
-        <td className="px-4 py-3 text-neutral-400 text-xs">
-          {isExpanded ? "▲" : "▼"}
+        <td className="px-4 py-3 text-xs">
+          <div className="flex items-center justify-end gap-2">
+            {/* Editar la solicitud (req. 2.16). Solo Reparto y solo mientras
+                el viaje no haya arrancado. */}
+            {trip.tipo === "REPARTO" && isTripEditable(trip.estado) && (
+              <ClientTripEditDialog
+                tripId={trip.id}
+                codigo={trip.codigo}
+                onDone={() => router.refresh()}
+              />
+            )}
+            <span className="text-neutral-400">{isExpanded ? "▲" : "▼"}</span>
+          </div>
         </td>
       </tr>
       {isExpanded && (

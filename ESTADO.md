@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-07-20 (sesion 30 — flujo establecer/recuperar contraseña funcionando E2E)
+> Ultima actualizacion: 2026-07-21 (sesion 31 — req 2.16 edición de solicitudes de Reparto + infra de testing)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos + flujo de contraseña cerrado y verificado**. Sesión 30: el mail de "establecer contraseña" al alta de cliente **funciona punta a punta** (PRs #54, #55, #56 mergeados). Se resolvió con `token_hash` + `verifyOtp` server-side (`/auth/confirm`), que funciona cross-device, y pasando el envío a Supabase (SMTP propio `transportesreysil@gmail.com`) en vez de Ferozo. La config de dominio propio dejó de ser necesaria. Además se corrigieron 2 bugs en el ABM de clientes al quitar emails de acceso.
+✅ Proyecto funcional — **11 módulos + req 2.16 (edición de solicitudes) construido y verificado**. Sesión 31: se puede editar una solicitud de Reparto mientras está en PENDIENTE/PREASIGNADO/ASIGNADO, desde el panel de operadores y desde el portal del cliente. En EN_CURSO y FINALIZADO queda bloqueado, validado en RLS **y** en la Server Action. Además el proyecto pasó a tener **infraestructura de testing** (Vitest + Supabase local en Docker) que antes no existía: 43 tests automatizados. La sesión 30 había cerrado el flujo de establecer/recuperar contraseña E2E.
 
 ---
 
@@ -30,8 +30,73 @@
 | 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
 | 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
+| 2.16 | Edición de solicitudes de Reparto | 🔄 En PR | Rama `feature/edicion-viajes-reparto`. **Migración 0024 PENDIENTE de aplicar en producción.** Editable en PENDIENTE/PREASIGNADO/ASIGNADO; bloqueado en EN_CURSO/FINALIZADO. Editan operador, admin y cliente. Solo REPARTO — CONTENEDOR diferido. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Testing
+
+Antes de esta sesión el proyecto **no tenía ningún test**. Ahora:
+
+| Comando | Qué corre | Estado |
+|---------|-----------|--------|
+| `npm test` | 28 unitarios (gate de estados, destinos, mapeo de formulario) | ✅ |
+| `npm run test:rls` | 15 tests de policies RLS contra la BD real | ✅ |
+| `npm run type-check` / `npm run lint` | — | ✅ |
+
+**Supabase local:** `npx supabase start` + `npx supabase db reset`. Las 24 migraciones aplican limpias desde cero. Seed con datos falsos en `supabase/seed.sql` (usuarios `*@local.test`, contraseña `password123`). Permite desarrollar y probar **sin tocar producción**, que hasta ahora era la única base disponible.
+
+---
+
+## Trabajo en Esta Sesion (2026-07-21 — Sesion 31)
+
+🆕 **Req 2.16 — Edición de solicitudes de Reparto según estado** (rama `feature/edicion-viajes-reparto`)
+
+**A. Alcance aprobado**
+- Editable en **PENDIENTE, PREASIGNADO, ASIGNADO**. Bloqueado en **EN_CURSO y FINALIZADO**.
+- Editan operador, admin y **el propio cliente** desde su portal.
+- Incluye ABM de destinos: convertir de destino único a multi-destino y viceversa.
+- **Solo REPARTO.** La edición de CONTENEDOR se hace a nivel *reserva* (1 reserva → N contenedores → N viajes) y quedó diferida con el análisis ya cerrado.
+
+**B. Migración 0024 (PENDIENTE de aplicar en producción)**
+- `supabase/migrations/0024_edicion_solicitudes_reparto.sql`
+- Helpers `trip_estado_editable(estado)` y `trip_editable_by_client(trip_id)` (SECURITY DEFINER, para no reintroducir la recursión que arreglaron 0003/0004).
+- Policies UPDATE para CLIENTE en `trips` y `trip_reparto_fields`; INSERT/UPDATE/DELETE en `trip_destinations`. **Hasta ahora el rol CLIENTE solo tenía INSERT y SELECT** — esta es superficie de escritura nueva.
+- Trigger `trips_guard_cliente_update`: impide que el cliente cambie `estado` o `client_id`. Hace falta porque las policies no distinguen por columna y `GRANT UPDATE(cols)` no sirve (staff y cliente comparten el rol `authenticated`). Deja pasar service_role (`auth.uid()` null), staff y el chofer asignado.
+- Columna `enviar_ediciones` en `reysil_notification_emails`.
+
+**C. Server**
+- `lib/server/trips/editable.ts` (NUEVO) — `EDITABLE_STATES` + `isTripEditable()`, compartido UI/server.
+- `lib/server/trips/destinations.ts` (NUEVO) — `insertTripDestinations` (movido desde `actions.ts`), `replaceTripDestinations`, `resolveDestinoDescripcion`.
+- `lib/server/trips/edit-actions.ts` (NUEVO) — `updateRepartoAction`. Relee el estado al momento de guardar (cubre la carrera con el chofer arrancando el viaje). No escribe `estado` ni `client_id`.
+- `lib/server/trips/queries.ts` — `getRepartoForEdit()` + tipo `RepartoForEdit`.
+- `lib/utils/reparto-form.ts` (NUEVO) — mapeo del viaje guardado a valores del formulario.
+- `lib/validators/trip.ts` — `UpdateRepartoSchema`.
+- `lib/server/notifications/notify-trip-edited.ts` (NUEVO) + template + categoría `ediciones`.
+
+**D. UI**
+- `app/api/trips/[id]/edit-data/route.ts` (NUEVO) — datos del formulario, con las mismas validaciones de dueño y estado que la action.
+- `components/operador/trip-edit-dialog.tsx` y `components/cliente/trip-edit-dialog.tsx` (NUEVOS).
+- `operator-reparto-form.tsx` y `cliente/reparto-form.tsx` — aceptan `mode: "create" | "edit"` + `initialValues`. El modo `create` queda idéntico al de antes.
+- Botón "Editar" en `pendientes-view`, `asignado-view` y `cliente/trip-list`, visible solo si el estado lo permite.
+
+**E. Infraestructura de testing (el proyecto no tenía ninguna)**
+- Vitest + `vitest.config.ts` + `vitest.rls.config.ts`; scripts `test`, `test:watch`, `test:rls`.
+- Supabase local en Docker. **Las 24 migraciones aplican limpias desde cero** — nunca se había probado.
+- `supabase/seed.sql` (NUEVO) — datos falsos: 6 viajes de Reparto, uno por estado, + 2 clientes para probar aislamiento.
+- Sección `## Testing` agregada a `CLAUDE.md`, que no existía.
+
+**F. Verificación**
+- 28 tests unitarios ✅ · 15 tests de RLS contra la BD real ✅ · `type-check`, `lint` y `build` ✅
+- 14 checks E2E con Playwright contra el Supabase local ✅ — incluyen: el operador guarda un cambio y el estado no se mueve; EN_CURSO y FINALIZADO no ofrecen "Editar"; el endpoint devuelve 409 en EN_CURSO y 403 para un cliente ajeno; el cliente convierte su solicitud a multi-destino.
+
+**G. Hallazgos del camino**
+- **Corrección a mi propio análisis:** había advertido que un viaje ASIGNADO multi-destino podía tener horas cargadas y que borrar destinos las perdería. El usuario lo cuestionó y tenía razón: el campo "Salida del destino" no se renderiza hasta que exista la llegada, y registrar la llegada pasa el viaje a EN_CURSO. Un viaje editable **nunca** tiene horas. La guarda quedó como aserción de invariante, no como mitigación de un caso real.
+- **Riesgo latente anotado, NO corregido:** `assignTripAction` (`lib/server/assignments/actions.ts:86-89`) escribe `estado: "ASIGNADO"` sin guarda del estado actual, a diferencia de `registerTripEventAction` que usa `.eq("estado", "ASIGNADO")`. Hoy es inofensivo porque la vista En Curso no ofrece reasignar, pero está a un cambio de UI de devolver un EN_CURSO a ASIGNADO.
+- Entorno local: el contenedor `vector` de analytics rompe `supabase start` en Mac (desactivado en `config.toml`); `anon`/`authenticated` no reciben los grants que sí tienen en la nube (replicados en el seed, **no** en una migración); GoTrue no tolera `NULL` en las columnas de token de `auth.users`.
+- Los `<label>` de los formularios no están asociados a sus `<input>` (sin `htmlFor`/`id`) en toda la app. Preexistente, no tocado en este PR.
 
 ---
 

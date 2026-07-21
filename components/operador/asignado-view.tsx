@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import type { OperatorTripRow } from "@/lib/server/assignments/queries";
 import { TripTable } from "./trip-table";
 import { AssignedTripActions } from "./assigned-trip-actions";
+import { TripEditDialog } from "./trip-edit-dialog";
+import { isTripEditable } from "@/lib/server/trips/editable";
 
 type Driver = { id: string; codigo: string; nombre: string; apellido: string };
 
@@ -24,15 +26,25 @@ export function AsignadoView({
       enableDateDriverFilters
       driversForFilter={drivers}
       actions={(trip) => (
-        <AssignedTripActions
-          tripId={trip.id}
-          drivers={drivers}
-          currentDriverId={trip.trip_assignments?.driver_id}
-          currentPatente={trip.trip_assignments?.patente}
-          currentComentario={trip.trip_assignments?.comentario_asignacion}
-          fecha={trip.fecha_solicitada || undefined}
-          onDone={() => router.refresh()}
-        />
+        <div className="flex flex-wrap gap-1">
+          {/* Editar la solicitud (req. 2.16) — ASIGNADO sigue siendo editable */}
+          {trip.tipo === "REPARTO" && isTripEditable(trip.estado) && (
+            <TripEditDialog
+              tripId={trip.id}
+              codigo={trip.codigo}
+              onDone={() => router.refresh()}
+            />
+          )}
+          <AssignedTripActions
+            tripId={trip.id}
+            drivers={drivers}
+            currentDriverId={trip.trip_assignments?.driver_id}
+            currentPatente={trip.trip_assignments?.patente}
+            currentComentario={trip.trip_assignments?.comentario_asignacion}
+            fecha={trip.fecha_solicitada || undefined}
+            onDone={() => router.refresh()}
+          />
+        </div>
       )}
     />
   );
