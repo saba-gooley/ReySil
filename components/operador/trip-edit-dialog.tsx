@@ -77,7 +77,7 @@ export function TripEditDialog({
           "rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-100"
         }
       >
-        Editar
+        Editar Viaje
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>

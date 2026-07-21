@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TripRow } from "@/lib/server/trips/queries";
 import { isTripEditable } from "@/lib/server/trips/editable";
+import { formatHoraAR } from "@/lib/utils/date";
 import { ClientTripEditDialog } from "./trip-edit-dialog";
 
 const ESTADO_LABELS: Record<string, { label: string; color: string }> = {
@@ -128,7 +129,9 @@ function TripRowComponent({
           {trip.origen_descripcion || "—"}
         </td>
         <td className="px-4 py-3 text-sm">
-          {trip.destino_descripcion || "—"}
+          {trip.trip_destinations.length > 0
+            ? `Múltiples (${trip.trip_destinations.length})`
+            : trip.destino_descripcion || "—"}
         </td>
         <td className="px-4 py-3 text-xs text-neutral-500">
           {assignment
@@ -185,7 +188,10 @@ function TripDetail({ trip }: { trip: TripRow }) {
             }
           />
           <Row label="Origen" value={trip.origen_descripcion} />
-          <Row label="Destino" value={trip.destino_descripcion} />
+          {/* Con multiples destinos se listan todos abajo, no solo el primero */}
+          {trip.trip_destinations.length === 0 && (
+            <Row label="Destino" value={trip.destino_descripcion} />
+          )}
           <Row label="Observaciones" value={trip.observaciones_cliente} />
         </dl>
       </div>
@@ -273,6 +279,51 @@ function TripDetail({ trip }: { trip: TripRow }) {
               </>
             )}
           </dl>
+        </div>
+      )}
+
+      {/* Destinos multiples (req. 2.12) — se listan todos, con las horas que
+          haya registrado el chofer en cada uno */}
+      {trip.trip_destinations.length > 0 && (
+        <div className="space-y-2 sm:col-span-3">
+          <h4 className="text-xs font-semibold uppercase text-neutral-400">
+            Destinos ({trip.trip_destinations.length})
+          </h4>
+          <div className="space-y-1.5">
+            {[...trip.trip_destinations]
+              .sort((a, b) => a.orden - b.orden)
+              .map((d, i) => (
+                <div
+                  key={d.id}
+                  className="flex items-start gap-2 rounded border border-neutral-200 bg-white px-3 py-2"
+                >
+                  <span className="mt-0.5 w-5 shrink-0 text-xs font-medium text-neutral-400">
+                    {i + 1}.
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-neutral-900">{d.destino}</p>
+                    {d.observaciones && (
+                      <p className="text-xs text-neutral-400">{d.observaciones}</p>
+                    )}
+                    {(d.hora_llegada || d.hora_salida) && (
+                      <p className="mt-0.5 text-xs text-neutral-500">
+                        {d.hora_llegada && (
+                          <span className="text-green-700">
+                            ✓ Llegada: {formatHoraAR(d.hora_llegada)}
+                          </span>
+                        )}
+                        {d.hora_llegada && d.hora_salida && (
+                          <span className="mx-1 text-neutral-300">·</span>
+                        )}
+                        {d.hora_salida && (
+                          <span>Salida: {formatHoraAR(d.hora_salida)}</span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
       )}
 

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { reorderDestinationsAction } from "@/lib/server/trips/actions";
+import { formatHoraAR } from "@/lib/utils/date";
 
 type Destination = {
   id: string;
@@ -19,14 +20,6 @@ type Props = {
 };
 
 const EDITABLE_STATES = ["PENDIENTE", "PREASIGNADO", "ASIGNADO"];
-
-function formatHoraAR(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "America/Argentina/Buenos_Aires",
-  });
-}
 
 export function DestinationOrderEditor({ tripId, tripEstado, destinations }: Props) {
   const [items, setItems] = useState(

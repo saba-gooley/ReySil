@@ -80,6 +80,7 @@ export type ReysilNotificationEmail = {
   enviar_asignaciones: boolean;
   enviar_remitos: boolean;
   enviar_salida_deposito: boolean;
+  enviar_ediciones: boolean;
   created_at: string;
   updated_at: string;
 };
