@@ -1,3 +1,5 @@
+BEGIN;
+
 -- =========================================================================
 -- 0024 — Edicion de solicitudes REPARTO (req. 2.16)
 --
@@ -134,3 +136,5 @@ CREATE POLICY trip_destinations_delete_cliente ON public.trip_destinations
 -- manda nada (ya esta mirando el viaje).
 ALTER TABLE public.reysil_notification_emails
   ADD COLUMN IF NOT EXISTS enviar_ediciones BOOLEAN NOT NULL DEFAULT false;
+
+COMMIT;
