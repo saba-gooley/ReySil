@@ -30,7 +30,7 @@
 | 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
 | 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
-| 2.16 | Edición de solicitudes de Reparto | 🔄 En PR | Rama `feature/edicion-viajes-reparto`. **Migración 0024 PENDIENTE de aplicar en producción.** Editable en PENDIENTE/PREASIGNADO/ASIGNADO; bloqueado en EN_CURSO/FINALIZADO. Editan operador, admin y cliente. Solo REPARTO — CONTENEDOR diferido. |
+| 2.16 | Edición de solicitudes de Reparto | 🔄 En PR #57 | **Migración 0024 YA APLICADA en producción (2026-07-21), verificada con pre y post-check.** Falta mergear y deployar. Editable en PENDIENTE/PREASIGNADO/ASIGNADO; bloqueado en EN_CURSO/FINALIZADO. Editan operador, admin y cliente. Solo REPARTO — CONTENEDOR diferido. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
 
@@ -60,7 +60,9 @@ Antes de esta sesión el proyecto **no tenía ningún test**. Ahora:
 - Incluye ABM de destinos: convertir de destino único a multi-destino y viceversa.
 - **Solo REPARTO.** La edición de CONTENEDOR se hace a nivel *reserva* (1 reserva → N contenedores → N viajes) y quedó diferida con el análisis ya cerrado.
 
-**B. Migración 0024 (PENDIENTE de aplicar en producción)**
+**B. Migración 0024 (APLICADA en producción el 2026-07-21)**
+- Pre-check contra producción antes de aplicarla: funciones auth, estados del enum y tablas requeridas, todo presente → sin deriva de esquema respecto de las migraciones. Post-check: 5 policies, 1 trigger, 2 funciones y la columna, todo OK.
+- Envuelta en `BEGIN`/`COMMIT`. Idempotente: los 6 `DROP ... IF EXISTS` apuntan a objetos que crea la propia migración.
 - `supabase/migrations/0024_edicion_solicitudes_reparto.sql`
 - Helpers `trip_estado_editable(estado)` y `trip_editable_by_client(trip_id)` (SECURITY DEFINER, para no reintroducir la recursión que arreglaron 0003/0004).
 - Policies UPDATE para CLIENTE en `trips` y `trip_reparto_fields`; INSERT/UPDATE/DELETE en `trip_destinations`. **Hasta ahora el rol CLIENTE solo tenía INSERT y SELECT** — esta es superficie de escritura nueva.

@@ -14,7 +14,7 @@
 - Editan operador, admin y **el cliente**. Mail a ReySil solo cuando edita el cliente.
 
 ### Done
-- **Migración 0024** (PENDIENTE de aplicar en producción): policies UPDATE para CLIENTE en `trips`, `trip_reparto_fields` y `trip_destinations`, todas con el gate de estado dentro de la policy. Trigger `trips_guard_cliente_update` que impide al cliente cambiar `estado`/`client_id`. Columna `enviar_ediciones`.
+- **Migración 0024** (APLICADA en producción el 2026-07-21): policies UPDATE para CLIENTE en `trips`, `trip_reparto_fields` y `trip_destinations`, todas con el gate de estado dentro de la policy. Trigger `trips_guard_cliente_update` que impide al cliente cambiar `estado`/`client_id`. Columna `enviar_ediciones`.
 - **Server:** `editable.ts`, `destinations.ts`, `edit-actions.ts`, `getRepartoForEdit`, `UpdateRepartoSchema`, `notify-trip-edited.ts`. La action relee el estado al guardar, para cubrir la carrera con el chofer arrancando el viaje.
 - **UI:** endpoint `/api/trips/[id]/edit-data`, dos diálogos de edición, y los formularios de Reparto (operador y cliente) parametrizados con `mode` + `initialValues` — el modo alta queda idéntico.
 - **Infraestructura de testing, que no existía:** Vitest + Supabase local en Docker + `supabase/seed.sql` con datos falsos. Sección `## Testing` agregada a CLAUDE.md.
@@ -35,9 +35,14 @@
 - Los `<label>` de los formularios no están asociados a sus `<input>` en toda la app. Preexistente, no tocado.
 
 ### Next
-1. Aplicar la **migración 0024** en Supabase de producción antes de deployar.
-2. Configurar en el ABM qué mails de ReySil reciben el aviso de edición (`enviar_ediciones` arranca en `false` para todos).
+1. Mergear el PR #57 y deployar (la migración 0024 ya está aplicada en producción).
+2. Configurar en el ABM qué mails de ReySil reciben el aviso de edición (`enviar_ediciones` arranca en `false` para todos, así que hasta prenderlo no le llega a nadie).
 3. Retomar la edición de CONTENEDOR a nivel reserva, incluyendo agregar/quitar contenedores.
+
+### Verificación en producción
+- Pre-check antes de migrar: funciones `auth_*`, los 3 estados editables del enum y las 4 tablas requeridas, todo presente. Confirma que producción **no** se desvió de los archivos de migración pese a haberse aplicado a mano durante meses.
+- Post-check: 5 policies + 1 trigger + 2 funciones + la columna. Todo OK.
+- Aprendizaje operativo: el SQL Editor de Supabase muestra **solo el resultado de la última sentencia**. Los chequeos hay que mandarlos como una sola query con `UNION ALL`, o el usuario ve un único resultado y parece que las demás no corrieron.
 
 ---
 
