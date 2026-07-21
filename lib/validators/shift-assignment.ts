@@ -52,6 +52,8 @@ export const ReysilNotificationEmailSchema = z.object({
   enviar_asignaciones: z.boolean().default(false),
   enviar_remitos: z.boolean().default(false),
   enviar_salida_deposito: z.boolean().default(false),
+  // req. 2.16 — aviso cuando el CLIENTE modifica una solicitud
+  enviar_ediciones: z.boolean().default(false),
 });
 
 export type ReysilNotificationEmailInput = z.infer<

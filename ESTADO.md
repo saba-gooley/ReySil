@@ -2,12 +2,12 @@
 
 > Se actualiza automaticamente con /fin-sesion.
 > Es lo primero que Claude lee para saber donde estamos.
-> Ultima actualizacion: 2026-07-16 (sesion 29 — diagnóstico entrega mails + bug recovery flow + desbloqueo DALTOSUR)
+> Ultima actualizacion: 2026-07-21 (sesion 31 — req 2.16 edición de solicitudes de Reparto + infra de testing)
 
 ---
 
 ## Estado General
-✅ Proyecto funcional — **11 módulos + mail automático de contraseña mergeado (PR #53)**. Sesión 29: diagnóstico reveló que Ferozo rechaza mails con links a `*.vercel.app` como spam (0/4 entrega; tfaster.com.ar: 4/4). Fix pendiente: configurar dominio `reysil.tfaster.com.ar`. También descubierto: flujo de recovery roto (hash implícito no se procesa). Workaround DALTOSUR: contraseñas temporales asignadas + verificadas.
+✅ Proyecto funcional — **11 módulos + req 2.16 (edición de solicitudes) construido y verificado**. Sesión 31: se puede editar una solicitud de Reparto mientras está en PENDIENTE/PREASIGNADO/ASIGNADO, desde el panel de operadores y desde el portal del cliente. En EN_CURSO y FINALIZADO queda bloqueado, validado en RLS **y** en la Server Action. Además el proyecto pasó a tener **infraestructura de testing** (Vitest + Supabase local en Docker) que antes no existía: 43 tests automatizados. La sesión 30 había cerrado el flujo de establecer/recuperar contraseña E2E.
 
 ---
 
@@ -16,12 +16,12 @@
 | # | Modulo | Estado | Notas |
 |---|--------|--------|-------|
 | 1 | Setup e Infraestructura | ✅ Completo | Next.js 14.2.35, schema SQL 17 tablas, middleware Supabase, PWA manifest, deploy Vercel |
-| 2 | Autenticacion | ✅ Completo | Login, recuperar/restablecer contrasena, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole |
-| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav. **Alta de cliente y nuevo email de acceso envían mail "Establecer contraseña" (`notify-set-password.ts`, sesión 28)** |
+| 2 | Autenticacion | ✅ Completo | Login, middleware RBAC, RLS policies 17 tablas, helpers getCurrentUser/requireRole. **Recuperar/establecer contraseña via `token_hash` + `verifyOtp` en `/auth/confirm` — funciona cross-device (sesión 30)** |
+| 3 | Administracion | ✅ Completo | ABM clientes (con emails y depositos) y ABM choferes (con generacion de credenciales). Panel operadores con layout y nav. **Alta de cliente y nuevo email de acceso envían mail "Establecer contraseña" via Supabase (`notify-set-password.ts`). Al quitar un email se borra el usuario de auth (sesión 30)** |
 | 4 | Portal Cliente | ✅ Completo | Solicitud Reparto (form + grilla), Solicitud Contenedor, seguimiento realtime, historial. PR #3 y #4 mergeados |
 | 5 | Panel Operadores | ✅ Completo | 8 vistas (Pendientes, Asignado, En Curso, Finalizadas, Remitos, Toneladas, Reportes, Clientes, Choferes). PR #5 mergeado |
 | 6 | PWA Chofer | ✅ Completo | Layout mobile-first, viajes del dia, turno, inspeccion vehicular (5 secciones, 35 items). PR #6 mergeado |
-| 7 | Notificaciones | ✅ Completo | SMTP Ferozo (nodemailer): email al crear solicitud, asignar/reasignar chofer, cargar remito, **establecer contraseña** (sesión 29). Preferencias por cliente y ReySil. Await (no fire-and-forget). ⚠️ Mails con links a `reysil.vercel.app` rechazados como spam por Ferozo → PENDIENTE dominio propio. |
+| 7 | Notificaciones | ✅ Completo | **Dos canales:** (a) mails de negocio (solicitud, asignación, remito) por SMTP Ferozo/nodemailer desde `administracion@tfaster.com.ar`; (b) mails de auth (establecer/recuperar contraseña) los envía **Supabase** por su SMTP (`transportesreysil@gmail.com`). Preferencias por cliente y ReySil. Await (no fire-and-forget). ⚠️ Ferozo rechaza como spam los mails con links a `*.vercel.app` — por eso los de auth NO pasan por Ferozo. |
 | 8 | Integraciones | ✅ Completo | Google Drive upload (remitos + PDF inspecciones), @react-pdf/renderer para PDF inspeccion. PR #8 mergeado |
 | 9 | Gestión de Camiones y Disponibilidad | ✅ Completo | ABM camiones, tablero disponibilidad, selectlists con status, menu reorganizado, dialogs fijos |
 | 10 | Panel Admin — ABM Operadores | ✅ Completo | Layout admin, ABM operadores (create/edit/deactivate/reactivate/reset password), acceso a panel operadores |
@@ -30,8 +30,119 @@
 | 2.10 | Edición datos viaje por chofer | ✅ Completo | PR #46 mergeado. Chofer corrige horas de eventos en viajes EN_CURSO. |
 | 2.9 | Edición datos viaje por operador | ✅ Completo | PR #47 mergeado. `TripDataEditor` en detalle expandido: edita horas de hitos y km/pernoctada/obs. Solo EN_CURSO y FINALIZADO. |
 | 2.12 | Múltiples destinos por solicitud | ✅ Completo | PRs #48 #49 #50 #51 mergeados. Migraciones 0022 y 0023 aplicadas. Chofer registra hora_llegada/hora_salida por destino (ASIGNADO→EN_CURSO). Operador reordena destinos. Sección "Registro del viaje" oculta para multi-dest. |
+| 2.16 | Edición de solicitudes de Reparto | 🔄 En PR #57 | **Migración 0024 YA APLICADA en producción (2026-07-21), verificada con pre y post-check.** Falta mergear y deployar. Editable en PENDIENTE/PREASIGNADO/ASIGNADO; bloqueado en EN_CURSO/FINALIZADO. Editan operador, admin y cliente. Solo REPARTO — CONTENEDOR diferido. |
 
 **Referencias:** ⬜ Pendiente · 🔄 En progreso · ✅ Completo · 🚫 Bloqueado
+
+---
+
+## Testing
+
+Antes de esta sesión el proyecto **no tenía ningún test**. Ahora:
+
+| Comando | Qué corre | Estado |
+|---------|-----------|--------|
+| `npm test` | 28 unitarios (gate de estados, destinos, mapeo de formulario) | ✅ |
+| `npm run test:rls` | 15 tests de policies RLS contra la BD real | ✅ |
+| `npm run type-check` / `npm run lint` | — | ✅ |
+
+**Supabase local:** `npx supabase start` + `npx supabase db reset`. Las 24 migraciones aplican limpias desde cero. Seed con datos falsos en `supabase/seed.sql` (usuarios `*@local.test`, contraseña `password123`). Permite desarrollar y probar **sin tocar producción**, que hasta ahora era la única base disponible.
+
+---
+
+## Trabajo en Esta Sesion (2026-07-21 — Sesion 31)
+
+🆕 **Req 2.16 — Edición de solicitudes de Reparto según estado** (rama `feature/edicion-viajes-reparto`)
+
+**A. Alcance aprobado**
+- Editable en **PENDIENTE, PREASIGNADO, ASIGNADO**. Bloqueado en **EN_CURSO y FINALIZADO**.
+- Editan operador, admin y **el propio cliente** desde su portal.
+- Incluye ABM de destinos: convertir de destino único a multi-destino y viceversa.
+- **Solo REPARTO.** La edición de CONTENEDOR se hace a nivel *reserva* (1 reserva → N contenedores → N viajes) y quedó diferida con el análisis ya cerrado.
+
+**B. Migración 0024 (APLICADA en producción el 2026-07-21)**
+- Pre-check contra producción antes de aplicarla: funciones auth, estados del enum y tablas requeridas, todo presente → sin deriva de esquema respecto de las migraciones. Post-check: 5 policies, 1 trigger, 2 funciones y la columna, todo OK.
+- Envuelta en `BEGIN`/`COMMIT`. Idempotente: los 6 `DROP ... IF EXISTS` apuntan a objetos que crea la propia migración.
+- `supabase/migrations/0024_edicion_solicitudes_reparto.sql`
+- Helpers `trip_estado_editable(estado)` y `trip_editable_by_client(trip_id)` (SECURITY DEFINER, para no reintroducir la recursión que arreglaron 0003/0004).
+- Policies UPDATE para CLIENTE en `trips` y `trip_reparto_fields`; INSERT/UPDATE/DELETE en `trip_destinations`. **Hasta ahora el rol CLIENTE solo tenía INSERT y SELECT** — esta es superficie de escritura nueva.
+- Trigger `trips_guard_cliente_update`: impide que el cliente cambie `estado` o `client_id`. Hace falta porque las policies no distinguen por columna y `GRANT UPDATE(cols)` no sirve (staff y cliente comparten el rol `authenticated`). Deja pasar service_role (`auth.uid()` null), staff y el chofer asignado.
+- Columna `enviar_ediciones` en `reysil_notification_emails`.
+
+**C. Server**
+- `lib/server/trips/editable.ts` (NUEVO) — `EDITABLE_STATES` + `isTripEditable()`, compartido UI/server.
+- `lib/server/trips/destinations.ts` (NUEVO) — `insertTripDestinations` (movido desde `actions.ts`), `replaceTripDestinations`, `resolveDestinoDescripcion`.
+- `lib/server/trips/edit-actions.ts` (NUEVO) — `updateRepartoAction`. Relee el estado al momento de guardar (cubre la carrera con el chofer arrancando el viaje). No escribe `estado` ni `client_id`.
+- `lib/server/trips/queries.ts` — `getRepartoForEdit()` + tipo `RepartoForEdit`.
+- `lib/utils/reparto-form.ts` (NUEVO) — mapeo del viaje guardado a valores del formulario.
+- `lib/validators/trip.ts` — `UpdateRepartoSchema`.
+- `lib/server/notifications/notify-trip-edited.ts` (NUEVO) + template + categoría `ediciones`.
+
+**D. UI**
+- `app/api/trips/[id]/edit-data/route.ts` (NUEVO) — datos del formulario, con las mismas validaciones de dueño y estado que la action.
+- `components/operador/trip-edit-dialog.tsx` y `components/cliente/trip-edit-dialog.tsx` (NUEVOS).
+- `operator-reparto-form.tsx` y `cliente/reparto-form.tsx` — aceptan `mode: "create" | "edit"` + `initialValues`. El modo `create` queda idéntico al de antes.
+- Botón "Editar" en `pendientes-view`, `asignado-view` y `cliente/trip-list`, visible solo si el estado lo permite.
+
+**E. Infraestructura de testing (el proyecto no tenía ninguna)**
+- Vitest + `vitest.config.ts` + `vitest.rls.config.ts`; scripts `test`, `test:watch`, `test:rls`.
+- Supabase local en Docker. **Las 24 migraciones aplican limpias desde cero** — nunca se había probado.
+- `supabase/seed.sql` (NUEVO) — datos falsos: 6 viajes de Reparto, uno por estado, + 2 clientes para probar aislamiento.
+- Sección `## Testing` agregada a `CLAUDE.md`, que no existía.
+
+**F. Verificación**
+- 28 tests unitarios ✅ · 15 tests de RLS contra la BD real ✅ · `type-check`, `lint` y `build` ✅
+- 14 checks E2E con Playwright contra el Supabase local ✅ — incluyen: el operador guarda un cambio y el estado no se mueve; EN_CURSO y FINALIZADO no ofrecen "Editar"; el endpoint devuelve 409 en EN_CURSO y 403 para un cliente ajeno; el cliente convierte su solicitud a multi-destino.
+
+**G. Hallazgos del camino**
+- **Corrección a mi propio análisis:** había advertido que un viaje ASIGNADO multi-destino podía tener horas cargadas y que borrar destinos las perdería. El usuario lo cuestionó y tenía razón: el campo "Salida del destino" no se renderiza hasta que exista la llegada, y registrar la llegada pasa el viaje a EN_CURSO. Un viaje editable **nunca** tiene horas. La guarda quedó como aserción de invariante, no como mitigación de un caso real.
+- **Riesgo latente anotado, NO corregido:** `assignTripAction` (`lib/server/assignments/actions.ts:86-89`) escribe `estado: "ASIGNADO"` sin guarda del estado actual, a diferencia de `registerTripEventAction` que usa `.eq("estado", "ASIGNADO")`. Hoy es inofensivo porque la vista En Curso no ofrece reasignar, pero está a un cambio de UI de devolver un EN_CURSO a ASIGNADO.
+- Entorno local: el contenedor `vector` de analytics rompe `supabase start` en Mac (desactivado en `config.toml`); `anon`/`authenticated` no reciben los grants que sí tienen en la nube (replicados en el seed, **no** en una migración); GoTrue no tolera `NULL` en las columnas de token de `auth.users`.
+- Los `<label>` de los formularios no están asociados a sus `<input>` (sin `htmlFor`/`id`) en toda la app. Preexistente, no tocado en este PR.
+
+---
+
+## Trabajo en Esta Sesion (2026-07-20 — Sesion 30)
+
+✅ **Flujo de establecer/recuperar contraseña funcionando E2E + 2 bugs del ABM de clientes**
+
+**A. Corrección del diagnóstico de la sesión 29**
+- El flujo de "¿Olvidaste tu contraseña?" **NO estaba roto** (afirmación errónea de la sesión anterior). Funcionaba: usa `resetPasswordForEmail` (PKCE, `?code=`) y el callback lo procesaba bien.
+- Lo que fallaba era **solo el mail de alta**, que usaba `admin.generateLink` → produce link de flujo implícito (`#access_token=`, hash) que el servidor no puede leer.
+- Causa real del "no anda en otro dispositivo": PKCE necesita un *code verifier* guardado en el navegador que pidió el link. El cliente que abre el mail de alta está en otro equipo → nunca lo tiene.
+
+**B. Fix del flujo (PR #54)**
+- `app/auth/confirm/route.ts` (NUEVO) — valida `token_hash` con `verifyOtp` **server-side**, crea sesión en cookies, redirige a `/restablecer-contrasena`. No depende de nada guardado en el navegador → funciona cross-device.
+- `lib/supabase/middleware.ts` — `/auth/confirm` agregado a rutas accesibles.
+- `lib/server/notifications/notify-set-password.ts` — pasa de `generateLink` + SMTP propio a `resetPasswordForEmail`: **Supabase envía el mail** por su propio SMTP (entrega confiable).
+- **Config en Supabase (dashboard):** plantilla "Reset Password" → link `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`.
+
+**C. Fix del bug con sesión activa (PR #55)**
+- Reportado al probar el alta real: el link abría la app en el inicio sin pedir nada.
+- Causa: `/auth/confirm` y `/auth/callback` estaban en `PUBLIC_PATHS`, que aplica "si hay sesión → redirigir al home". El operador que acababa de dar el alta tenía sesión → el middleware lo desviaba **antes** de que el handler procesara el token.
+- Fix: mover ambos a `NEUTRAL_PATHS` (los callbacks de auth deben ejecutar su handler siempre).
+- Detectado porque las pruebas con curl iban sin cookies y no cubrían el caso "ya logueado".
+
+**D. Dos bugs en `updateClientAction` al quitar emails de acceso (PR #56)**
+- **Bug 1:** se *baneaba* el usuario de auth en vez de borrarlo → usuario huérfano permanente + email seguía ocupado en `auth.users`, impidiendo reutilizarlo en otro cliente (fallaba con error confuso).
+- **Bug 2 (seguridad):** `listUsers()` sin parámetros usa `perPage=50` por default. Con **66 usuarios** en la base, 16 quedaban fuera y para ellos **el baneo nunca se ejecutaba**: seguían pudiendo entrar al portal tras quitarles el acceso. Falla silenciosa.
+- Fix: borrar `user_profiles` + auth user (en ese orden por FK); `listUsers()` con `perPage` explícito y **una sola llamada fuera del loop** (antes: una lectura completa por cada email removido); eliminada una query muerta.
+- La baja lógica con ban de `toggleClientAction` NO se tocó — ahí el ban es correcto (reversible).
+
+**E. Configuración de correo (dashboard, hecha por el usuario)**
+- Supabase SMTP pasó de `campaigns@addtarget.com` a **`transportesreysil@gmail.com`** (cuenta propia, ya no la personal del dev).
+- Aprendizajes: Gmail SMTP solo permite enviar desde la cuenta autenticada o un alias verificado en "Enviar como" — si no, reescribe el remitente y pisa el display name. Y la contraseña de aplicación va **sin espacios** (con espacios: `Error sending recovery email` 500).
+
+**F. Limpieza de datos**
+- Borrados los clientes de prueba `CLI-PRUEBA-SG01` y `CLI-PRUEBA-SG03` (nombre; sus códigos eran `00000000000002` y `00000000000003`) con sus 9 usuarios de auth, perfiles y emails. Sin viajes ni reservas asociadas. Base: 18 → 16 clientes.
+- **NO se tocaron** `CLI-PRUEBA` ("Cliente de Prueba SA") ni `00000001` ("cleinte de prueba luki").
+
+### Verificación
+- `verifyOtp` con `token_hash` crea sesión sin PKCE verifier (cross-device) ✅
+- `/auth/confirm` en producción: token válido → `/restablecer-contrasena` + cookie de sesión; inválido → `/recuperar-contrasena?error=link_invalido` ✅
+- Con sesión activa (el caso que fallaba): reproducido contra el código viejo y validado con el fix ✅
+- E2E real del usuario: alta de cliente → llega el mail → link → fija contraseña ✅
+- Fix de emails: tras quitar el email el usuario ya no existe en auth y el email se puede reutilizar ✅
 
 ---
 
@@ -560,10 +671,16 @@ Reemplazado el bloque fecha/hora del encabezado superior derecho del PDF de insp
 
 ## Proximo Paso Exacto
 
-**Status actual:** 10 módulos completos + módulo 11 construido. 3 PRs abiertos esperando revisión del usuario.
+**Status actual:** Todos los módulos completos. Flujo de contraseña cerrado y verificado E2E en producción. Sin PRs abiertos ni bloqueantes.
+
+### Mejoras pendientes de correo (ninguna urgente — el sistema funciona)
+1. **Proveedor transaccional de email.** Supabase advierte que `smtp.gmail.com` no es transaccional ("designed for sending personal rather than transactional email messages"). Límite ~500 mails/día. Migrar a Resend/SendGrid/Brevo con dominio de ReySil autenticado (SPF/DKIM) daría remitente corporativo real, sin límites y sin que Gmail pise el display name.
+2. **Unificar remitentes.** Hoy el cliente ve dos: `transportesreysil@gmail.com` (auth) y `administracion@tfaster.com.ar` (negocio). Cosmético.
+3. **Dominio propio `reysil.tfaster.com.ar`** — dejó de ser bloqueante (los mails de auth ya no pasan por Ferozo). Queda como mejora de marca. Pasos completos en `SESSION_LOG.md` sesión 29.
+4. **Vigencia del link de recovery** (~1h). Si el onboarding lo necesita, subir en Supabase → Auth → Email → OTP Expiration.
 
 ### Próximos requerimientos del cliente
-Pendiente de recibir próximas secciones del documento funcional del cliente. Los últimos procesados fueron 2.5-2.8 (sesión 22) y sus correcciones post-entrega (sesión 23). No hay bloqueantes activos.
+Pendiente de recibir próximas secciones del documento funcional del cliente. Los últimos procesados fueron 2.5-2.8 (sesión 22) y sus correcciones post-entrega (sesión 23).
 
 ### Deuda técnica
 - Upload de remitos a Drive desde dev local puede exceder el timeout de 25s. En producción (Vercel) no se reproduce.
@@ -628,7 +745,10 @@ Pendiente de recibir próximas secciones del documento funcional del cliente. Lo
 - **Validación de tipo_camion contra BD**: tras PR #39 el schema Zod acepta cualquier string ≤50; el form solo ofrece tipos activos pero el server no verifica pertenencia. Decisión consciente para limitar scope.
 - **Lockout per-usuario despues de 5 intentos fallidos** (HU-AUTH-001): no implementado en v1. Dependemos del rate limiting nativo de Supabase Auth (por IP).
 - **Cache de rol en middleware**: `lib/supabase/middleware.ts` consulta `user_profiles` en cada request. En producción con mucho tráfico, considerar cache en cookie.
-- **`listUsers()` en updateClientAction**: trae TODOS los usuarios. Con muchos usuarios, paginar o buscar por email.
+- ~~**`listUsers()` en updateClientAction**~~: RESUELTO sesión 30 (PR #56) — se sacó del loop y lleva `perPage` explícito. El default de 50 hacía que con 66 usuarios el baneo nunca se ejecutara para 16 de ellos.
+- **Código muerto en `templates.ts`**: `setPasswordSubject` / `setPasswordHtml` / `SetPasswordEmailData` quedaron sin uso tras la sesión 30 (el mail de contraseña lo manda Supabase con su propia plantilla). Borrar cuando se toque ese archivo.
+- **Gmail SMTP no es transaccional**: Supabase lo advierte explícitamente. Límite ~500 mails/día y el display name puede ser pisado por Gmail. Migrar a un proveedor transaccional cuando crezca el volumen.
+- **Dos remitentes distintos**: los mails de auth salen de `transportesreysil@gmail.com` y los de negocio de `administracion@tfaster.com.ar`. El cliente ve dos identidades.
 - **PDF de inspección fire-and-forget**: si falla upload a Drive, no hay retry.
 - **Remito upload sin validación de tamaño**: considerar validar max ~10MB server-side.
 - **Service Worker para PWA offline**: manifest.json configurado pero sin service worker real.

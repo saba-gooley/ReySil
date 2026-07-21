@@ -63,6 +63,8 @@ export type TripRow = {
     destino: string;
     observaciones: string | null;
     orden: number;
+    hora_llegada: string | null;
+    hora_salida: string | null;
   }[];
   remitos: {
     id: string;
@@ -122,7 +124,7 @@ const TRIP_SELECT = `
   trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
   trip_events(id, tipo, ocurrido_at, observaciones),
   containers(numero, tipo, peso_carga_kg, fecha_entrega, precintos, observaciones, reservations(numero_booking, naviera, buque, fecha_arribo, fecha_carga, fecha_entrega, observaciones, orden, mercaderia, despacho, carga, terminal, devuelve_en, libre_hasta)),
-  trip_destinations(id, destino, observaciones, orden),
+  trip_destinations(id, destino, observaciones, orden, hora_llegada, hora_salida),
   remitos(id, drive_url, estado)
 `;
 
@@ -191,3 +193,71 @@ export async function listClientDeposits(clientId: string) {
   if (error) throw error;
   return data;
 }
+
+/**
+ * Req. 2.16 — Carga una solicitud de REPARTO con todo lo necesario para
+ * rellenar el formulario de edicion.
+ *
+ * Devuelve null si el viaje no existe o no es un REPARTO. La autorizacion y
+ * el gate de estado NO se resuelven aca: son responsabilidad de la Server
+ * Action (updateRepartoAction) y de las policies RLS de la migracion 0024.
+ */
+export async function getRepartoForEdit(tripId: string) {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("trips")
+    .select(`
+      id, codigo, client_id, tipo, estado,
+      origen_deposit_id, origen_descripcion, destino_descripcion,
+      fecha_solicitada, observaciones_cliente,
+      trip_reparto_fields(ndv, pal, cat, nro_un, cantidad_bultos, peso_kg, toneladas, metadata),
+      trip_destinations(id, destino, observaciones, orden)
+    `)
+    .eq("id", tripId)
+    .eq("tipo", "REPARTO")
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const raw = data as Record<string, unknown>;
+  const fields = Array.isArray(raw.trip_reparto_fields)
+    ? raw.trip_reparto_fields[0] ?? null
+    : raw.trip_reparto_fields ?? null;
+
+  const destinations = ((raw.trip_destinations as Record<string, unknown>[]) ?? [])
+    .slice()
+    .sort((a, b) => (a.orden as number) - (b.orden as number));
+
+  return { ...raw, trip_reparto_fields: fields, trip_destinations: destinations } as RepartoForEdit;
+}
+
+export type RepartoForEdit = {
+  id: string;
+  codigo: string;
+  client_id: string;
+  tipo: "REPARTO";
+  estado: string;
+  origen_deposit_id: string | null;
+  origen_descripcion: string | null;
+  destino_descripcion: string | null;
+  fecha_solicitada: string | null;
+  observaciones_cliente: string | null;
+  trip_reparto_fields: {
+    ndv: string | null;
+    pal: number | null;
+    cat: string | null;
+    nro_un: string | null;
+    cantidad_bultos: number | null;
+    peso_kg: number | null;
+    toneladas: number | null;
+    metadata: Record<string, unknown>;
+  } | null;
+  trip_destinations: {
+    id: string;
+    destino: string;
+    observaciones: string | null;
+    orden: number;
+  }[];
+};

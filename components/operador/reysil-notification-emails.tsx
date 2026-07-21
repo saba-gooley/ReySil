@@ -16,6 +16,7 @@ export type ReysilNotificationEmail = {
   enviar_asignaciones: boolean;
   enviar_remitos: boolean;
   enviar_salida_deposito: boolean;
+  enviar_ediciones: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -129,16 +130,23 @@ function EmailRow({
     initialState,
   );
 
-  function handleUpdate(enviar_solicitudes: boolean, enviar_asignaciones: boolean, enviar_remitos: boolean, enviar_salida_deposito: boolean) {
+  /**
+   * Recibe solo lo que cambia y completa el resto con lo que ya estaba.
+   * Antes eran booleanos posicionales: con cinco checkboxes era cuestion de
+   * tiempo mandar uno en la posicion equivocada y pisar la preferencia de al lado.
+   */
+  function handleUpdate(cambio: Partial<Omit<ReysilNotificationEmail, "id" | "email">>) {
     const formData = new FormData();
     formData.set(
       "payload",
       JSON.stringify({
         id: emailRow.id,
-        enviar_solicitudes,
-        enviar_asignaciones,
-        enviar_remitos,
-        enviar_salida_deposito,
+        enviar_solicitudes: emailRow.enviar_solicitudes,
+        enviar_asignaciones: emailRow.enviar_asignaciones,
+        enviar_remitos: emailRow.enviar_remitos,
+        enviar_salida_deposito: emailRow.enviar_salida_deposito,
+        enviar_ediciones: emailRow.enviar_ediciones,
+        ...cambio,
       }),
     );
     updateAction(formData);
@@ -167,6 +175,7 @@ function EmailRow({
               emailRow.enviar_asignaciones && "Asignaciones",
               emailRow.enviar_remitos && "Remitos",
               emailRow.enviar_salida_deposito && "Salida depósito",
+              emailRow.enviar_ediciones && "Ediciones",
             ].filter(Boolean).join(" • ") || "Sin notificaciones"}
           </p>
         </div>
@@ -182,9 +191,7 @@ function EmailRow({
               <input
                 type="checkbox"
                 checked={emailRow.enviar_solicitudes}
-                onChange={(e) =>
-                  handleUpdate(e.target.checked, emailRow.enviar_asignaciones, emailRow.enviar_remitos, emailRow.enviar_salida_deposito)
-                }
+                onChange={(e) => handleUpdate({ enviar_solicitudes: e.target.checked })}
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
@@ -196,9 +203,7 @@ function EmailRow({
               <input
                 type="checkbox"
                 checked={emailRow.enviar_asignaciones}
-                onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, e.target.checked, emailRow.enviar_remitos, emailRow.enviar_salida_deposito)
-                }
+                onChange={(e) => handleUpdate({ enviar_asignaciones: e.target.checked })}
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
@@ -210,9 +215,7 @@ function EmailRow({
               <input
                 type="checkbox"
                 checked={emailRow.enviar_remitos}
-                onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, e.target.checked, emailRow.enviar_salida_deposito)
-                }
+                onChange={(e) => handleUpdate({ enviar_remitos: e.target.checked })}
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
@@ -224,13 +227,24 @@ function EmailRow({
               <input
                 type="checkbox"
                 checked={emailRow.enviar_salida_deposito}
-                onChange={(e) =>
-                  handleUpdate(emailRow.enviar_solicitudes, emailRow.enviar_asignaciones, emailRow.enviar_remitos, e.target.checked)
-                }
+                onChange={(e) => handleUpdate({ enviar_salida_deposito: e.target.checked })}
                 className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
               />
               <span className="text-sm text-neutral-700">
                 Enviar copias al salir del depósito (Contenedor)
+              </span>
+            </label>
+
+            {/* req. 2.16 — solo se dispara cuando edita el CLIENTE */}
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={emailRow.enviar_ediciones}
+                onChange={(e) => handleUpdate({ enviar_ediciones: e.target.checked })}
+                className="h-4 w-4 rounded border-neutral-300 text-reysil-red"
+              />
+              <span className="text-sm text-neutral-700">
+                Avisar cuando el cliente modifica una solicitud
               </span>
             </label>
           </div>

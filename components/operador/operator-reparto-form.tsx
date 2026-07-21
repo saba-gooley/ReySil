@@ -4,52 +4,81 @@ import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createRepartoForClientAction, type TripActionState } from "@/lib/server/trips/actions";
-import { MultiplesDestinosSection, type DestinoEntry } from "@/components/ui/multiples-destinos";
+import { updateRepartoAction } from "@/lib/server/trips/edit-actions";
+import { MultiplesDestinosSection } from "@/components/ui/multiples-destinos";
+import {
+  emptyRepartoValues,
+  type DestinoEntry,
+  type RepartoInitialValues,
+} from "@/lib/utils/reparto-form";
 
 type Client = { id: string; nombre: string };
 type Deposit = { id: string; nombre: string; direccion: string | null; tipo: string };
 
 const initialState: TripActionState = {};
 
+/**
+ * Formulario de Reparto del operador. Sirve para el alta y, desde el req 2.16,
+ * tambien para editar una solicitud existente.
+ *
+ * En modo "edit" el cliente queda fijo: un viaje no cambia de dueno al
+ * editarse (lo refuerza el trigger de la migracion 0024).
+ */
 export function OperatorRepartoForm({
   clients,
   truckTypes,
+  mode = "create",
+  initialValues,
+  onDone,
 }: {
   clients: Client[];
   truckTypes: string[];
+  mode?: "create" | "edit";
+  initialValues?: RepartoInitialValues;
+  onDone?: () => void;
 }) {
-  const [state, formAction] = useFormState(createRepartoForClientAction, initialState);
+  const isEdit = mode === "edit";
+  const init = initialValues ?? emptyRepartoValues();
+
+  const [state, formAction] = useFormState(
+    isEdit ? updateRepartoAction : createRepartoForClientAction,
+    initialState,
+  );
   const router = useRouter();
 
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(init.clientId);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [loadingDeposits, setLoadingDeposits] = useState(false);
-  const [fechaSolicitada, setFechaSolicitada] = useState("");
-  const [fechaEntrega, setFechaEntrega] = useState("");
-  const [origenDepositId, setOrigenDepositId] = useState("");
-  const [origenDescripcion, setOrigenDescripcion] = useState("");
-  const [destinoDescripcion, setDestinoDescripcion] = useState("");
-  const [observaciones, setObservaciones] = useState("");
-  const [ndv, setNdv] = useState("");
-  const [pal, setPal] = useState("");
-  const [cat, setCat] = useState("");
-  const [nroUn, setNroUn] = useState("");
-  const [cantidadBultos, setCantidadBultos] = useState("");
-  const [pesoKg, setPesoKg] = useState("");
-  const [toneladas, setToneladas] = useState("");
-  const [codigoPostal, setCodigoPostal] = useState("");
-  const [zonaTarifa, setZonaTarifa] = useState("");
-  const [horario, setHorario] = useState("");
-  const [tipoCamion, setTipoCamion] = useState("");
-  const [peon, setPeon] = useState("");
-  const [multiplesDestinos, setMultiplesDestinos] = useState(false);
-  const [destinos, setDestinos] = useState<DestinoEntry[]>([{ key: 1, destino: "", observaciones: "" }]);
+  const [fechaSolicitada, setFechaSolicitada] = useState(init.fechaSolicitada);
+  const [fechaEntrega, setFechaEntrega] = useState(init.fechaEntrega);
+  const [origenDepositId, setOrigenDepositId] = useState(init.origenDepositId);
+  const [origenDescripcion, setOrigenDescripcion] = useState(init.origenDescripcion);
+  const [destinoDescripcion, setDestinoDescripcion] = useState(init.destinoDescripcion);
+  const [observaciones, setObservaciones] = useState(init.observaciones);
+  const [ndv, setNdv] = useState(init.ndv);
+  const [pal, setPal] = useState(init.pal);
+  const [cat, setCat] = useState(init.cat);
+  const [nroUn, setNroUn] = useState(init.nroUn);
+  const [cantidadBultos, setCantidadBultos] = useState(init.cantidadBultos);
+  const [pesoKg, setPesoKg] = useState(init.pesoKg);
+  const [toneladas, setToneladas] = useState(init.toneladas);
+  const [codigoPostal, setCodigoPostal] = useState(init.codigoPostal);
+  const [zonaTarifa, setZonaTarifa] = useState(init.zonaTarifa);
+  const [horario, setHorario] = useState(init.horario);
+  const [tipoCamion, setTipoCamion] = useState(init.tipoCamion);
+  const [peon, setPeon] = useState(init.peon);
+  const [multiplesDestinos, setMultiplesDestinos] = useState(init.multiplesDestinos);
+  const [destinos, setDestinos] = useState<DestinoEntry[]>(init.destinos);
 
   useEffect(() => {
-    if (state.success) {
+    if (!state.success) return;
+    if (isEdit) {
+      onDone?.();
+      router.refresh();
+    } else {
       router.push("/operador/pendientes");
     }
-  }, [state.success, router]);
+  }, [state.success, isEdit, onDone, router]);
 
   useEffect(() => {
     if (!clientId) {
@@ -67,6 +96,8 @@ export function OperatorRepartoForm({
 
   function handleSubmit(formData: FormData) {
     const payload = {
+      // En edicion el viaje ya tiene dueno; el id manda y client_id se ignora.
+      ...(isEdit ? { trip_id: init.tripId } : {}),
       client_id: clientId,
       fecha_solicitada: fechaSolicitada,
       fecha_entrega: fechaEntrega,
@@ -104,30 +135,48 @@ export function OperatorRepartoForm({
         <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">{state.error}</div>
       )}
 
-      {/* Selector de cliente */}
-      <fieldset className="space-y-4 rounded-lg border-2 border-reysil-red bg-reysil-red-light p-5">
-        <legend className="px-2 text-sm font-semibold text-reysil-red">
+      {/* Cliente. En el alta va destacado en rojo porque elegirlo es la accion
+          principal; en edicion es un dato fijo mas, y el rojo se leia como un
+          error. */}
+      <fieldset
+        className={
+          isEdit
+            ? "space-y-4 rounded-lg border border-neutral-200 bg-white p-5"
+            : "space-y-4 rounded-lg border-2 border-reysil-red bg-reysil-red-light p-5"
+        }
+      >
+        <legend
+          className={`px-2 text-sm font-semibold ${isEdit ? "text-neutral-700" : "text-reysil-red"}`}
+        >
           Cliente
         </legend>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">
-            Cargar solicitud para *
-          </label>
-          <select
-            value={clientId}
-            onChange={(e) => setClientId(e.target.value)}
-            required
-            className={inputClass}
-          >
-            <option value="">Seleccioná un cliente...</option>
-            {clients.map((c) => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
-            ))}
-          </select>
-          {state.fieldErrors?.client_id && (
-            <p className="mt-1 text-xs text-red-600">{state.fieldErrors.client_id[0]}</p>
-          )}
-        </div>
+        {isEdit ? (
+          <div className="text-sm">
+            <span className="font-medium text-neutral-900">
+              {clients.find((c) => c.id === clientId)?.nombre ?? "—"}
+            </span>
+          </div>
+        ) : (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-neutral-700">
+              Cargar solicitud para *
+            </label>
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              required
+              className={inputClass}
+            >
+              <option value="">Seleccioná un cliente...</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+            {state.fieldErrors?.client_id && (
+              <p className="mt-1 text-xs text-red-600">{state.fieldErrors.client_id[0]}</p>
+            )}
+          </div>
+        )}
       </fieldset>
 
       {/* Datos del viaje */}
@@ -254,20 +303,24 @@ export function OperatorRepartoForm({
       </fieldset>
 
       <div className="flex items-center justify-between">
-        <button type="button" onClick={() => router.push("/operador/solicitudes")} className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-100">
+        <button
+          type="button"
+          onClick={() => (isEdit ? onDone?.() : router.push("/operador/solicitudes"))}
+          className="rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-100"
+        >
           Cancelar
         </button>
-        <SubmitButton />
+        <SubmitButton isEdit={isEdit} />
       </div>
     </form>
   );
 }
 
-function SubmitButton() {
+function SubmitButton({ isEdit }: { isEdit: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button type="submit" disabled={pending} className="rounded-md bg-reysil-red px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-reysil-red-dark disabled:opacity-50">
-      {pending ? "Enviando..." : "Cargar solicitud"}
+      {pending ? "Guardando..." : isEdit ? "Guardar cambios" : "Cargar solicitud"}
     </button>
   );
 }

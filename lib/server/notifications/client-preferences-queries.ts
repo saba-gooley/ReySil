@@ -80,6 +80,7 @@ export type ReysilNotificationEmail = {
   enviar_asignaciones: boolean;
   enviar_remitos: boolean;
   enviar_salida_deposito: boolean;
+  enviar_ediciones: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -99,13 +100,14 @@ export async function getClientMailsForSalidaDeposito(
 /**
  * Obtener mails internos de ReySil para notificaciones
  */
-export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones" | "remitos" | "salida_deposito"): Promise<string[]> {
+export async function getReysilNotificationEmails(type: "solicitudes" | "asignaciones" | "remitos" | "salida_deposito" | "ediciones"): Promise<string[]> {
   const supabase = createAdminClient();
 
   const column =
     type === "solicitudes" ? "enviar_solicitudes" :
     type === "asignaciones" ? "enviar_asignaciones" :
     type === "salida_deposito" ? "enviar_salida_deposito" :
+    type === "ediciones" ? "enviar_ediciones" :
     "enviar_remitos";
 
   const { data, error } = await supabase

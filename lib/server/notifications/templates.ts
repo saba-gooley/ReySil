@@ -221,6 +221,57 @@ export function solicitudHtml(data: SolicitudEmailData): string {
 }
 
 // =========================================================================
+// Edición de solicitud por el cliente (req. 2.16)
+// =========================================================================
+
+export type TripEditedEmailData = {
+  codigo: string;
+  clientName: string;
+  origen: string;
+  destino: string;
+  fecha: string;
+  estado: string;
+  choferAsignado?: string;
+};
+
+export function tripEditedSubject(data: TripEditedEmailData): string {
+  return `ReySil — El cliente modificó la solicitud ${data.codigo}`;
+}
+
+export function tripEditedHtml(data: TripEditedEmailData): string {
+  // Si ya hay chofer asignado, el cambio le importa a alguien que quizas ya
+  // salio: por eso el aviso va destacado.
+  const avisoChofer = data.choferAsignado
+    ? `<p style="margin:0 0 16px;padding:10px 12px;background:#fef3c7;border-left:3px solid #d97706;color:#92400e;font-size:13px;">
+         Esta solicitud ya tiene chofer asignado (<strong>${data.choferAsignado}</strong>). Verificá si hace falta avisarle del cambio.
+       </p>`
+    : "";
+
+  const body = `
+    <h2 style="margin:0 0 8px;color:${BRAND_RED_DARK};font-size:18px;">Solicitud modificada por el cliente</h2>
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;line-height:1.5;">
+      <strong>${data.clientName}</strong> modificó la solicitud <strong>${data.codigo}</strong>.
+      Estos son los datos que quedaron vigentes.
+    </p>
+    ${avisoChofer}
+    <table cellpadding="0" cellspacing="0" style="width:100%;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:16px;">
+      <tbody>
+        ${dataRow("Código", data.codigo)}
+        ${dataRow("Cliente", data.clientName)}
+        ${dataRow("Estado", data.estado)}
+        ${dataRow("Origen", data.origen)}
+        ${dataRow("Destino", data.destino)}
+        ${dataRow("Fecha de carga", data.fecha)}
+      </tbody>
+    </table>
+    <p style="margin:0;color:#6b7280;font-size:13px;">
+      Podés ver el detalle completo en el panel de operadores.
+    </p>`;
+
+  return layout(`Solicitud ${data.codigo} modificada — ReySil`, body);
+}
+
+// =========================================================================
 // Múltiples Remitos por Viaje (req. 2.7/2.8)
 // =========================================================================
 

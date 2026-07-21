@@ -6,28 +6,13 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/server/auth/get-current-user";
 import { CreateRepartoSchema, CreateContenedorSchema } from "@/lib/validators/trip";
 import { notifyRepartoCreated, notifyContenedorCreated } from "@/lib/server/notifications/notify-reparto";
+import { insertTripDestinations } from "./destinations";
 
 export type TripActionState = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
   success?: boolean;
 };
-
-async function insertTripDestinations(
-  supabase: ReturnType<typeof createClient>,
-  tripId: string,
-  destinos: { destino: string; observaciones?: string }[],
-): Promise<void> {
-  if (destinos.length === 0) return;
-  await supabase.from("trip_destinations").insert(
-    destinos.map((d, i) => ({
-      trip_id: tripId,
-      destino: d.destino,
-      observaciones: d.observaciones || null,
-      orden: i,
-    })),
-  );
-}
 
 async function resolveOrigenDescripcion(
   supabase: ReturnType<typeof createClient>,

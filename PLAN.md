@@ -120,6 +120,7 @@ public/
 | `trucks` | Camiones (marca, modelo, patente, estado activo/inactivo) |
 | `truck_types` | Tipos de camion configurables para el formulario de Reparto (nombre, activo). Escritura solo ADMIN |
 | `truck_daily_status` | Vista SQL que calcula el estado diario de cada camion (LIBRE/PREASIGNADO/ASIGNADO) cruzando trips + trip_assignments |
+| `reysil_notification_emails` | Mails internos de ReySil que reciben copias. `enviar_ediciones BOOLEAN` (req. 2.16) marca quien recibe el aviso cuando un cliente modifica una solicitud |
 | `trip_destinations` | Destinos multiples por viaje (req. 2.12). id, trip_id FK CASCADE, destino TEXT, observaciones TEXT, orden SMALLINT, hora_llegada TIMESTAMPTZ NULL, hora_salida TIMESTAMPTZ NULL. Si hay filas → el viaje tiene multiples destinos. `trips.destino_descripcion` mantiene el primer destino por compat. El chofer registra hora_llegada/hora_salida por cada destino (migración 0023). El operador puede reordenar mientras el viaje sea PENDIENTE/PREASIGNADO/ASIGNADO. |
 
 Todas las tablas tienen Row Level Security activado. Las policies aseguran que cada rol solo ve/modifica los datos que le corresponden:
@@ -187,6 +188,14 @@ Supabase Realtime para suscripciones a cambios en `trips` y `trip_events`. Usado
 
 **Total: 25 historias + nuevas | 94 puntos + 23 puntos | Módulos 1-10 Completos, Módulo 11 Pendiente**
 
+> Requerimiento transversal aprobado 2026-07-21 (no es un modulo nuevo):
+> - **2.16 Edicion de solicitudes segun estado** (tipo A): operador, admin y el propio cliente
+>   pueden editar una solicitud mientras esta en PENDIENTE, PREASIGNADO o ASIGNADO. En EN_CURSO
+>   y FINALIZADO la edicion queda bloqueada, validado en las policies RLS **y** en la Server
+>   Action. Incluye el ABM de destinos (convertir de destino unico a multi-destino y viceversa).
+>   Cuando edita el cliente se notifica a ReySil por mail. **Alcance: solo REPARTO** — la edicion
+>   de CONTENEDOR se hace a nivel reserva y queda diferida.
+>
 > Requerimientos transversales aprobados 2026-06-12 (no son modulos nuevos):
 > - **2.13 Codigo de Viaje Secuencial** (tipo A): columna `trips.codigo` con secuencia `VJ-#####`, backfill historico por `created_at`. Visible en app chofer, listados de solicitudes (primera columna), listado de remitos y filtros de busqueda. El nombre del archivo de remito en Drive incorpora el codigo.
 > - **2.14 Validacion de Km al cierre de turno** (tipo D): el soft-check de km cargados se muda de finalizar viaje a finalizar turno (los km viven en `shift_logs`).

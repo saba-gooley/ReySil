@@ -49,6 +49,19 @@ export const CreateRepartoSchema = z.object({
 export type CreateRepartoInput = z.infer<typeof CreateRepartoSchema>;
 
 /**
+ * Schema para editar un Reparto existente (req. 2.16).
+ *
+ * Mismos campos que el alta mas el id del viaje. No incluye client_id ni
+ * estado: el viaje no cambia de dueno ni de estado al editarse (lo refuerza
+ * el trigger trips_guard_cliente_update de la migracion 0024).
+ */
+export const UpdateRepartoSchema = CreateRepartoSchema.extend({
+  trip_id: z.string().uuid("Viaje invalido"),
+});
+
+export type UpdateRepartoInput = z.infer<typeof UpdateRepartoSchema>;
+
+/**
  * Schema para solicitud tipo Contenedor (HU-CLI-003).
  * Crea reservation + containers + trips.
  */

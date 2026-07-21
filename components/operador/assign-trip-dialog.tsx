@@ -15,16 +15,18 @@ type Mode = "assign" | "reassign" | "preassign" | "update-preassigned";
 
 const DIALOG_TITLES: Record<Mode, string> = {
   assign: "Confirmar Asignación",
-  reassign: "Modificar Asignación",
+  reassign: "Cambiar Chofer",
   preassign: "Preasignar Chofer",
-  "update-preassigned": "Modificar Preasignación",
+  "update-preassigned": "Cambiar Chofer Preasignado",
 };
 
+// "Cambiar Chofer" y no "Modificar": desde el req 2.16 conviven en la misma
+// celda con "Editar Viaje", y "Modificar" a secas no dejaba claro que modifica.
 const TRIGGER_LABELS: Record<Mode, string> = {
   assign: "Confirmar",
-  reassign: "Modificar",
+  reassign: "Cambiar Chofer",
   preassign: "Preasignar",
-  "update-preassigned": "Modificar",
+  "update-preassigned": "Cambiar Chofer",
 };
 
 const TRIGGER_CLASSES: Record<Mode, string> = {

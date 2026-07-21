@@ -172,7 +172,7 @@ export async function updateReysilNotificationEmail(
 ): Promise<PreferenceActionState> {
   try {
     const raw = JSON.parse(formData.get("payload") as string);
-    const { id, enviar_solicitudes, enviar_asignaciones, enviar_remitos, enviar_salida_deposito } = raw;
+    const { id, enviar_solicitudes, enviar_asignaciones, enviar_remitos, enviar_salida_deposito, enviar_ediciones } = raw;
 
     if (!id) {
       return { error: "ID de email requerido" };
@@ -186,6 +186,7 @@ export async function updateReysilNotificationEmail(
         enviar_asignaciones,
         enviar_remitos,
         enviar_salida_deposito,
+        enviar_ediciones,
       })
       .eq("id", id);
 
